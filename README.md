@@ -1,10 +1,11 @@
-# MigrainTracker
+# Migraine Tracker
 
-MigrainTracker ist eine App-Idee für das schnelle Erfassen von Kopfschmerzen und Migräneepisoden. Der Fokus liegt auf wenigen, klaren Eingaben, damit Betroffene Symptome, Medikamente, Wetterkontext und Arzttermine ohne großen Aufwand dokumentieren können.
+Migraine Tracker ist eine App-Idee für das schnelle Erfassen von Kopfschmerzen und Migräneepisoden. Der Fokus liegt auf wenigen, klaren Eingaben, damit Betroffene Symptome, Medikamente, Wetterkontext und Arzttermine ohne großen Aufwand dokumentieren können.
 
 ## Ziel
 
 Die App soll helfen,
+
 - Episoden konsistent zu erfassen,
 - mögliche Auslöser und Muster sichtbar zu machen,
 - die Wirkung von Medikamenten besser nachzuvollziehen,
@@ -31,9 +32,10 @@ Jeder Eintrag soll so schnell wie möglich erstellt werden können. Statt langer
 
 ## MVP
 
-Der erste Produktumfang ist bewusst klein gehalten. Details stehen im Dokument [docs/MVP-Konzept.md](/Users/mat/code/MigrainTracker/docs/MVP-Konzept.md).
+Der erste Produktumfang ist bewusst klein gehalten. Details stehen im Dokument [docs/MVP-Konzept.md](/Users/mat/code/Migraine Tracker/docs/MVP-Konzept.md).
 
 Enthalten sind:
+
 - Episoden erfassen
 - Medikamente dokumentieren
 - Wetterdaten speichern

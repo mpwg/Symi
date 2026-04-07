@@ -2,11 +2,12 @@
 
 ## Produktziel
 
-Das MVP von MigrainTracker soll ein verlässliches, schnelles Migräne-Tagebuch sein. Nutzerinnen und Nutzer sollen eine Episode in wenigen Sekunden erfassen und später nachvollziehen können, wie häufig Beschwerden auftreten, welche Medikamente helfen und ob Wetter oder andere Faktoren eine Rolle spielen.
+Das MVP von Migraine Tracker soll ein verlässliches, schnelles Migräne-Tagebuch sein. Nutzerinnen und Nutzer sollen eine Episode in wenigen Sekunden erfassen und später nachvollziehen können, wie häufig Beschwerden auftreten, welche Medikamente helfen und ob Wetter oder andere Faktoren eine Rolle spielen.
 
 ## Nicht-Ziele im MVP
 
 Diese Punkte sind zunächst bewusst ausgeschlossen:
+
 - komplexe Diagnose- oder Therapieempfehlungen
 - Community- oder Social-Features
 - umfangreiche KI-Auswertung
@@ -25,13 +26,14 @@ Viele Betroffene dokumentieren Symptome unregelmäßig oder gar nicht, weil vorh
 
 ## Wertversprechen
 
-MigrainTracker reduziert Dokumentation auf das Wesentliche und ergänzt automatisch Kontextdaten wie Wetter. Dadurch entsteht ohne großen Aufwand ein verwertbarer Verlauf für den Alltag und für ärztliche Gespräche.
+Migraine Tracker reduziert Dokumentation auf das Wesentliche und ergänzt automatisch Kontextdaten wie Wetter. Dadurch entsteht ohne großen Aufwand ein verwertbarer Verlauf für den Alltag und für ärztliche Gespräche.
 
 ## MVP-Funktionsumfang
 
 ### 1. Episoden erfassen
 
 Pro Episode sollen mindestens folgende Daten erfasst werden:
+
 - Startzeitpunkt
 - optional Endzeitpunkt oder Dauer
 - Intensität von `1` bis `10`
@@ -41,6 +43,7 @@ Pro Episode sollen mindestens folgende Daten erfasst werden:
 ### 2. Medikamente dokumentieren
 
 Zu einer Episode oder unabhängig davon:
+
 - Medikamentenname
 - Einnahmezeitpunkt
 - Dosis
@@ -49,12 +52,14 @@ Zu einer Episode oder unabhängig davon:
 ### 3. Wetter automatisch speichern
 
 Beim Anlegen einer Episode:
+
 - Temperatur
 - Wetterzustand
 - Luftfeuchtigkeit, sofern verfügbar
 - Luftdruck, sofern verfügbar
 
 Quelle im MVP:
+
 - bevorzugt `Open-Meteo` oder vergleichbare freie Quelle
 - `WeatherKit` später als Ausbauoption
 
