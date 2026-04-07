@@ -32,7 +32,7 @@ Jeder Eintrag soll so schnell wie möglich erstellt werden können. Statt langer
 
 ## MVP
 
-Der erste Produktumfang ist bewusst klein gehalten. Details stehen im Dokument [docs/MVP-Konzept.md](/Users/mat/code/Migraine Tracker/docs/MVP-Konzept.md).
+Der erste Produktumfang ist bewusst klein gehalten. Details stehen im Dokument [docs/MVP-Konzept.md](docs/MVP-Konzept.md).
 
 Enthalten sind:
 
