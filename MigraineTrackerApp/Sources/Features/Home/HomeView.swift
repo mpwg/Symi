@@ -1,15 +1,24 @@
+import SwiftData
 import SwiftUI
 
 struct HomeView: View {
     @Binding var selectedTab: AppTab
+    @Query(sort: [SortDescriptor(\Episode.startedAt, order: .reverse)]) private var episodes: [Episode]
 
     var body: some View {
         List {
             Section("Heute") {
-                MetricRow(
-                    title: "Keine Episode erfasst",
-                    detail: "Starte mit einem schnellen Eintrag für Intensität, Symptome und Medikamente."
-                )
+                if let latestEpisode = episodes.first {
+                    MetricRow(
+                        title: "Letzte Episode: \(latestEpisode.type.rawValue)",
+                        detail: "Intensität \(latestEpisode.intensity)/10 · \(latestEpisode.startedAt.formatted(date: .abbreviated, time: .shortened))"
+                    )
+                } else {
+                    MetricRow(
+                        title: "Keine Episode erfasst",
+                        detail: "Starte mit einem schnellen Eintrag für Intensität, Symptome und Medikamente."
+                    )
+                }
             }
 
             Section("Schnellzugriffe") {
@@ -33,6 +42,7 @@ struct HomeView: View {
             }
 
             Section("MVP-Fokus") {
+                MetricRow(title: "Gespeicherte Episoden", detail: "\(episodes.count)")
                 MetricRow(title: "Lokale Speicherung", detail: "Keine Anmeldung, kein Backend, keine Synchronisation.")
                 MetricRow(title: "Wetterkontext", detail: "Wird später automatisch am Episodenzeitpunkt ergänzt.")
             }

@@ -7,21 +7,29 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		67C586DB6E225B371A57B6B4 /* EpisodeDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87529B926803152BA72C3087 /* EpisodeDetailView.swift */; };
 		6934243EE1A75935021C43A4 /* AppShellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D839E97441CF64B3460CF9A4 /* AppShellView.swift */; };
 		6C7F194CE1675FEF89050E7C /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C99AFA838A6BA0DF619E4EFE /* HomeView.swift */; };
+		7FC18E2773D1BB69488B8539 /* EpisodeEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F8E20DFD4C3E1BDA686C014 /* EpisodeEditorView.swift */; };
 		8085AC93E469E61A4354FA8E /* ExportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22C8949DD27E1984B8E78A0A /* ExportView.swift */; };
+		B59E9BBAACCBEE4494EE97A9 /* ExportModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25695DC9335184985670561E /* ExportModels.swift */; };
 		B8E1C2C4AB3E6C3752F9A1B1 /* AppTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34B7DAEFC1788926A789BFBB /* AppTab.swift */; };
 		C2CAEBF45F6A018FA99B8DF9 /* CaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AC2168AD7637327A7700D7D /* CaptureView.swift */; };
 		CDFF199FAB2C4067DDF22815 /* MigraineTrackerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 460EED7FC7B2C0B247848187 /* MigraineTrackerApp.swift */; };
 		D956CE1316884595C77C8233 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65161BF0C7B966F53D55388C /* HistoryView.swift */; };
+		DAAED55FD6A5C1F3B302589A /* EpisodeModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CFF011117841DC40FE13222 /* EpisodeModels.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		22C8949DD27E1984B8E78A0A /* ExportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportView.swift; sourceTree = "<group>"; };
+		25695DC9335184985670561E /* ExportModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportModels.swift; sourceTree = "<group>"; };
 		34B7DAEFC1788926A789BFBB /* AppTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTab.swift; sourceTree = "<group>"; };
 		460EED7FC7B2C0B247848187 /* MigraineTrackerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigraineTrackerApp.swift; sourceTree = "<group>"; };
 		65161BF0C7B966F53D55388C /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
+		7CFF011117841DC40FE13222 /* EpisodeModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EpisodeModels.swift; sourceTree = "<group>"; };
+		87529B926803152BA72C3087 /* EpisodeDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EpisodeDetailView.swift; sourceTree = "<group>"; };
 		8AC2168AD7637327A7700D7D /* CaptureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureView.swift; sourceTree = "<group>"; };
+		9F8E20DFD4C3E1BDA686C014 /* EpisodeEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EpisodeEditorView.swift; sourceTree = "<group>"; };
 		C99AFA838A6BA0DF619E4EFE /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		D657942850A17EFED6B7ABD6 /* MigraineTrackerApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = MigraineTrackerApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D839E97441CF64B3460CF9A4 /* AppShellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppShellView.swift; sourceTree = "<group>"; };
@@ -33,6 +41,7 @@
 		04E5B098CE17C12040D4E67A /* History */ = {
 			isa = PBXGroup;
 			children = (
+				87529B926803152BA72C3087 /* EpisodeDetailView.swift */,
 				65161BF0C7B966F53D55388C /* HistoryView.swift */,
 			);
 			path = History;
@@ -62,6 +71,7 @@
 			children = (
 				CE267BCE177D67DADAE04F73 /* App */,
 				2A7DA545FE40AB5393385C0E /* Features */,
+				983B2CBB21D16197907F3CF0 /* Models */,
 			);
 			name = Sources;
 			path = MigraineTrackerApp/Sources;
@@ -80,6 +90,7 @@
 			isa = PBXGroup;
 			children = (
 				8AC2168AD7637327A7700D7D /* CaptureView.swift */,
+				9F8E20DFD4C3E1BDA686C014 /* EpisodeEditorView.swift */,
 			);
 			path = Capture;
 			sourceTree = "<group>";
@@ -90,6 +101,15 @@
 				22C8949DD27E1984B8E78A0A /* ExportView.swift */,
 			);
 			path = Export;
+			sourceTree = "<group>";
+		};
+		983B2CBB21D16197907F3CF0 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				7CFF011117841DC40FE13222 /* EpisodeModels.swift */,
+				25695DC9335184985670561E /* ExportModels.swift */,
+			);
+			path = Models;
 			sourceTree = "<group>";
 		};
 		CE267BCE177D67DADAE04F73 /* App */ = {
@@ -180,6 +200,10 @@
 				6934243EE1A75935021C43A4 /* AppShellView.swift in Sources */,
 				B8E1C2C4AB3E6C3752F9A1B1 /* AppTab.swift in Sources */,
 				C2CAEBF45F6A018FA99B8DF9 /* CaptureView.swift in Sources */,
+				67C586DB6E225B371A57B6B4 /* EpisodeDetailView.swift in Sources */,
+				7FC18E2773D1BB69488B8539 /* EpisodeEditorView.swift in Sources */,
+				DAAED55FD6A5C1F3B302589A /* EpisodeModels.swift in Sources */,
+				B59E9BBAACCBEE4494EE97A9 /* ExportModels.swift in Sources */,
 				8085AC93E469E61A4354FA8E /* ExportView.swift in Sources */,
 				D956CE1316884595C77C8233 /* HistoryView.swift in Sources */,
 				6C7F194CE1675FEF89050E7C /* HomeView.swift in Sources */,
