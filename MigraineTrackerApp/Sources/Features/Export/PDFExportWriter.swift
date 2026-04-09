@@ -25,7 +25,7 @@ enum PDFExportWriter {
         ] as CFDictionary
 
         guard let consumer = CGDataConsumer(url: url as CFURL),
-              let context = CGContext(consumer: consumer, mediaBox: &mediaBox, metadata)
+              let context = unsafe CGContext(consumer: consumer, mediaBox: &mediaBox, metadata)
         else {
             throw PDFExportError.contextCreationFailed
         }
@@ -225,7 +225,7 @@ private struct PDFPageContext {
         )
 
         let framesetter = CTFramesetterCreateWithAttributedString(attributedText)
-        let path = CGPath(rect: pdfRect(fromTopLeftRect: frameRect), transform: nil)
+        let path = unsafe CGPath(rect: pdfRect(fromTopLeftRect: frameRect), transform: nil)
         let frame = CTFramesetterCreateFrame(framesetter, CFRange(location: 0, length: attributedText.length), path, nil)
 
         context.saveGState()

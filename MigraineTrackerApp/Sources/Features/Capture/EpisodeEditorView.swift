@@ -37,8 +37,16 @@ struct EpisodeEditorView: View {
     @State private var saveMessageVisible = false
     @State private var validationMessage: String?
 
-    private let symptomOptions = ["Übelkeit", "Lichtempfindlichkeit", "Geräuschempfindlichkeit", "Aura"]
+    private let symptomOptions = [
+        "Übelkeit",
+        "Lichtempfindlichkeit",
+        "Geräuschempfindlichkeit",
+        "Aura",
+        "Kiefer-/Aufbissschmerz",
+        "Pochen, Pulsieren"
+    ]
     private let triggerOptions = ["Stress", "Schlafmangel", "Alkohol", "Menstruation", "Bildschirmzeit"]
+    private let weatherConditionOptions = ["Wetterumschwung/Wind"]
     private let maxRecentMedications = 6
 
     init(episode: Episode? = nil, onSaved: (() -> Void)? = nil) {
@@ -136,6 +144,8 @@ struct EpisodeEditorView: View {
                 Toggle("Wetterdaten manuell ergänzen", isOn: $weatherEnabled.animation())
 
                 if weatherEnabled {
+                    weatherConditionSection
+
                     TextField("Wetterlage, z. B. sonnig oder Regen", text: $weatherCondition)
                     TextField("Temperatur in °C", text: $weatherTemperature)
                         .keyboardType(.decimalPad)
@@ -240,6 +250,43 @@ struct EpisodeEditorView: View {
                     .buttonStyle(.plain)
                     .accessibilityLabel("\(title): \(option)")
                     .accessibilityHint(isSelected ? "Entfernt die Auswahl." : "Wählt diese Option aus.")
+                    .accessibilityAddTraits(isSelected ? .isSelected : [])
+                }
+            }
+        }
+    }
+
+    private var weatherConditionSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Schnellauswahl")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.secondary)
+
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 10)], spacing: 10) {
+                ForEach(weatherConditionOptions, id: \.self) { option in
+                    let isSelected = weatherCondition == option
+
+                    Button {
+                        weatherCondition = isSelected ? "" : option
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                                .imageScale(.medium)
+                            Text(option)
+                                .font(.subheadline.weight(.medium))
+                                .multilineTextAlignment(.leading)
+                            Spacer(minLength: 0)
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 10)
+                        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                        .background(isSelected ? Color.accentColor.opacity(0.16) : Color(.secondarySystemGroupedBackground))
+                        .foregroundStyle(isSelected ? Color.accentColor : Color.primary)
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Wetter: \(option)")
+                    .accessibilityHint(isSelected ? "Entfernt die Auswahl." : "Wählt diese Wetterlage aus.")
                     .accessibilityAddTraits(isSelected ? .isSelected : [])
                 }
             }
