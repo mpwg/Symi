@@ -96,7 +96,9 @@ enum PDFExportWriter {
         if !record.medications.isEmpty {
             let medicationText = record.medications.map { medication in
                 let dosageText = medication.dosage.isEmpty ? medication.category : "\(medication.category), \(medication.dosage)"
-                return "\(medication.name) (\(dosageText), Wirkung: \(medication.effectiveness))"
+                let quantityText = medication.quantity > 1 ? ", Anzahl: \(medication.quantity)" : ""
+                let effectivenessText = medication.effectiveness == MedicationEffectiveness.partial.rawValue ? "" : ", Wirkung: \(medication.effectiveness)"
+                return "\(medication.name) (\(dosageText)\(quantityText)\(effectivenessText))"
             }
             lines.append("Medikamente: \(medicationText.joined(separator: "; "))")
         }
