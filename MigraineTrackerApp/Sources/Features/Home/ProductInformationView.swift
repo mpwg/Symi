@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct ProductInformationView: View {
+    private let privacyURL = URL(string: "https://s3.privyr.com/privacy/privacy-policy.html?d=eyJlbWFpbCI6ImZldXJpZy5mZXVlcjdhQGljbG91ZC5jb20iLCJjb21wYW55IjoiTWF0dGhpYXMgV2FsbG5lci1H6WhyaSIsImdlbl9hdCI6IjIwMjYtMDQtMDlUMTE6MjI6MjUuOTYzWiJ9")!
+
     enum Mode {
         case standard
         case onboarding
@@ -32,6 +34,10 @@ struct ProductInformationView: View {
                     title: "PDF-Export nur auf deinen Befehl",
                     detail: "Ein Bericht wird erst lokal erzeugt, wenn du ihn exportierst und bewusst teilst."
                 )
+
+                Link(destination: privacyURL) {
+                    Label("Datenschutzerklärung öffnen", systemImage: "link")
+                }
             }
 
             Section("Berechtigungen") {

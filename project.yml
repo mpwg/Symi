@@ -41,7 +41,6 @@ targets:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
-        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: Migraine Tracker nutzt deinen Standort nur, um beim Erfassen einer Episode passende Wetterdaten zu ergänzen.
     scheme:
       gatherCoverageData: false
       testTargets: []
