@@ -1,6 +1,6 @@
 name: MigraineTracker
 options:
-  bundleIdPrefix: com.mpwg
+  bundleIdPrefix: eu.mpwg
 configs:
   Debug: debug
   Release: release
@@ -10,7 +10,7 @@ settings:
     MARKETING_VERSION: 0.1.0
     CURRENT_PROJECT_VERSION: 1
     SWIFT_VERSION: "6.0"
-    TARGETED_DEVICE_FAMILY: 1
+    TARGETED_DEVICE_FAMILY: 1,2,6
     GENERATE_INFOPLIST_FILE: YES
     INFOPLIST_KEY_CFBundleDisplayName: Migraine Tracker
     INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
@@ -20,7 +20,7 @@ targets:
   MigraineTrackerApp:
     type: application
     platform: iOS
-    deploymentTarget: "17.0"
+    deploymentTarget: "26.4"
     sources:
       - path: MigraineTrackerApp/Sources
     resources:
@@ -30,11 +30,11 @@ targets:
       Release: Configs/Release.xcconfig
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.mpwg.MigraineTracker
+        PRODUCT_BUNDLE_IDENTIFIER: eu.mpwg.MigraineTracker
         PRODUCT_NAME: MigraineTracker
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
-        SUPPORTS_MACCATALYST: NO
+        SUPPORTS_MACCATALYST: YES
         SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
         SWIFT_EMIT_LOC_STRINGS: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone:

@@ -1,40 +1,76 @@
+import CoreGraphics
+import CoreText
 import Foundation
-import UIKit
+import PDFKit
 
 enum PDFExportWriter {
     static func write(summary: ExportPeriodSummary) throws -> URL {
         let fileName = "MigraineTracker-\(dateStamp(summary.startDate))-\(dateStamp(summary.endDate)).pdf"
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
-        let renderer = UIGraphicsPDFRenderer(bounds: CGRect(x: 0, y: 0, width: 595, height: 842))
+        let pageRect = CGRect(x: 0, y: 0, width: 595, height: 842)
+        let layout = PDFLayout(pageRect: pageRect)
 
-        try renderer.writePDF(to: url) { context in
-            let pageRect = renderer.format.bounds
-            let layout = PDFLayout(pageRect: pageRect)
-
-            var page = PDFPageContext(context: context, layout: layout)
-            page.beginPage()
-            page.drawTitle("Migraine Tracker Bericht")
-            page.drawBodyLine("Zeitraum: \(summary.startDate.formatted(date: .abbreviated, time: .omitted)) bis \(summary.endDate.formatted(date: .abbreviated, time: .omitted))")
-            page.drawBodyLine("Episoden: \(summary.episodeCount)")
-
-            if summary.episodeCount > 0 {
-                page.drawBodyLine("Durchschnittliche Intensität: \(summary.averageIntensity.formatted(.number.precision(.fractionLength(1))))/10")
-            }
-
-            if !summary.medicationNames.isEmpty {
-                page.drawBodyLine("Dokumentierte Medikamente: \(summary.medicationNames.joined(separator: ", "))")
-            }
-
-            page.addSpacing(18)
-            page.drawSectionTitle("Episodenübersicht")
-
-            for record in summary.records {
-                let block = exportLines(for: record)
-                page.drawBlock(block)
-            }
-        }
+        try writeRawPDF(summary: summary, to: url, layout: layout)
+        try finalizeDocument(at: url)
 
         return url
+    }
+
+    private static func writeRawPDF(summary: ExportPeriodSummary, to url: URL, layout: PDFLayout) throws {
+        var mediaBox = layout.pageRect
+        let metadata = [
+            kCGPDFContextCreator: "MigraineTracker",
+            kCGPDFContextAuthor: "MigraineTracker",
+            kCGPDFContextTitle: "Migraine Tracker Bericht"
+        ] as CFDictionary
+
+        guard let consumer = CGDataConsumer(url: url as CFURL),
+              let context = CGContext(consumer: consumer, mediaBox: &mediaBox, metadata)
+        else {
+            throw PDFExportError.contextCreationFailed
+        }
+
+        var page = PDFPageContext(context: context, layout: layout)
+        page.beginPage()
+        try page.drawTitle("Migraine Tracker Bericht")
+        try page.drawBodyLine("Zeitraum: \(summary.startDate.formatted(date: .abbreviated, time: .omitted)) bis \(summary.endDate.formatted(date: .abbreviated, time: .omitted))")
+        try page.drawBodyLine("Episoden: \(summary.episodeCount)")
+
+        if summary.episodeCount > 0 {
+            try page.drawBodyLine("Durchschnittliche Intensität: \(summary.averageIntensity.formatted(.number.precision(.fractionLength(1))))/10")
+        }
+
+        if !summary.medicationNames.isEmpty {
+            try page.drawBodyLine("Dokumentierte Medikamente: \(summary.medicationNames.joined(separator: ", "))")
+        }
+
+        page.addSpacing(18)
+        try page.drawSectionTitle("Episodenübersicht")
+
+        for record in summary.records {
+            try page.drawBlock(exportLines(for: record))
+        }
+
+        page.endPage()
+        context.closePDF()
+    }
+
+    private static func finalizeDocument(at url: URL) throws {
+        guard let document = PDFDocument(url: url), document.pageCount > 0 else {
+            throw PDFExportError.documentValidationFailed
+        }
+
+        document.documentAttributes = [
+            PDFDocumentAttribute.titleAttribute: "Migraine Tracker Bericht",
+            PDFDocumentAttribute.authorAttribute: "MigraineTracker",
+            PDFDocumentAttribute.creatorAttribute: "MigraineTracker"
+        ]
+
+        guard let data = document.dataRepresentation() else {
+            throw PDFExportError.documentValidationFailed
+        }
+
+        try data.write(to: url, options: .atomic)
     }
 
     private static func exportLines(for record: EpisodeExportRecord) -> [String] {
@@ -100,12 +136,20 @@ enum PDFExportWriter {
     }
 }
 
+private enum PDFExportError: Error {
+    case contextCreationFailed
+    case documentValidationFailed
+    case drawingFailed
+}
+
 private struct PDFLayout {
     let pageRect: CGRect
     let margin: CGFloat = 40
-    let titleFont = UIFont.systemFont(ofSize: 22, weight: .bold)
-    let sectionFont = UIFont.systemFont(ofSize: 15, weight: .semibold)
-    let bodyFont = UIFont.systemFont(ofSize: 11)
+    let titleFont = CTFontCreateWithName("Helvetica-Bold" as CFString, 22, nil)
+    let sectionFont = CTFontCreateWithName("Helvetica-Bold" as CFString, 15, nil)
+    let bodyFont = CTFontCreateWithName("Helvetica" as CFString, 11, nil)
+    let textColor = CGColor(gray: 0.05, alpha: 1)
+    let separatorColor = CGColor(gray: 0.82, alpha: 1)
     let lineSpacing: CGFloat = 5
 
     var contentWidth: CGFloat { pageRect.width - (margin * 2) }
@@ -114,54 +158,49 @@ private struct PDFLayout {
 }
 
 private struct PDFPageContext {
-    let context: UIGraphicsPDFRendererContext
+    let context: CGContext
     let layout: PDFLayout
     var cursorY: CGFloat = 0
 
-    init(context: UIGraphicsPDFRendererContext, layout: PDFLayout) {
+    init(context: CGContext, layout: PDFLayout) {
         self.context = context
         self.layout = layout
         self.cursorY = layout.topY
     }
 
     mutating func beginPage() {
-        context.beginPage()
+        context.beginPDFPage(nil)
         cursorY = layout.topY
     }
 
-    mutating func drawTitle(_ text: String) {
-        draw(text: text, font: layout.titleFont)
-        addSpacing(10)
+    mutating func drawTitle(_ text: String) throws {
+        try draw(text: text, font: layout.titleFont, extraSpacing: 10)
     }
 
-    mutating func drawSectionTitle(_ text: String) {
-        ensureSpace(for: text, font: layout.sectionFont, extraSpacing: 8)
-        draw(text: text, font: layout.sectionFont)
-        addSpacing(6)
+    mutating func drawSectionTitle(_ text: String) throws {
+        try draw(text: text, font: layout.sectionFont, extraSpacing: 6)
     }
 
-    mutating func drawBodyLine(_ text: String) {
-        ensureSpace(for: text, font: layout.bodyFont, extraSpacing: layout.lineSpacing)
-        draw(text: text, font: layout.bodyFont)
+    mutating func drawBodyLine(_ text: String) throws {
+        try draw(text: text, font: layout.bodyFont, extraSpacing: layout.lineSpacing)
     }
 
-    mutating func drawBlock(_ lines: [String]) {
-        let estimatedHeight = lines.reduce(0) { partial, line in
+    mutating func drawBlock(_ lines: [String]) throws {
+        let estimatedHeight = lines.reduce(CGFloat.zero) { partial, line in
             partial + height(for: line, font: layout.bodyFont) + layout.lineSpacing
-        } + 8
+        } + 19
 
         if cursorY + estimatedHeight > layout.bottomY {
+            endPage()
             beginPage()
         }
 
         for line in lines {
-            drawBodyLine(line)
+            try drawBodyLine(line)
         }
 
         addSpacing(8)
-        let separatorRect = CGRect(x: layout.margin, y: cursorY, width: layout.contentWidth, height: 1)
-        UIColor.systemGray4.setFill()
-        UIBezierPath(rect: separatorRect).fill()
+        drawSeparator()
         addSpacing(10)
     }
 
@@ -169,36 +208,73 @@ private struct PDFPageContext {
         cursorY += value
     }
 
-    private mutating func ensureSpace(for text: String, font: UIFont, extraSpacing: CGFloat) {
-        let requiredHeight = height(for: text, font: font) + extraSpacing
-        if cursorY + requiredHeight > layout.bottomY {
+    private mutating func draw(text: String, font: CTFont, extraSpacing: CGFloat) throws {
+        let textHeight = height(for: text, font: font)
+        if cursorY + textHeight + extraSpacing > layout.bottomY {
+            endPage()
             beginPage()
         }
-    }
 
-    private mutating func draw(text: String, font: UIFont) {
-        let paragraph = NSMutableParagraphStyle()
-        paragraph.lineBreakMode = .byWordWrapping
-
-        let attributes: [NSAttributedString.Key: Any] = [
-            .font: font,
-            .foregroundColor: UIColor.label,
-            .paragraphStyle: paragraph
-        ]
-
-        let rect = CGRect(x: layout.margin, y: cursorY, width: layout.contentWidth, height: height(for: text, font: font))
-        NSString(string: text).draw(with: rect, options: .usesLineFragmentOrigin, attributes: attributes, context: nil)
-        cursorY = rect.maxY + layout.lineSpacing
-    }
-
-    private func height(for text: String, font: UIFont) -> CGFloat {
-        let rect = NSString(string: text).boundingRect(
-            with: CGSize(width: layout.contentWidth, height: .greatestFiniteMagnitude),
-            options: [.usesLineFragmentOrigin, .usesFontLeading],
-            attributes: [.font: font],
-            context: nil
+        let frameRect = CGRect(x: layout.margin, y: cursorY, width: layout.contentWidth, height: textHeight)
+        let attributedText = NSAttributedString(
+            string: text,
+            attributes: [
+                NSAttributedString.Key(kCTFontAttributeName as String): font,
+                NSAttributedString.Key(kCTForegroundColorAttributeName as String): layout.textColor
+            ]
         )
 
-        return ceil(rect.height)
+        let framesetter = CTFramesetterCreateWithAttributedString(attributedText)
+        let path = CGPath(rect: pdfRect(fromTopLeftRect: frameRect), transform: nil)
+        let frame = CTFramesetterCreateFrame(framesetter, CFRange(location: 0, length: attributedText.length), path, nil)
+
+        context.saveGState()
+        context.textMatrix = .identity
+        CTFrameDraw(frame, context)
+        context.restoreGState()
+
+        cursorY = frameRect.maxY + extraSpacing
+    }
+
+    private func drawSeparator() {
+        let separatorRect = pdfRect(
+            fromTopLeftRect: CGRect(x: layout.margin, y: cursorY, width: layout.contentWidth, height: 1)
+        )
+        context.saveGState()
+        context.setFillColor(layout.separatorColor)
+        context.fill(separatorRect)
+        context.restoreGState()
+    }
+
+    private func height(for text: String, font: CTFont) -> CGFloat {
+        let attributedText = NSAttributedString(
+            string: text,
+            attributes: [
+                NSAttributedString.Key(kCTFontAttributeName as String): font
+            ]
+        )
+        let framesetter = CTFramesetterCreateWithAttributedString(attributedText)
+        let suggestedSize = CTFramesetterSuggestFrameSizeWithConstraints(
+            framesetter,
+            CFRange(location: 0, length: attributedText.length),
+            nil,
+            CGSize(width: layout.contentWidth, height: .greatestFiniteMagnitude),
+            nil
+        )
+
+        return ceil(max(suggestedSize.height, CTFontGetSize(font)))
+    }
+
+    private func pdfRect(fromTopLeftRect rect: CGRect) -> CGRect {
+        CGRect(
+            x: rect.minX,
+            y: layout.pageRect.height - rect.maxY,
+            width: rect.width,
+            height: rect.height
+        )
+    }
+
+    mutating func endPage() {
+        context.endPDFPage()
     }
 }
