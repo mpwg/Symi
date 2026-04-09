@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AppShellView: View {
     @State private var selectedTab: AppTab = .home
+    @AppStorage("hasSeenTrustOnboarding") private var hasSeenTrustOnboarding = false
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -37,6 +38,26 @@ struct AppShellView: View {
             }
             .tag(AppTab.export)
         }
+        .sheet(isPresented: onboardingBinding) {
+            NavigationStack {
+                ProductInformationView(
+                    mode: .onboarding,
+                    acknowledge: { hasSeenTrustOnboarding = true }
+                )
+            }
+            .interactiveDismissDisabled()
+        }
+    }
+
+    private var onboardingBinding: Binding<Bool> {
+        Binding(
+            get: { !hasSeenTrustOnboarding },
+            set: { isPresented in
+                if !isPresented {
+                    hasSeenTrustOnboarding = true
+                }
+            }
+        )
     }
 }
 
