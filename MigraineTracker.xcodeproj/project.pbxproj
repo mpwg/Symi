@@ -114,7 +114,6 @@
 				DEVELOPMENT_TEAM = PZV43D6HWT;
 				INFOPLIST_KEY_CFBundleDisplayName = "Migraine Tracker";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.medical";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Migraine Tracker nutzt deinen Standort nur, um beim Erfassen einer Episode passende Wetterdaten zu ergänzen.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
@@ -145,7 +144,6 @@
 				DEVELOPMENT_TEAM = PZV43D6HWT;
 				INFOPLIST_KEY_CFBundleDisplayName = "Migraine Tracker";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.medical";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Migraine Tracker nutzt deinen Standort nur, um beim Erfassen einer Episode passende Wetterdaten zu ergänzen.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";

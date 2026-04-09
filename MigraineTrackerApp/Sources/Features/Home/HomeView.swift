@@ -39,12 +39,29 @@ struct HomeView: View {
                 } label: {
                     Label("PDF exportieren", systemImage: "square.and.arrow.up")
                 }
+
+                NavigationLink {
+                    ProductInformationView(mode: .standard)
+                } label: {
+                    Label("Datenschutz und Hinweise", systemImage: "hand.raised")
+                }
             }
 
             Section("MVP-Fokus") {
                 MetricRow(title: "Gespeicherte Episoden", detail: "\(episodes.count)")
                 MetricRow(title: "Lokale Speicherung", detail: "Keine Anmeldung, kein Backend, keine Synchronisation.")
                 MetricRow(title: "Wetterkontext", detail: "Kann optional manuell pro Episode ergänzt und lokal gespeichert werden.")
+            }
+
+            Section("Medizinischer Hinweis") {
+                MetricRow(
+                    title: "Tracking statt Diagnose",
+                    detail: "Die App dokumentiert Episoden und Medikamente, gibt aber keine Diagnose und keine Therapieempfehlung."
+                )
+                MetricRow(
+                    title: "Aktuell keine Systemberechtigung nötig",
+                    detail: "Standort oder Health-Daten werden im aktuellen MVP nicht abgefragt."
+                )
             }
         }
         .navigationTitle("Migraine Tracker")
