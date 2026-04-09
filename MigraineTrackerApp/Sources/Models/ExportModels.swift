@@ -9,7 +9,9 @@ struct EpisodeExportRecord: Identifiable {
     let symptoms: [String]
     let triggers: [String]
     let notes: String
+    let functionalImpact: String
     let medications: [MedicationLine]
+    let weather: WeatherLine?
 
     init(episode: Episode) {
         self.id = episode.id
@@ -20,12 +22,22 @@ struct EpisodeExportRecord: Identifiable {
         self.symptoms = episode.symptoms
         self.triggers = episode.triggers
         self.notes = episode.notes
+        self.functionalImpact = episode.functionalImpact
         self.medications = episode.medications.map {
             MedicationLine(
                 name: $0.name,
                 category: $0.category.rawValue,
                 dosage: $0.dosage,
                 effectiveness: $0.effectiveness.rawValue
+            )
+        }
+        self.weather = episode.weatherSnapshot.map {
+            WeatherLine(
+                condition: $0.condition,
+                temperature: $0.temperature,
+                humidity: $0.humidity,
+                pressure: $0.pressure,
+                source: $0.source
             )
         }
     }
@@ -37,6 +49,14 @@ struct EpisodeExportRecord: Identifiable {
         let dosage: String
         let effectiveness: String
     }
+
+    struct WeatherLine {
+        let condition: String
+        let temperature: Double?
+        let humidity: Double?
+        let pressure: Double?
+        let source: String
+    }
 }
 
 struct ExportPeriodSummary {
@@ -45,4 +65,12 @@ struct ExportPeriodSummary {
     let records: [EpisodeExportRecord]
 
     var episodeCount: Int { records.count }
+    var averageIntensity: Double {
+        guard !records.isEmpty else { return 0 }
+        return Double(records.map(\.intensity).reduce(0, +)) / Double(records.count)
+    }
+
+    var medicationNames: [String] {
+        Array(Set(records.flatMap { $0.medications.map(\.name) })).sorted()
+    }
 }

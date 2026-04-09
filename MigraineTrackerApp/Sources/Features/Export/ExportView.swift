@@ -4,6 +4,8 @@ import SwiftUI
 struct ExportView: View {
     @State private var startDate = Calendar.current.date(byAdding: .day, value: -30, to: .now) ?? .now
     @State private var endDate = Date()
+    @State private var exportURL: URL?
+    @State private var exportErrorMessage: String?
     @Query(sort: [SortDescriptor(\Episode.startedAt, order: .reverse)]) private var episodes: [Episode]
 
     var body: some View {
@@ -18,8 +20,31 @@ struct ExportView: View {
             Section("Bericht") {
                 Text("Episoden im Zeitraum: \(summary.episodeCount)")
                     .font(.headline)
-                Text("Der PDF-Export wird lokal erzeugt und später über das iOS-Share-Sheet geteilt.")
+                if summary.episodeCount > 0 {
+                    Text("Durchschnittliche Intensität: \(summary.averageIntensity.formatted(.number.precision(.fractionLength(1))))/10")
+                        .foregroundStyle(.secondary)
+                }
+                Text("Der PDF-Export wird lokal erzeugt und über das iOS-Share-Sheet geteilt.")
                     .foregroundStyle(.secondary)
+            }
+
+            Section("Aktionen") {
+                Button("PDF erstellen") {
+                    createPDF()
+                }
+                .disabled(!canExport)
+
+                if let exportURL {
+                    ShareLink(item: exportURL) {
+                        Label("PDF teilen", systemImage: "square.and.arrow.up")
+                    }
+                }
+
+                if let exportErrorMessage {
+                    Text(exportErrorMessage)
+                        .font(.subheadline)
+                        .foregroundStyle(.red)
+                }
             }
 
             if !summary.records.isEmpty {
@@ -35,6 +60,11 @@ struct ExportView: View {
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
                             }
+                            if let weather = record.weather, !weather.condition.isEmpty {
+                                Text("Wetter: \(weather.condition)")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
                         .padding(.vertical, 2)
                     }
@@ -44,6 +74,10 @@ struct ExportView: View {
         .navigationTitle("Export")
     }
 
+    private var canExport: Bool {
+        !exportSummary.records.isEmpty && startDate <= endDate
+    }
+
     private var exportSummary: ExportPeriodSummary {
         let endOfDay = Calendar.current.date(bySettingHour: 23, minute: 59, second: 59, of: endDate) ?? endDate
         let filtered = episodes
@@ -51,6 +85,27 @@ struct ExportView: View {
             .map(EpisodeExportRecord.init)
 
         return ExportPeriodSummary(startDate: startDate, endDate: endDate, records: filtered)
+    }
+
+    private func createPDF() {
+        exportErrorMessage = nil
+        exportURL = nil
+
+        guard startDate <= endDate else {
+            exportErrorMessage = "Der Zeitraum ist ungültig."
+            return
+        }
+
+        guard !exportSummary.records.isEmpty else {
+            exportErrorMessage = "Für den gewählten Zeitraum gibt es keine Episoden."
+            return
+        }
+
+        do {
+            exportURL = try PDFExportWriter.write(summary: exportSummary)
+        } catch {
+            exportErrorMessage = "Der PDF-Export konnte nicht erstellt werden."
+        }
     }
 }
 
