@@ -7,13 +7,16 @@ struct MigraineTrackerApp: App {
         let schema = Schema([
             Episode.self,
             MedicationEntry.self,
+            MedicationDefinition.self,
             WeatherSnapshot.self,
         ])
 
         let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
         do {
-            return try ModelContainer(for: schema, configurations: [configuration])
+            let container = try ModelContainer(for: schema, configurations: [configuration])
+            MedicationCatalog.importSeedDataIfNeeded(into: container)
+            return container
         } catch {
             fatalError("ModelContainer konnte nicht erstellt werden: \(error)")
         }

@@ -9,7 +9,7 @@ struct EpisodeEditorView: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
-    @Query(sort: [SortDescriptor(\MedicationEntry.takenAt, order: .reverse)]) private var previousMedicationEntries: [MedicationEntry]
+    @Query(sort: [SortDescriptor(\MedicationDefinition.sortOrder), SortDescriptor(\MedicationDefinition.name)]) private var medicationDefinitions: [MedicationDefinition]
 
     private let mode: EditorMode
     private let episode: Episode?
@@ -27,7 +27,7 @@ struct EpisodeEditorView: View {
     @State private var menstruationStatus: MenstruationStatus
     @State private var selectedSymptoms: Set<String>
     @State private var selectedTriggers: Set<String>
-    @State private var medications: [MedicationDraft]
+    @State private var medications: [MedicationSelection]
     @State private var weatherEnabled: Bool
     @State private var weatherCondition: String
     @State private var weatherTemperature: String
@@ -35,6 +35,8 @@ struct EpisodeEditorView: View {
     @State private var weatherPressure: String
     @State private var weatherSource: String
     @State private var medicationSearchText = ""
+    @State private var isAddingCustomMedication = false
+    @State private var customMedicationName = ""
     @State private var saveMessageVisible = false
     @State private var validationMessage: String?
 
@@ -48,7 +50,9 @@ struct EpisodeEditorView: View {
     ]
     private let triggerOptions = ["Stress", "Schlafmangel", "Alkohol", "Menstruation", "Bildschirmzeit"]
     private let weatherConditionOptions = ["Wetterumschwung/Wind"]
-    private let maxRecentMedications = 6
+    private let customGroupID = "custom-medications"
+    private let customGroupTitle = "Eigene Medikamente"
+    private let customGroupFooter = "Eigene Medikamente werden lokal in SwiftData gespeichert und stehen später wieder zur Auswahl."
 
     init(episode: Episode? = nil, onSaved: (() -> Void)? = nil) {
         self.episode = episode
@@ -67,7 +71,7 @@ struct EpisodeEditorView: View {
         _menstruationStatus = State(initialValue: episode?.menstruationStatus ?? .unknown)
         _selectedSymptoms = State(initialValue: Set(episode?.symptoms ?? []))
         _selectedTriggers = State(initialValue: Set(episode?.triggers ?? []))
-        _medications = State(initialValue: episode?.medications.map(MedicationDraft.init) ?? [])
+        _medications = State(initialValue: episode?.medications.map(MedicationSelection.init) ?? [])
         _weatherEnabled = State(initialValue: episode?.weatherSnapshot != nil)
         _weatherCondition = State(initialValue: episode?.weatherSnapshot?.condition ?? "")
         _weatherTemperature = State(initialValue: EpisodeEditorView.stringValue(for: episode?.weatherSnapshot?.temperature, fractionDigits: 1))
@@ -167,6 +171,28 @@ struct EpisodeEditorView: View {
                     .textInputAutocapitalization(.words)
                     .autocorrectionDisabled()
 
+                if isAddingCustomMedication {
+                    VStack(alignment: .leading, spacing: 12) {
+                        TextField("Name des eigenen Medikaments", text: $customMedicationName)
+                            .textInputAutocapitalization(.words)
+                            .autocorrectionDisabled()
+
+                        HStack {
+                            Button("Abbrechen") {
+                                customMedicationName = ""
+                                isAddingCustomMedication = false
+                            }
+
+                            Spacer()
+
+                            Button("Hinzufügen") {
+                                addCustomMedication()
+                            }
+                            .buttonStyle(.borderedProminent)
+                        }
+                    }
+                }
+
                 if filteredMedicationGroups.isEmpty {
                     ContentUnavailableView(
                         "Kein Medikament gefunden",
@@ -185,13 +211,15 @@ struct EpisodeEditorView: View {
                                     alignment: .leading,
                                     spacing: 12
                                 ) {
-                                    ForEach(group.entries) { entry in
-                                        Button {
-                                            addMedication(from: entry)
-                                        } label: {
-                                            MedicationCatalogEntryRow(entry: entry)
-                                        }
-                                        .buttonStyle(.plain)
+                                    ForEach(group.items) { definition in
+                                        MedicationDefinitionRow(
+                                            definition: definition,
+                                            isSelected: isMedicationSelected(definition),
+                                            quantity: quantity(for: definition),
+                                            onToggle: { toggleMedicationSelection(for: definition) },
+                                            onDecrease: { decrementMedicationQuantity(for: definition) },
+                                            onIncrease: { incrementMedicationQuantity(for: definition) }
+                                        )
                                     }
                                 }
                                 .padding(12)
@@ -209,40 +237,26 @@ struct EpisodeEditorView: View {
                     .padding(.vertical, 4)
                 }
 
-                let recentMedications = recentMedicationTemplates
-
-                if !recentMedications.isEmpty {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("Zuletzt verwendet")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(.secondary)
-
-                        ForEach(recentMedications) { template in
-                            Button {
-                                addMedication(from: template)
-                            } label: {
-                                MedicationTemplateRow(template: template)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                    .padding(.vertical, 4)
-                }
-
-                if medications.isEmpty {
+                if selectedMedications.isEmpty {
                     Text("Nur ergänzen, wenn du heute etwas genommen hast.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 } else {
-                    ForEach(medications.indices, id: \.self) { index in
-                        MedicationDraftForm(draft: $medications[index]) {
-                            medications.remove(at: index)
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Ausgewählt")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.secondary)
+
+                        ForEach(selectedMedications) { medication in
+                            SelectedMedicationSummaryRow(draft: medication) {
+                                removeMedicationSelection(id: medication.id)
+                            }
                         }
                     }
                 }
 
                 Button {
-                    medications.append(MedicationDraft(takenAt: startedAt, reliefStartedAt: startedAt))
+                    isAddingCustomMedication = true
                 } label: {
                     Label("Eigenes Medikament hinzufügen", systemImage: "plus.circle")
                 }
@@ -356,15 +370,6 @@ struct EpisodeEditorView: View {
             return
         }
 
-        let validDrafts: [MedicationDraft]
-
-        do {
-            validDrafts = try validatedMedicationDrafts()
-        } catch {
-            validationMessage = error.localizedDescription
-            return
-        }
-
         let target = episode ?? Episode(startedAt: startedAt, intensity: Int(intensity))
 
         target.type = type
@@ -379,8 +384,7 @@ struct EpisodeEditorView: View {
         target.symptoms = Array(selectedSymptoms).sorted()
         target.triggers = Array(selectedTriggers).sorted()
 
-        let existingMedications = target.medications
-        for medication in existingMedications {
+        for medication in target.medications {
             modelContext.delete(medication)
         }
 
@@ -393,15 +397,14 @@ struct EpisodeEditorView: View {
             modelContext.insert(target)
         }
 
-        for draft in validDrafts {
+        for draft in selectedMedications {
             let entry = MedicationEntry(
-                name: draft.name.trimmingCharacters(in: .whitespacesAndNewlines),
+                name: draft.name,
                 category: draft.category,
-                dosage: draft.dosage.trimmingCharacters(in: .whitespacesAndNewlines),
-                takenAt: draft.takenAt,
-                effectiveness: draft.effectiveness,
-                reliefStartedAt: draft.reliefStartedAtEnabled ? draft.reliefStartedAt : nil,
-                isRepeatDose: draft.isRepeatDose,
+                dosage: draft.dosage,
+                quantity: draft.quantity,
+                takenAt: startedAt,
+                effectiveness: .partial,
                 episode: target
             )
             target.medications.append(entry)
@@ -456,107 +459,188 @@ struct EpisodeEditorView: View {
         weatherHumidity = ""
         weatherPressure = ""
         weatherSource = ""
+        medicationSearchText = ""
+        customMedicationName = ""
+        isAddingCustomMedication = false
         validationMessage = nil
     }
 
-    private func validatedMedicationDrafts() throws -> [MedicationDraft] {
-        try medications.compactMap { draft in
-            let trimmedName = draft.name.trimmingCharacters(in: .whitespacesAndNewlines)
-            let trimmedDosage = draft.dosage.trimmingCharacters(in: .whitespacesAndNewlines)
-            let hasAnyInput = !trimmedName.isEmpty
-                || !trimmedDosage.isEmpty
-                || draft.category != .other
-                || draft.effectiveness != .partial
-                || draft.isRepeatDose
-                || draft.reliefStartedAtEnabled
-
-            guard hasAnyInput else {
-                return nil
-            }
-
-            guard !trimmedName.isEmpty else {
-                throw EpisodeValidationError.medicationNameMissing
-            }
-
-            return draft
-        }
-    }
-
-    private var recentMedicationTemplates: [MedicationTemplate] {
-        var seenKeys = Set<String>()
-        var templates: [MedicationTemplate] = []
-
-        for entry in previousMedicationEntries {
-            let template = MedicationTemplate(entry: entry)
-
-            guard seenKeys.insert(template.deduplicationKey).inserted else {
-                continue
-            }
-
-            templates.append(template)
-
-            if templates.count == maxRecentMedications {
-                break
-            }
-        }
-
-        return templates
-    }
-
-    private var filteredMedicationGroups: [MedicationCatalogGroup] {
+    private var filteredMedicationGroups: [MedicationDefinitionGroup] {
         let query = medicationSearchText.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard !query.isEmpty else {
-            return MedicationCatalog.austrianCommonGroups
+            return allMedicationGroups
         }
 
-        return MedicationCatalog.austrianCommonGroups.compactMap { group in
-            let entries = group.entries.filter { entry in
-                entry.name.localizedCaseInsensitiveContains(query)
-            }
+        return allMedicationGroups.compactMap { group in
+            let items = group.items.filter { $0.name.localizedCaseInsensitiveContains(query) }
 
-            guard !entries.isEmpty else {
+            guard !items.isEmpty else {
                 return nil
             }
 
-            return MedicationCatalogGroup(
+            return MedicationDefinitionGroup(
                 id: group.id,
                 title: group.title,
                 footer: group.footer,
-                entries: entries
+                items: items
             )
         }
     }
 
-    private func addMedication(from template: MedicationTemplate) {
-        medications.append(
-            MedicationDraft(
-                name: template.name,
-                category: template.category,
-                dosage: template.dosage,
-                takenAt: startedAt,
-                effectiveness: template.effectiveness,
-                reliefStartedAtEnabled: false,
-                reliefStartedAt: startedAt,
-                isRepeatDose: false
+    private var allMedicationGroups: [MedicationDefinitionGroup] {
+        let knownKeys = Set(medicationDefinitions.map(\.selectionKey))
+        let persistedGroups = Dictionary(grouping: medicationDefinitions) { $0.groupID }
+        let sortedGroupIDs = persistedGroups.keys.sorted { lhs, rhs in
+            let leftOrder = persistedGroups[lhs]?.map(\.sortOrder).min() ?? .max
+            let rightOrder = persistedGroups[rhs]?.map(\.sortOrder).min() ?? .max
+            return leftOrder < rightOrder
+        }
+
+        var groups = sortedGroupIDs.compactMap { groupID -> MedicationDefinitionGroup? in
+            guard let items = persistedGroups[groupID], let first = items.first else {
+                return nil
+            }
+
+            return MedicationDefinitionGroup(
+                id: groupID,
+                title: first.groupTitle,
+                footer: first.groupFooter,
+                items: items.sorted { $0.sortOrder < $1.sortOrder }
             )
-        )
+        }
+
+        let orphanSelections = medications.compactMap { selection -> MedicationDefinition? in
+            guard !knownKeys.contains(selection.selectionKey) else {
+                return nil
+            }
+
+            return MedicationDefinition(
+                catalogKey: "selection:\(selection.selectionKey)",
+                groupID: customGroupID,
+                groupTitle: customGroupTitle,
+                groupFooter: customGroupFooter,
+                name: selection.name,
+                category: selection.category,
+                suggestedDosage: selection.dosage,
+                sortOrder: Int.max - 1,
+                isCustom: true
+            )
+        }
+
+        if !orphanSelections.isEmpty {
+            groups.removeAll { $0.id == customGroupID }
+            let customItems = (persistedGroups[customGroupID] ?? []) + orphanSelections
+            let deduped = Dictionary(uniqueKeysWithValues: customItems.map { ($0.selectionKey, $0) }).values
+                .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+
+            groups.append(
+                MedicationDefinitionGroup(
+                    id: customGroupID,
+                    title: customGroupTitle,
+                    footer: customGroupFooter,
+                    items: deduped
+                )
+            )
+        }
+
+        return groups
     }
 
-    private func addMedication(from entry: MedicationCatalogEntry) {
-        medications.append(
-            MedicationDraft(
-                name: entry.name,
-                category: entry.category,
-                dosage: entry.suggestedDosage,
-                takenAt: startedAt,
-                effectiveness: .partial,
-                reliefStartedAtEnabled: false,
-                reliefStartedAt: startedAt,
-                isRepeatDose: false
-            )
-        )
+    private var selectedMedications: [MedicationSelection] {
+        medications
+            .filter(\.isSelected)
+            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
+
+    private func isMedicationSelected(_ definition: MedicationDefinition) -> Bool {
+        medications.contains { $0.selectionKey == definition.selectionKey && $0.isSelected }
+    }
+
+    private func quantity(for definition: MedicationDefinition) -> Int {
+        medications.first(where: { $0.selectionKey == definition.selectionKey })?.quantity ?? 1
+    }
+
+    private func toggleMedicationSelection(for definition: MedicationDefinition) {
+        if let index = medications.firstIndex(where: { $0.selectionKey == definition.selectionKey }) {
+            medications[index].isSelected.toggle()
+            medications[index].quantity = max(1, medications[index].quantity)
+        } else {
+            medications.append(MedicationSelection(definition: definition))
+        }
+    }
+
+    private func incrementMedicationQuantity(for definition: MedicationDefinition) {
+        if let index = medications.firstIndex(where: { $0.selectionKey == definition.selectionKey }) {
+            medications[index].quantity += 1
+            medications[index].isSelected = true
+        } else {
+            medications.append(MedicationSelection(definition: definition))
+        }
+    }
+
+    private func decrementMedicationQuantity(for definition: MedicationDefinition) {
+        guard let index = medications.firstIndex(where: { $0.selectionKey == definition.selectionKey }) else {
+            return
+        }
+
+        medications[index].quantity = max(1, medications[index].quantity - 1)
+        medications[index].isSelected = true
+    }
+
+    private func removeMedicationSelection(id: UUID) {
+        guard let index = medications.firstIndex(where: { $0.id == id }) else {
+            return
+        }
+
+        medications[index].isSelected = false
+        medications[index].quantity = 1
+    }
+
+    private func addCustomMedication() {
+        let trimmedName = customMedicationName.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !trimmedName.isEmpty else {
+            validationMessage = "Bitte gib einen Namen für das eigene Medikament ein."
+            return
+        }
+
+        if let existing = medicationDefinitions.first(where: {
+            $0.name.compare(trimmedName, options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame
+        }) {
+            toggleMedicationSelection(for: existing)
+            customMedicationName = ""
+            isAddingCustomMedication = false
+            validationMessage = nil
+            return
+        }
+
+        let nextSortOrder = (medicationDefinitions.map(\.sortOrder).max() ?? 0) + 1
+        let definition = MedicationDefinition(
+            catalogKey: "custom:\(UUID().uuidString)",
+            groupID: customGroupID,
+            groupTitle: customGroupTitle,
+            groupFooter: customGroupFooter,
+            name: trimmedName,
+            category: .other,
+            suggestedDosage: "",
+            sortOrder: nextSortOrder,
+            isCustom: true
+        )
+
+        modelContext.insert(definition)
+
+        do {
+            try modelContext.save()
+            toggleMedicationSelection(for: definition)
+            customMedicationName = ""
+            isAddingCustomMedication = false
+            validationMessage = nil
+        } catch {
+            validationMessage = "Eigenes Medikament konnte nicht gespeichert werden."
+        }
+    }
+
     private func validatedWeatherSnapshot() throws -> ValidatedWeatherSnapshot? {
         guard weatherEnabled else {
             return nil
@@ -578,17 +662,6 @@ struct EpisodeEditorView: View {
         }
 
         return value.formatted(.number.precision(.fractionLength(fractionDigits)))
-    }
-}
-
-private enum EpisodeValidationError: LocalizedError {
-    case medicationNameMissing
-
-    var errorDescription: String? {
-        switch self {
-        case .medicationNameMissing:
-            "Bitte gib für jedes Medikament zumindest einen Namen an."
-        }
     }
 }
 
@@ -621,195 +694,175 @@ private struct IntensityPicker: View {
     }
 }
 
-private struct MedicationDraftForm: View {
-    @Binding var draft: MedicationDraft
-    let onRemove: () -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(draft.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "Neues Medikament" : draft.name)
-                    .font(.headline)
-
-                Spacer()
-
-                Button(role: .destructive, action: onRemove) {
-                    Label("Entfernen", systemImage: "trash")
-                        .labelStyle(.iconOnly)
-                }
-                .accessibilityLabel("Medikament entfernen")
-            }
-
-            TextField("Name", text: $draft.name)
-            Picker("Kategorie", selection: $draft.category) {
-                ForEach(MedicationCategory.allCases) { category in
-                    Text(category.rawValue).tag(category)
-                }
-            }
-            .pickerStyle(.menu)
-
-            TextField("Dosis", text: $draft.dosage)
-            DatePicker("Einnahme", selection: $draft.takenAt)
-
-            Picker("Wirkung", selection: $draft.effectiveness) {
-                ForEach(MedicationEffectiveness.allCases) { effectiveness in
-                    Text(effectiveness.rawValue).tag(effectiveness)
-                }
-            }
-
-            Toggle("Wiederholungseinnahme", isOn: $draft.isRepeatDose)
-            Toggle("Wirkungseintritt angeben", isOn: $draft.reliefStartedAtEnabled.animation())
-            if draft.reliefStartedAtEnabled {
-                DatePicker("Wirkungseintritt", selection: $draft.reliefStartedAt)
-            }
-
-            Text("Katalogeinträge und eigene Medikamente lassen sich hier jederzeit umbenennen oder anpassen.")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-        }
-        .padding(12)
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-    }
+private struct MedicationDefinitionGroup: Identifiable {
+    let id: String
+    let title: String
+    let footer: String?
+    let items: [MedicationDefinition]
 }
 
-private struct MedicationDraft: Identifiable {
+private struct MedicationSelection: Identifiable {
     let id: UUID
+    let selectionKey: String
     var name: String
     var category: MedicationCategory
     var dosage: String
-    var takenAt: Date
-    var effectiveness: MedicationEffectiveness
-    var reliefStartedAtEnabled: Bool
-    var reliefStartedAt: Date
-    var isRepeatDose: Bool
-
-    init(
-        id: UUID = UUID(),
-        name: String = "",
-        category: MedicationCategory = .other,
-        dosage: String = "",
-        takenAt: Date = .now,
-        effectiveness: MedicationEffectiveness = .partial,
-        reliefStartedAtEnabled: Bool = false,
-        reliefStartedAt: Date = .now,
-        isRepeatDose: Bool = false
-    ) {
-        self.id = id
-        self.name = name
-        self.category = category
-        self.dosage = dosage
-        self.takenAt = takenAt
-        self.effectiveness = effectiveness
-        self.reliefStartedAtEnabled = reliefStartedAtEnabled
-        self.reliefStartedAt = reliefStartedAt
-        self.isRepeatDose = isRepeatDose
-    }
+    var quantity: Int
+    var isSelected: Bool
 
     init(entry: MedicationEntry) {
         self.id = entry.id
         self.name = entry.name
         self.category = entry.category
         self.dosage = entry.dosage
-        self.takenAt = entry.takenAt
-        self.effectiveness = entry.effectiveness
-        self.reliefStartedAtEnabled = entry.reliefStartedAt != nil
-        self.reliefStartedAt = entry.reliefStartedAt ?? entry.takenAt
-        self.isRepeatDose = entry.isRepeatDose
+        self.quantity = max(1, entry.quantity)
+        self.isSelected = true
+        self.selectionKey = MedicationSelection.makeSelectionKey(
+            name: entry.name,
+            category: entry.category,
+            dosage: entry.dosage
+        )
+    }
+
+    init(definition: MedicationDefinition) {
+        self.id = UUID()
+        self.name = definition.name
+        self.category = definition.category
+        self.dosage = definition.suggestedDosage
+        self.quantity = 1
+        self.isSelected = true
+        self.selectionKey = definition.selectionKey
+    }
+
+    private static func makeSelectionKey(name: String, category: MedicationCategory, dosage: String) -> String {
+        [
+            name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
+            category.rawValue,
+            dosage.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        ].joined(separator: "|")
     }
 }
 
-private struct MedicationTemplate: Identifiable {
-    let id: String
-    let name: String
-    let category: MedicationCategory
-    let dosage: String
-    let effectiveness: MedicationEffectiveness
+private struct MedicationDefinitionRow: View {
+    let definition: MedicationDefinition
+    let isSelected: Bool
+    let quantity: Int
+    let onToggle: () -> Void
+    let onDecrease: () -> Void
+    let onIncrease: () -> Void
 
-    init(entry: MedicationEntry) {
-        let trimmedName = entry.name.trimmingCharacters(in: .whitespacesAndNewlines)
-        let trimmedDosage = entry.dosage.trimmingCharacters(in: .whitespacesAndNewlines)
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Button(action: onToggle) {
+                HStack(alignment: .center, spacing: 12) {
+                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                        .imageScale(.large)
+                        .foregroundStyle(isSelected ? Color.accentColor : .primary)
+                        .frame(width: 28, alignment: .center)
 
-        self.name = trimmedName
-        self.category = entry.category
-        self.dosage = trimmedDosage
-        self.effectiveness = entry.effectiveness
-        self.id = [trimmedName.lowercased(), entry.category.rawValue, trimmedDosage.lowercased()].joined(separator: "|")
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(definition.name)
+                            .font(.headline.weight(.semibold))
+                            .foregroundStyle(.primary)
+                            .lineLimit(2)
+
+                        if !definition.suggestedDosage.isEmpty {
+                            Text(definition.suggestedDosage)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
+                    Spacer(minLength: 0)
+                }
+            }
+            .buttonStyle(.plain)
+
+            if isSelected {
+                HStack(spacing: 10) {
+                    Text("Anzahl")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.secondary)
+
+                    Spacer()
+
+                    Button(action: onDecrease) {
+                        Image(systemName: "minus.circle")
+                            .imageScale(.large)
+                    }
+                    .buttonStyle(.plain)
+
+                    Text("\(quantity)")
+                        .font(.headline.monospacedDigit())
+                        .frame(minWidth: 24)
+
+                    Button(action: onIncrease) {
+                        Image(systemName: "plus.circle")
+                            .imageScale(.large)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .frame(maxWidth: .infinity, minHeight: isSelected ? 108 : 72, alignment: .leading)
+        .background(isSelected ? Color.accentColor.opacity(0.14) : Color(.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityLabel)
+        .accessibilityHint(isSelected ? "Medikament ausgewählt. Passe die Anzahl an." : "Wählt dieses Medikament aus.")
     }
 
-    var deduplicationKey: String { id }
-
-    var summary: String {
-        if dosage.isEmpty {
-            return "\(category.rawValue) · letzte Wirkung \(effectiveness.rawValue.lowercased())"
+    private var accessibilityLabel: String {
+        if isSelected {
+            return "\(definition.name), ausgewählt, Anzahl \(quantity)"
         }
 
-        return "\(category.rawValue) · \(dosage) · letzte Wirkung \(effectiveness.rawValue.lowercased())"
+        if definition.suggestedDosage.isEmpty {
+            return definition.name
+        }
+
+        return "\(definition.name), \(definition.suggestedDosage)"
     }
 }
 
-private struct MedicationTemplateRow: View {
-    let template: MedicationTemplate
+private struct SelectedMedicationSummaryRow: View {
+    let draft: MedicationSelection
+    let onRemove: () -> Void
 
     var body: some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
-                Text(template.name)
+                Text(draft.name)
                     .font(.headline)
                     .foregroundStyle(.primary)
 
-                Text(template.summary)
+                Text(summary)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
 
             Spacer()
 
-            Image(systemName: "plus.circle.fill")
-                .imageScale(.large)
-                .foregroundStyle(Color.accentColor)
+            Button(role: .destructive, action: onRemove) {
+                Label("Entfernen", systemImage: "xmark.circle.fill")
+                    .labelStyle(.iconOnly)
+            }
+            .accessibilityLabel("\(draft.name) abwählen")
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(.secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(template.name), \(template.summary)")
-        .accessibilityHint("Übernimmt dieses Medikament in den aktuellen Eintrag.")
     }
-}
 
-private struct MedicationCatalogEntryRow: View {
-    let entry: MedicationCatalogEntry
-
-    var body: some View {
-        HStack(alignment: .center, spacing: 12) {
-            Image(systemName: "circle")
-                .imageScale(.large)
-                .foregroundStyle(.primary)
-                .frame(width: 28, alignment: .center)
-
-            VStack(alignment: .leading, spacing: 3) {
-                Text(entry.name)
-                    .font(.headline.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .lineLimit(2)
-
-                Text(entry.suggestedDosage)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer(minLength: 0)
+    private var summary: String {
+        if draft.dosage.isEmpty {
+            return "Anzahl \(draft.quantity)"
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .frame(maxWidth: .infinity, minHeight: 72, alignment: .leading)
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(entry.name), \(entry.suggestedDosage)")
-        .accessibilityHint("Übernimmt dieses Medikament in den aktuellen Eintrag.")
+
+        return "\(draft.dosage) · Anzahl \(draft.quantity)"
     }
 }
 

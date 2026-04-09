@@ -125,6 +125,7 @@ final class MedicationEntry {
     var name: String
     var categoryRaw: String
     var dosage: String
+    var quantity: Int
     var takenAt: Date
     var effectivenessRaw: String
     var reliefStartedAt: Date?
@@ -137,6 +138,7 @@ final class MedicationEntry {
         name: String,
         category: MedicationCategory,
         dosage: String,
+        quantity: Int = 1,
         takenAt: Date,
         effectiveness: MedicationEffectiveness,
         reliefStartedAt: Date? = nil,
@@ -147,6 +149,7 @@ final class MedicationEntry {
         self.name = name
         self.categoryRaw = category.rawValue
         self.dosage = dosage
+        self.quantity = quantity
         self.takenAt = takenAt
         self.effectivenessRaw = effectiveness.rawValue
         self.reliefStartedAt = reliefStartedAt
@@ -162,6 +165,57 @@ final class MedicationEntry {
     var effectiveness: MedicationEffectiveness {
         get { MedicationEffectiveness(rawValue: effectivenessRaw) ?? .partial }
         set { effectivenessRaw = newValue.rawValue }
+    }
+}
+
+@Model
+final class MedicationDefinition {
+    @Attribute(.unique) var catalogKey: String
+    var groupID: String
+    var groupTitle: String
+    var groupFooter: String?
+    var name: String
+    var categoryRaw: String
+    var suggestedDosage: String
+    var sortOrder: Int
+    var isCustom: Bool
+    var createdAt: Date
+
+    init(
+        catalogKey: String,
+        groupID: String,
+        groupTitle: String,
+        groupFooter: String? = nil,
+        name: String,
+        category: MedicationCategory,
+        suggestedDosage: String,
+        sortOrder: Int,
+        isCustom: Bool,
+        createdAt: Date = .now
+    ) {
+        self.catalogKey = catalogKey
+        self.groupID = groupID
+        self.groupTitle = groupTitle
+        self.groupFooter = groupFooter
+        self.name = name
+        self.categoryRaw = category.rawValue
+        self.suggestedDosage = suggestedDosage
+        self.sortOrder = sortOrder
+        self.isCustom = isCustom
+        self.createdAt = createdAt
+    }
+
+    var category: MedicationCategory {
+        get { MedicationCategory(rawValue: categoryRaw) ?? .other }
+        set { categoryRaw = newValue.rawValue }
+    }
+
+    var selectionKey: String {
+        [
+            name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
+            category.rawValue,
+            suggestedDosage.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        ].joined(separator: "|")
     }
 }
 

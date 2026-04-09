@@ -59,9 +59,17 @@ struct EpisodeDetailView: View {
                             Text(medicationHeadline(for: medication))
                                 .foregroundStyle(.secondary)
 
-                            Text("Wirkung: \(medication.effectiveness.rawValue)")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
+                            if medication.quantity > 1 {
+                                Text("Anzahl: \(medication.quantity)")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+
+                            if medication.effectiveness != .partial {
+                                Text("Wirkung: \(medication.effectiveness.rawValue)")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
 
                             if medication.isRepeatDose {
                                 Text("Als Wiederholungseinnahme dokumentiert")

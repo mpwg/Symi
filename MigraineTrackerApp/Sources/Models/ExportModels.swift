@@ -28,6 +28,7 @@ struct EpisodeExportRecord: Identifiable {
                 name: $0.name,
                 category: $0.category.rawValue,
                 dosage: $0.dosage,
+                quantity: $0.quantity,
                 effectiveness: $0.effectiveness.rawValue
             )
         }
@@ -47,6 +48,7 @@ struct EpisodeExportRecord: Identifiable {
         let name: String
         let category: String
         let dosage: String
+        let quantity: Int
         let effectiveness: String
     }
 
