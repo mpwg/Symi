@@ -31,6 +31,7 @@ final class CloudKitSyncProvider: NSObject, @unchecked Sendable, SyncProvider {
     private let zoneID: CKRecordZone.ID
     private let recordProvider: @Sendable (CKRecord.ID) async -> CKRecord?
     private let eventHandler: @Sendable (SyncProviderEvent) async -> Void
+    private let appLogStore: AppLogStore
     private var syncEngine: CKSyncEngine?
     private let container = CKContainer(identifier: SyncConfiguration.containerIdentifier)
     private var pendingRecordNames = Set<String>()
@@ -38,11 +39,13 @@ final class CloudKitSyncProvider: NSObject, @unchecked Sendable, SyncProvider {
     init(
         stateStore: SyncStateStore,
         zoneID: CKRecordZone.ID,
+        appLogStore: AppLogStore,
         recordProvider: @escaping @Sendable (CKRecord.ID) async -> CKRecord?,
         eventHandler: @escaping @Sendable (SyncProviderEvent) async -> Void
     ) {
         self.stateStore = stateStore
         self.zoneID = zoneID
+        self.appLogStore = appLogStore
         self.recordProvider = recordProvider
         self.eventHandler = eventHandler
     }
@@ -76,6 +79,7 @@ final class CloudKitSyncProvider: NSObject, @unchecked Sendable, SyncProvider {
 
     func start() async throws {
         guard syncEngine == nil else {
+            await log(level: .debug, operation: "provider.start.skip", message: "Sync-Engine läuft bereits.")
             return
         }
 
@@ -93,17 +97,26 @@ final class CloudKitSyncProvider: NSObject, @unchecked Sendable, SyncProvider {
             ]
         )
         syncEngine = engine
+        await log(level: .info, operation: "provider.start", message: "CloudKit-Sync-Engine gestartet.", metadata: [
+            "zone": zoneID.zoneName
+        ])
     }
 
     func stop() async {
         await syncEngine?.cancelOperations()
         syncEngine = nil
+        await log(level: .info, operation: "provider.stop", message: "CloudKit-Sync-Engine gestoppt.")
     }
 
     func queue(recordNames: [String]) async {
         pendingRecordNames.formUnion(recordNames)
+        await log(level: .debug, operation: "provider.queue", message: "Records für Upload markiert.", metadata: [
+            "count": "\(recordNames.count)",
+            "recordNames": recordNames.sorted().joined(separator: ",")
+        ])
 
         guard let syncEngine else {
+            await log(level: .warning, operation: "provider.queue.deferred", message: "Queue wurde vorgemerkt, Engine ist aber noch nicht aktiv.")
             return
         }
 
@@ -117,22 +130,30 @@ final class CloudKitSyncProvider: NSObject, @unchecked Sendable, SyncProvider {
 
     func fetch() async throws {
         guard let syncEngine else {
+            await log(level: .warning, operation: "provider.fetch.skip", message: "Fetch übersprungen, da keine Sync-Engine aktiv ist.")
             return
         }
 
+        await log(level: .info, operation: "provider.fetch.start", message: "CloudKit-Änderungen werden geladen.")
         try await syncEngine.fetchChanges(
             .init(scope: .zoneIDs([zoneID]))
         )
+        await log(level: .info, operation: "provider.fetch.finish", message: "CloudKit-Änderungen wurden geladen.")
     }
 
     func send() async throws {
         guard let syncEngine else {
+            await log(level: .warning, operation: "provider.send.skip", message: "Upload übersprungen, da keine Sync-Engine aktiv ist.")
             return
         }
 
+        await log(level: .info, operation: "provider.send.start", message: "CloudKit-Änderungen werden gesendet.", metadata: [
+            "pendingRecords": "\(await queuedChangeCount)"
+        ])
         try await syncEngine.sendChanges(
             .init(scope: .zoneIDs([zoneID]))
         )
+        await log(level: .info, operation: "provider.send.finish", message: "CloudKit-Änderungen wurden gesendet.")
     }
 }
 
@@ -140,8 +161,13 @@ extension CloudKitSyncProvider: CKSyncEngineDelegate {
     func handleEvent(_ event: CKSyncEngine.Event, syncEngine _: CKSyncEngine) async {
         switch event {
         case .stateUpdate(let update):
+            await log(level: .debug, operation: "provider.event.stateUpdate", message: "Sync-Statusserialisierung aktualisiert.")
             await eventHandler(.didUpdateState(update.stateSerialization))
         case .fetchedRecordZoneChanges(let changes):
+            await log(level: .info, operation: "provider.event.fetchedRecordZoneChanges", message: "Remote-Änderungen empfangen.", metadata: [
+                "modifications": "\(changes.modifications.count)",
+                "deletions": "\(changes.deletions.count)"
+            ])
             await eventHandler(.didFetchRecords(changes.modifications.map(\.record)))
             await eventHandler(.didDeleteRecords(changes.deletions.map(\.recordID)))
         case .sentRecordZoneChanges(let changes):
@@ -149,40 +175,58 @@ extension CloudKitSyncProvider: CKSyncEngineDelegate {
                 SyncFailedRecordSave(recordID: $0.record.recordID, error: $0.error)
             }
             pendingRecordNames.subtract(changes.savedRecords.map { $0.recordID.recordName })
+            await log(level: failures.isEmpty ? .info : .warning, operation: "provider.event.sentRecordZoneChanges", message: "Upload-Ergebnis erhalten.", metadata: [
+                "savedRecords": "\(changes.savedRecords.count)",
+                "failedRecords": "\(failures.count)"
+            ])
             await eventHandler(.didSendRecords(changes.savedRecords))
             if !failures.isEmpty {
                 await eventHandler(.didFailToSend(failures))
             }
         case .sentDatabaseChanges(let changes):
             if !changes.failedZoneSaves.isEmpty {
+                await log(level: .error, operation: "provider.event.sentDatabaseChanges.error", message: "Zone konnte nicht gespeichert werden.", metadata: [
+                    "failedZoneSaves": "\(changes.failedZoneSaves.count)"
+                ])
                 await eventHandler(.didEncounterError(changes.failedZoneSaves[0].error.localizedDescription))
             }
         case .didFetchRecordZoneChanges(let change):
             if let error = change.error {
+                await log(level: .error, operation: "provider.event.didFetchRecordZoneChanges.error", message: "Fehler beim Laden einer Zone.", metadata: [
+                    "error": error.localizedDescription
+                ])
                 await eventHandler(.didEncounterError(error.localizedDescription))
             }
         case .didSendChanges:
-            break
+            await log(level: .debug, operation: "provider.event.didSendChanges", message: "CKSyncEngine meldet abgeschlossenen Sendelauf.")
         case .didFetchChanges:
-            break
+            await log(level: .debug, operation: "provider.event.didFetchChanges", message: "CKSyncEngine meldet abgeschlossenen Fetch-Lauf.")
         case .willFetchChanges:
-            break
+            await log(level: .debug, operation: "provider.event.willFetchChanges", message: "CKSyncEngine startet einen Fetch-Lauf.")
         case .willFetchRecordZoneChanges:
-            break
+            await log(level: .debug, operation: "provider.event.willFetchRecordZoneChanges", message: "CKSyncEngine lädt Zonendetails.")
         case .willSendChanges:
-            break
+            await log(level: .debug, operation: "provider.event.willSendChanges", message: "CKSyncEngine startet einen Sendelauf.")
         case .accountChange(let change):
             switch change.changeType {
             case .signOut, .switchAccounts:
+                await log(level: .warning, operation: "provider.event.accountChange", message: "iCloud-Account wurde geändert.", metadata: [
+                    "changeType": "\(change.changeType)"
+                ])
                 await eventHandler(.didEncounterError("Der iCloud-Account wurde geändert. Bitte prüfe den Sync-Status."))
             case .signIn:
+                await log(level: .info, operation: "provider.event.accountChange", message: "iCloud-Account ist wieder verfügbar.", metadata: [
+                    "changeType": "\(change.changeType)"
+                ])
                 break
             @unknown default:
+                await log(level: .warning, operation: "provider.event.accountChange.unknown", message: "Unbekannte iCloud-Änderung erkannt.")
                 await eventHandler(.didEncounterError("Unbekannte iCloud-Änderung erkannt."))
             }
         case .fetchedDatabaseChanges:
-            break
+            await log(level: .debug, operation: "provider.event.fetchedDatabaseChanges", message: "Datenbankweite Änderungen wurden verarbeitet.")
         @unknown default:
+            await log(level: .warning, operation: "provider.event.unknown", message: "Unbekanntes CKSyncEngine-Ereignis empfangen.")
             break
         }
     }
@@ -192,6 +236,21 @@ extension CloudKitSyncProvider: CKSyncEngineDelegate {
         return await CKSyncEngine.RecordZoneChangeBatch(
             pendingChanges: changes,
             recordProvider: recordProvider
+        )
+    }
+
+    private func log(
+        level: AppLogLevel,
+        operation: String,
+        message: String,
+        metadata: [String: String] = [:]
+    ) async {
+        await appLogStore.log(
+            level: level,
+            category: .sync,
+            operation: operation,
+            message: message,
+            metadata: metadata
         )
     }
 }

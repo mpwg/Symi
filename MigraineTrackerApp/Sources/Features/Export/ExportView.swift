@@ -3,6 +3,7 @@ import SwiftUI
 
 struct ExportView: View {
     @EnvironmentObject private var syncCoordinator: SyncCoordinator
+    @EnvironmentObject private var appLogViewModel: AppLogViewModel
     @Query(sort: [SortDescriptor(\Episode.startedAt, order: .reverse)]) private var storedEpisodes: [Episode]
     @Query(sort: [SortDescriptor(\MedicationDefinition.name)]) private var storedDefinitions: [MedicationDefinition]
 
@@ -43,6 +44,17 @@ struct ExportView: View {
                 } label: {
                     Label("Cloud-Daten verwalten", systemImage: "icloud")
                 }
+
+                NavigationLink {
+                    SyncLogView()
+                } label: {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Label("Sync-Protokoll", systemImage: "text.document")
+                        Text(logSubtitle)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
             } header: {
                 Text("Synchronisation")
             }
@@ -67,9 +79,11 @@ struct ExportView: View {
         .navigationTitle("Sync & Datenexport")
         .task {
             syncCoordinator.refreshStatus()
+            appLogViewModel.refresh(limit: 1)
         }
         .refreshable {
             syncCoordinator.refreshStatus()
+            appLogViewModel.refresh(limit: 1)
         }
     }
 
@@ -129,6 +143,14 @@ struct ExportView: View {
 
     private func formatted(_ date: Date) -> String {
         date.formatted(date: .abbreviated, time: .shortened)
+    }
+
+    private var logSubtitle: String {
+        if let latest = appLogViewModel.entries.first {
+            return "Letzter Eintrag: \(formatted(latest.timestamp))"
+        }
+
+        return "Ansehen, teilen und bei Bedarf löschen."
     }
 }
 
