@@ -39,9 +39,9 @@ struct HomeView: View {
                 Button {
                     selectedTab = .export
                 } label: {
-                    Label("PDF exportieren", systemImage: "square.and.arrow.up")
+                    Label("Sync & Datenexport", systemImage: "arrow.trianglehead.2.clockwise.icloud")
                 }
-                .accessibilityHint("Öffnet den Exportbereich für Arztberichte als PDF.")
+                .accessibilityHint("Öffnet den Bereich für Sync-Status, Cloud-Daten und Exporte.")
 
                 NavigationLink {
                     ProductInformationView(mode: .standard)

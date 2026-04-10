@@ -111,6 +111,7 @@ struct DataExportView: View {
             }
         }
         .navigationTitle("Datenexport")
+        .scrollDismissesKeyboard(.interactively)
         .fileImporter(
             isPresented: $isImportingData,
             allowedContentTypes: [.migraineTrackerJSON5, .json, .plainText]

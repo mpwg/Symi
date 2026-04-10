@@ -8,7 +8,7 @@ struct ExportView: View {
 
     var body: some View {
         List {
-            Section("Synchronisation") {
+            Section {
                 NavigationLink {
                     SyncStatusView()
                 } label: {
@@ -27,12 +27,18 @@ struct ExportView: View {
                     get: { syncCoordinator.isEnabled },
                     set: { syncCoordinator.setSyncEnabled($0) }
                 ))
+                .tint(.green)
 
                 NavigationLink {
                     ManageCloudDataView()
                 } label: {
                     Label("Cloud-Daten verwalten", systemImage: "icloud")
                 }
+            } header: {
+                Text("Synchronisation")
+            }
+            footer: {
+                Text("Die App bleibt lokal vollständig nutzbar. iCloud-Sync ist optional und kann jederzeit wieder deaktiviert werden.")
             }
 
             Section("Export") {
@@ -51,6 +57,9 @@ struct ExportView: View {
         }
         .navigationTitle("Sync & Datenexport")
         .task {
+            syncCoordinator.refreshStatus()
+        }
+        .refreshable {
             syncCoordinator.refreshStatus()
         }
     }
@@ -96,6 +105,9 @@ private struct SyncStatusView: View {
             }
         }
         .navigationTitle("Status")
+        .refreshable {
+            syncCoordinator.refreshStatus()
+        }
     }
 
     private func statusRow(_ title: String, _ value: String) -> some View {
@@ -124,24 +136,32 @@ private struct ManageCloudDataView: View {
 
     var body: some View {
         List {
-            Section("Aktionen") {
+            Section {
                 Button("Jetzt synchronisieren") {
                     Task {
                         await syncCoordinator.syncNow()
                     }
                 }
+                .disabled(!syncCoordinator.isEnabled)
 
                 Button("Fehler erneut versuchen") {
                     Task {
                         await syncCoordinator.retryLastError()
                     }
                 }
-                .disabled(syncCoordinator.status.lastError == nil)
+                .disabled(!syncCoordinator.isEnabled || syncCoordinator.status.lastError == nil)
 
                 NavigationLink {
                     DataExportView()
                 } label: {
                     Text("Lokales JSON5-Backup erstellen")
+                }
+            } header: {
+                Text("Aktionen")
+            }
+            footer: {
+                if !syncCoordinator.isEnabled {
+                    Text("Aktiviere den Sync, um iCloud-Synchronisation und Konfliktbehandlung zu verwenden.")
                 }
             }
 
@@ -209,6 +229,9 @@ private struct ManageCloudDataView: View {
             }
         }
         .navigationTitle("Cloud-Daten")
+        .refreshable {
+            syncCoordinator.refreshStatus()
+        }
     }
 
     private var deletedEpisodes: [Episode] {
