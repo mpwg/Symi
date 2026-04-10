@@ -9,7 +9,11 @@ struct MigraineTrackerApp: App {
     init() {
         let schema = Schema(versionedSchema: MigraineTrackerSchemaV2.self)
 
-        let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        let configuration = ModelConfiguration(
+            schema: schema,
+            isStoredInMemoryOnly: false,
+            cloudKitDatabase: .none
+        )
 
         do {
             let container = try ModelContainer(
