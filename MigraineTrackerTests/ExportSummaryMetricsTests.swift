@@ -1,5 +1,5 @@
 import Testing
-@testable import MigraineTrackerCore
+@testable import MigraineTracker
 
 struct ExportSummaryMetricsTests {
     @Test

@@ -2,8 +2,8 @@ import SwiftData
 import SwiftUI
 
 struct ExportView: View {
-    @EnvironmentObject private var syncCoordinator: SyncCoordinator
-    @EnvironmentObject private var appLogViewModel: AppLogViewModel
+    @Environment(SyncCoordinator.self) private var syncCoordinator
+    @Environment(AppLogViewModel.self) private var appLogViewModel
     @Query(sort: [SortDescriptor(\Episode.startedAt, order: .reverse)]) private var storedEpisodes: [Episode]
     @Query(sort: [SortDescriptor(\MedicationDefinition.name)]) private var storedDefinitions: [MedicationDefinition]
 
@@ -31,7 +31,7 @@ struct ExportView: View {
                         }
                     }
                     .padding(.vertical, 6)
-                }
+            }
 
                 Toggle("Sync aktivieren", isOn: Binding(
                     get: { syncCoordinator.isEnabled },
@@ -155,7 +155,7 @@ struct ExportView: View {
 }
 
 private struct SyncStatusView: View {
-    @EnvironmentObject private var syncCoordinator: SyncCoordinator
+    @Environment(SyncCoordinator.self) private var syncCoordinator
 
     var body: some View {
         List {
@@ -228,7 +228,7 @@ private struct SyncStatusView: View {
 
 private struct ManageCloudDataView: View {
     @Environment(\.modelContext) private var modelContext
-    @EnvironmentObject private var syncCoordinator: SyncCoordinator
+    @Environment(SyncCoordinator.self) private var syncCoordinator
     @Query(sort: [SortDescriptor(\Episode.startedAt, order: .reverse)]) private var storedEpisodes: [Episode]
     @Query(sort: [SortDescriptor(\MedicationDefinition.updatedAt, order: .reverse)]) private var storedDefinitions: [MedicationDefinition]
 

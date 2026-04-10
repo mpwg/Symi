@@ -1,5 +1,6 @@
 import SwiftData
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct DataExportView: View {
     @Environment(\.modelContext) private var modelContext

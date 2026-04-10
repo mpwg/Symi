@@ -1,10 +1,12 @@
+import Observation
 import SwiftUI
 
 @MainActor
-final class AppLogViewModel: ObservableObject {
-    @Published private(set) var entries: [AppLogEntry] = []
-    @Published var filter: AppLogFilter = .all
-    @Published private(set) var shareURL: URL?
+@Observable
+final class AppLogViewModel {
+    private(set) var entries: [AppLogEntry] = []
+    var filter: AppLogFilter = .all
+    private(set) var shareURL: URL?
 
     private let store: AppLogStore
 
@@ -40,7 +42,7 @@ final class AppLogViewModel: ObservableObject {
 }
 
 struct SyncLogView: View {
-    @EnvironmentObject private var appLogViewModel: AppLogViewModel
+    @Environment(AppLogViewModel.self) private var appLogViewModel
 
     var body: some View {
         List {
@@ -51,12 +53,17 @@ struct SyncLogView: View {
             }
 
             Section("Filter") {
-                Picker("Ansicht", selection: filterBinding) {
+                @Bindable var appLogViewModel = appLogViewModel
+
+                Picker("Ansicht", selection: $appLogViewModel.filter) {
                     Text("Alle").tag(AppLogFilter.all)
                     Text("Nur Fehler").tag(AppLogFilter.errors)
                     Text("Nur Sync").tag(AppLogFilter.sync)
                 }
                 .pickerStyle(.segmented)
+                .onChange(of: appLogViewModel.filter) { _, newValue in
+                    appLogViewModel.updateFilter(newValue)
+                }
             }
 
             Section("Aktionen") {
@@ -120,13 +127,6 @@ struct SyncLogView: View {
         .refreshable {
             appLogViewModel.refresh()
         }
-    }
-
-    private var filterBinding: Binding<AppLogFilter> {
-        Binding(
-            get: { appLogViewModel.filter },
-            set: { appLogViewModel.updateFilter($0) }
-        )
     }
 
     private func iconName(for level: AppLogLevel) -> String {
