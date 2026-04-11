@@ -6,13 +6,35 @@ struct ValidatedWeatherSnapshot: Equatable {
     let humidity: Double?
     let pressure: Double?
     let source: String
+
+    nonisolated init(
+        condition: String,
+        temperature: Double?,
+        humidity: Double?,
+        pressure: Double?,
+        source: String
+    ) {
+        self.condition = condition
+        self.temperature = temperature
+        self.humidity = humidity
+        self.pressure = pressure
+        self.source = source
+    }
+
+    nonisolated static func == (lhs: ValidatedWeatherSnapshot, rhs: ValidatedWeatherSnapshot) -> Bool {
+        lhs.condition == rhs.condition &&
+            lhs.temperature == rhs.temperature &&
+            lhs.humidity == rhs.humidity &&
+            lhs.pressure == rhs.pressure &&
+            lhs.source == rhs.source
+    }
 }
 
 enum WeatherValidationError: LocalizedError, Equatable {
     case invalidNumber(String)
     case valueOutOfRange(fieldName: String, expectedRange: String)
 
-    var errorDescription: String? {
+    nonisolated var errorDescription: String? {
         switch self {
         case let .invalidNumber(fieldName):
             "\(fieldName) muss eine gültige Zahl sein."
@@ -20,10 +42,21 @@ enum WeatherValidationError: LocalizedError, Equatable {
             "\(fieldName) muss im Bereich \(expectedRange) liegen."
         }
     }
+
+    nonisolated static func == (lhs: WeatherValidationError, rhs: WeatherValidationError) -> Bool {
+        switch (lhs, rhs) {
+        case let (.invalidNumber(leftField), .invalidNumber(rightField)):
+            leftField == rightField
+        case let (.valueOutOfRange(leftField, leftRange), .valueOutOfRange(rightField, rightRange)):
+            leftField == rightField && leftRange == rightRange
+        default:
+            false
+        }
+    }
 }
 
 enum WeatherInputValidator {
-    static func validate(
+    nonisolated static func validate(
         isEnabled: Bool,
         condition: String,
         temperatureText: String,
@@ -85,7 +118,7 @@ enum WeatherInputValidator {
         )
     }
 
-    private static func parseOptionalNumber(from text: String, fieldName: String) throws -> Double? {
+    private nonisolated static func parseOptionalNumber(from text: String, fieldName: String) throws -> Double? {
         guard !text.isEmpty else {
             return nil
         }

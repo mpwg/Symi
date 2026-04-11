@@ -17,19 +17,19 @@ public enum AppLogFilter: String, Codable, CaseIterable, Sendable, Identifiable 
     case errors
     case sync
 
-    public var id: Self { self }
+    public nonisolated var id: Self { self }
 }
 
 public struct AppLogEntry: Codable, Equatable, Identifiable, Sendable {
-    public let id: UUID
-    public let timestamp: Date
-    public let category: AppLogCategory
-    public let level: AppLogLevel
-    public let operation: String
-    public let message: String
-    public let metadata: [String: String]
+    public nonisolated let id: UUID
+    public nonisolated let timestamp: Date
+    public nonisolated let category: AppLogCategory
+    public nonisolated let level: AppLogLevel
+    public nonisolated let operation: String
+    public nonisolated let message: String
+    public nonisolated let metadata: [String: String]
 
-    public init(
+    public nonisolated init(
         id: UUID = UUID(),
         timestamp: Date = .now,
         category: AppLogCategory,
@@ -45,6 +45,40 @@ public struct AppLogEntry: Codable, Equatable, Identifiable, Sendable {
         self.operation = operation
         self.message = message
         self.metadata = metadata
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case timestamp
+        case category
+        case level
+        case operation
+        case message
+        case metadata
+    }
+
+    public nonisolated init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            id: try container.decode(UUID.self, forKey: .id),
+            timestamp: try container.decode(Date.self, forKey: .timestamp),
+            category: try container.decode(AppLogCategory.self, forKey: .category),
+            level: try container.decode(AppLogLevel.self, forKey: .level),
+            operation: try container.decode(String.self, forKey: .operation),
+            message: try container.decode(String.self, forKey: .message),
+            metadata: try container.decode([String: String].self, forKey: .metadata)
+        )
+    }
+
+    public nonisolated func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(timestamp, forKey: .timestamp)
+        try container.encode(category, forKey: .category)
+        try container.encode(level, forKey: .level)
+        try container.encode(operation, forKey: .operation)
+        try container.encode(message, forKey: .message)
+        try container.encode(metadata, forKey: .metadata)
     }
 }
 

@@ -9,7 +9,7 @@ public enum SyncServiceState: String, Codable, CaseIterable, Sendable {
     case noICloudAccount
     case offline
 
-    public var displayTitle: String {
+    public nonisolated var displayTitle: String {
         switch self {
         case .disabled:
             "Deaktiviert"
@@ -35,15 +35,15 @@ public enum SyncEntityType: String, Codable, CaseIterable, Sendable {
 }
 
 public struct SyncStatusSnapshot: Codable, Equatable, Sendable {
-    public var state: SyncServiceState
-    public var service: String
-    public var queuedUpdates: Int
-    public var unsyncedRecords: Int
-    public var lastDownloadedAt: Date?
-    public var lastUploadedAt: Date?
-    public var lastError: String?
+    public nonisolated var state: SyncServiceState
+    public nonisolated var service: String
+    public nonisolated var queuedUpdates: Int
+    public nonisolated var unsyncedRecords: Int
+    public nonisolated var lastDownloadedAt: Date?
+    public nonisolated var lastUploadedAt: Date?
+    public nonisolated var lastError: String?
 
-    public init(
+    public nonisolated init(
         state: SyncServiceState = .disabled,
         service: String = "iCloud",
         queuedUpdates: Int = 0,
@@ -63,15 +63,15 @@ public struct SyncStatusSnapshot: Codable, Equatable, Sendable {
 }
 
 public struct SyncDocumentEnvelope: Codable, Equatable, Sendable {
-    public var documentID: String
-    public var entityType: SyncEntityType
-    public var schemaVersion: Int
-    public var modifiedAt: Date
-    public var authorDeviceID: String
-    public var deletedAt: Date?
-    public var payload: Payload
+    public nonisolated var documentID: String
+    public nonisolated var entityType: SyncEntityType
+    public nonisolated var schemaVersion: Int
+    public nonisolated var modifiedAt: Date
+    public nonisolated var authorDeviceID: String
+    public nonisolated var deletedAt: Date?
+    public nonisolated var payload: Payload
 
-    public init(
+    public nonisolated init(
         documentID: String,
         entityType: SyncEntityType,
         schemaVersion: Int = 1,
@@ -98,7 +98,7 @@ public struct SyncDocumentEnvelope: Codable, Equatable, Sendable {
             case medicationDefinition
         }
 
-        public init(from decoder: any Decoder) throws {
+        public nonisolated init(from decoder: any Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             if let episode = try container.decodeIfPresent(SyncEpisodePayload.self, forKey: .episode) {
                 self = .episode(episode)
@@ -118,7 +118,7 @@ public struct SyncDocumentEnvelope: Codable, Equatable, Sendable {
             )
         }
 
-        public func encode(to encoder: any Encoder) throws {
+        public nonisolated func encode(to encoder: any Encoder) throws {
             var container = encoder.container(keyedBy: CodingKeys.self)
             switch self {
             case .episode(let payload):
@@ -131,22 +131,22 @@ public struct SyncDocumentEnvelope: Codable, Equatable, Sendable {
 }
 
 public struct SyncEpisodePayload: Codable, Equatable, Sendable {
-    public var id: String
-    public var startedAt: Date
-    public var endedAt: Date?
-    public var type: String
-    public var intensity: Int
-    public var painLocation: String
-    public var painCharacter: String
-    public var notes: String
-    public var symptoms: [String]
-    public var triggers: [String]
-    public var functionalImpact: String
-    public var menstruationStatus: String
-    public var medications: [SyncMedicationEntryPayload]
-    public var weatherSnapshot: SyncWeatherSnapshotPayload?
+    public nonisolated var id: String
+    public nonisolated var startedAt: Date
+    public nonisolated var endedAt: Date?
+    public nonisolated var type: String
+    public nonisolated var intensity: Int
+    public nonisolated var painLocation: String
+    public nonisolated var painCharacter: String
+    public nonisolated var notes: String
+    public nonisolated var symptoms: [String]
+    public nonisolated var triggers: [String]
+    public nonisolated var functionalImpact: String
+    public nonisolated var menstruationStatus: String
+    public nonisolated var medications: [SyncMedicationEntryPayload]
+    public nonisolated var weatherSnapshot: SyncWeatherSnapshotPayload?
 
-    public init(
+    public nonisolated init(
         id: String,
         startedAt: Date,
         endedAt: Date?,
@@ -180,17 +180,17 @@ public struct SyncEpisodePayload: Codable, Equatable, Sendable {
 }
 
 public struct SyncMedicationEntryPayload: Codable, Equatable, Sendable {
-    public var id: String
-    public var name: String
-    public var category: String
-    public var dosage: String
-    public var quantity: Int
-    public var takenAt: Date
-    public var effectiveness: String
-    public var reliefStartedAt: Date?
-    public var isRepeatDose: Bool
+    public nonisolated var id: String
+    public nonisolated var name: String
+    public nonisolated var category: String
+    public nonisolated var dosage: String
+    public nonisolated var quantity: Int
+    public nonisolated var takenAt: Date
+    public nonisolated var effectiveness: String
+    public nonisolated var reliefStartedAt: Date?
+    public nonisolated var isRepeatDose: Bool
 
-    public init(
+    public nonisolated init(
         id: String,
         name: String,
         category: String,
@@ -211,18 +211,30 @@ public struct SyncMedicationEntryPayload: Codable, Equatable, Sendable {
         self.reliefStartedAt = reliefStartedAt
         self.isRepeatDose = isRepeatDose
     }
+
+    public nonisolated static func == (lhs: SyncMedicationEntryPayload, rhs: SyncMedicationEntryPayload) -> Bool {
+        lhs.id == rhs.id &&
+            lhs.name == rhs.name &&
+            lhs.category == rhs.category &&
+            lhs.dosage == rhs.dosage &&
+            lhs.quantity == rhs.quantity &&
+            lhs.takenAt == rhs.takenAt &&
+            lhs.effectiveness == rhs.effectiveness &&
+            lhs.reliefStartedAt == rhs.reliefStartedAt &&
+            lhs.isRepeatDose == rhs.isRepeatDose
+    }
 }
 
 public struct SyncWeatherSnapshotPayload: Codable, Equatable, Sendable {
-    public var id: String
-    public var recordedAt: Date
-    public var temperature: Double?
-    public var condition: String
-    public var humidity: Double?
-    public var pressure: Double?
-    public var source: String
+    public nonisolated var id: String
+    public nonisolated var recordedAt: Date
+    public nonisolated var temperature: Double?
+    public nonisolated var condition: String
+    public nonisolated var humidity: Double?
+    public nonisolated var pressure: Double?
+    public nonisolated var source: String
 
-    public init(
+    public nonisolated init(
         id: String,
         recordedAt: Date,
         temperature: Double?,
@@ -239,21 +251,31 @@ public struct SyncWeatherSnapshotPayload: Codable, Equatable, Sendable {
         self.pressure = pressure
         self.source = source
     }
+
+    public nonisolated static func == (lhs: SyncWeatherSnapshotPayload, rhs: SyncWeatherSnapshotPayload) -> Bool {
+        lhs.id == rhs.id &&
+            lhs.recordedAt == rhs.recordedAt &&
+            lhs.temperature == rhs.temperature &&
+            lhs.condition == rhs.condition &&
+            lhs.humidity == rhs.humidity &&
+            lhs.pressure == rhs.pressure &&
+            lhs.source == rhs.source
+    }
 }
 
 public struct SyncMedicationDefinitionPayload: Codable, Equatable, Sendable {
-    public var catalogKey: String
-    public var groupID: String
-    public var groupTitle: String
-    public var groupFooter: String?
-    public var name: String
-    public var category: String
-    public var suggestedDosage: String
-    public var sortOrder: Int
-    public var isCustom: Bool
-    public var createdAt: Date
+    public nonisolated var catalogKey: String
+    public nonisolated var groupID: String
+    public nonisolated var groupTitle: String
+    public nonisolated var groupFooter: String?
+    public nonisolated var name: String
+    public nonisolated var category: String
+    public nonisolated var suggestedDosage: String
+    public nonisolated var sortOrder: Int
+    public nonisolated var isCustom: Bool
+    public nonisolated var createdAt: Date
 
-    public init(
+    public nonisolated init(
         catalogKey: String,
         groupID: String,
         groupTitle: String,
@@ -279,26 +301,26 @@ public struct SyncMedicationDefinitionPayload: Codable, Equatable, Sendable {
 }
 
 public struct SyncShadow: Codable, Equatable, Sendable {
-    public var envelope: SyncDocumentEnvelope
-    public var recordSystemFields: Data?
+    public nonisolated var envelope: SyncDocumentEnvelope
+    public nonisolated var recordSystemFields: Data?
 
-    public init(envelope: SyncDocumentEnvelope, recordSystemFields: Data? = nil) {
+    public nonisolated init(envelope: SyncDocumentEnvelope, recordSystemFields: Data? = nil) {
         self.envelope = envelope
         self.recordSystemFields = recordSystemFields
     }
 }
 
 public struct SyncConflict: Codable, Equatable, Identifiable, Sendable {
-    public var id: String { documentID }
-    public var documentID: String
-    public var entityType: SyncEntityType
-    public var base: SyncDocumentEnvelope?
-    public var local: SyncDocumentEnvelope
-    public var remote: SyncDocumentEnvelope
-    public var conflictingFields: [String]
-    public var detectedAt: Date
+    public nonisolated var id: String { documentID }
+    public nonisolated var documentID: String
+    public nonisolated var entityType: SyncEntityType
+    public nonisolated var base: SyncDocumentEnvelope?
+    public nonisolated var local: SyncDocumentEnvelope
+    public nonisolated var remote: SyncDocumentEnvelope
+    public nonisolated var conflictingFields: [String]
+    public nonisolated var detectedAt: Date
 
-    public init(
+    public nonisolated init(
         documentID: String,
         entityType: SyncEntityType,
         base: SyncDocumentEnvelope?,
@@ -318,17 +340,17 @@ public struct SyncConflict: Codable, Equatable, Identifiable, Sendable {
 }
 
 public struct SyncMergeResult: Equatable, Sendable {
-    public var merged: SyncDocumentEnvelope
-    public var conflicts: [String]
+    public nonisolated var merged: SyncDocumentEnvelope
+    public nonisolated var conflicts: [String]
 
-    public init(merged: SyncDocumentEnvelope, conflicts: [String]) {
+    public nonisolated init(merged: SyncDocumentEnvelope, conflicts: [String]) {
         self.merged = merged
         self.conflicts = conflicts
     }
 }
 
 public enum SyncMergeEngine {
-    public static func merge(
+    public nonisolated static func merge(
         base: SyncDocumentEnvelope?,
         local: SyncDocumentEnvelope,
         remote: SyncDocumentEnvelope
@@ -372,7 +394,7 @@ public enum SyncMergeEngine {
         )
     }
 
-    private static func mergeEpisode(
+    private nonisolated static func mergeEpisode(
         base: SyncEpisodePayload?,
         local: SyncEpisodePayload,
         remote: SyncEpisodePayload
@@ -426,7 +448,7 @@ public enum SyncMergeEngine {
         )
     }
 
-    private static func mergeMedicationDefinition(
+    private nonisolated static func mergeMedicationDefinition(
         base: SyncMedicationDefinitionPayload?,
         local: SyncMedicationDefinitionPayload,
         remote: SyncMedicationDefinitionPayload
@@ -450,7 +472,7 @@ public enum SyncMergeEngine {
         )
     }
 
-    private static func mergeMedicationEntries(
+    private nonisolated static func mergeMedicationEntries(
         base: [String: SyncMedicationEntryPayload],
         local: [String: SyncMedicationEntryPayload],
         remote: [String: SyncMedicationEntryPayload],
@@ -499,7 +521,7 @@ public enum SyncMergeEngine {
         }
     }
 
-    private static func mergeWeather(
+    private nonisolated static func mergeWeather(
         base: SyncWeatherSnapshotPayload?,
         local: SyncWeatherSnapshotPayload?,
         remote: SyncWeatherSnapshotPayload?,
@@ -535,11 +557,11 @@ public enum SyncMergeEngine {
         }
     }
 
-    private static func index(_ entries: [SyncMedicationEntryPayload]) -> [String: SyncMedicationEntryPayload] {
+    private nonisolated static func index(_ entries: [SyncMedicationEntryPayload]) -> [String: SyncMedicationEntryPayload] {
         Dictionary(uniqueKeysWithValues: entries.map { ($0.id, $0) })
     }
 
-    private static func mergedValue<T: Equatable>(
+    private nonisolated static func mergedValue<T: Equatable>(
         field: String,
         base: T?,
         local: T,
@@ -553,7 +575,7 @@ public enum SyncMergeEngine {
         return result
     }
 
-    private static func mergedValue<T: Equatable>(
+    private nonisolated static func mergedValue<T: Equatable>(
         field _: String,
         base: T?,
         local: T,
@@ -584,7 +606,7 @@ public enum SyncMergeEngine {
 }
 
 private extension SyncDocumentEnvelope.Payload {
-    var episodePayload: SyncEpisodePayload? {
+    nonisolated var episodePayload: SyncEpisodePayload? {
         guard case .episode(let payload) = self else {
             return nil
         }
@@ -592,7 +614,7 @@ private extension SyncDocumentEnvelope.Payload {
         return payload
     }
 
-    var medicationDefinitionPayload: SyncMedicationDefinitionPayload? {
+    nonisolated var medicationDefinitionPayload: SyncMedicationDefinitionPayload? {
         guard case .medicationDefinition(let payload) = self else {
             return nil
         }
