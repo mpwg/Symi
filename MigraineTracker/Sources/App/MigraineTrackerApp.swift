@@ -5,8 +5,8 @@ import SwiftData
 struct MigraineTrackerApp: App {
     private let modelContainer: ModelContainer
     private let appLogStore: AppLogStore
-    @StateObject private var syncCoordinator: SyncCoordinator
-    @StateObject private var appLogViewModel: AppLogViewModel
+    @State private var syncCoordinator: SyncCoordinator
+    @State private var appLogViewModel: AppLogViewModel
 
     init() {
         let schema = Schema(versionedSchema: MigraineTrackerSchemaV2.self)
@@ -27,8 +27,8 @@ struct MigraineTrackerApp: App {
             self.modelContainer = container
             let appLogStore = AppLogStore()
             self.appLogStore = appLogStore
-            _syncCoordinator = StateObject(wrappedValue: SyncCoordinator(modelContainer: container, appLogStore: appLogStore))
-            _appLogViewModel = StateObject(wrappedValue: AppLogViewModel(store: appLogStore))
+            _syncCoordinator = State(initialValue: SyncCoordinator(modelContainer: container, appLogStore: appLogStore))
+            _appLogViewModel = State(initialValue: AppLogViewModel(store: appLogStore))
         } catch {
             fatalError("ModelContainer konnte nicht erstellt werden: \(error)")
         }
@@ -37,8 +37,8 @@ struct MigraineTrackerApp: App {
     var body: some Scene {
         WindowGroup {
             AppShellView()
-                .environmentObject(syncCoordinator)
-                .environmentObject(appLogViewModel)
+                .environment(syncCoordinator)
+                .environment(appLogViewModel)
         }
         .modelContainer(modelContainer)
     }

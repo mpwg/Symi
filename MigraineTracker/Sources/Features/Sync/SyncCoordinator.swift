@@ -1,14 +1,16 @@
 import CloudKit
 import Foundation
+import Observation
 import SwiftData
 import SwiftUI
 import UIKit
 
 @MainActor
-final class SyncCoordinator: ObservableObject {
-    @Published private(set) var status = SyncStatusSnapshot()
-    @Published private(set) var conflicts: [SyncConflict] = []
-    @Published private(set) var isEnabled = false
+@Observable
+final class SyncCoordinator {
+    private(set) var status = SyncStatusSnapshot()
+    private(set) var conflicts: [SyncConflict] = []
+    private(set) var isEnabled = false
 
     private let modelContainer: ModelContainer
     private let stateStore: SyncStateStore
