@@ -1,48 +1,7 @@
-import Observation
 import SwiftUI
 
-@MainActor
-@Observable
-final class AppLogViewModel {
-    private(set) var entries: [AppLogEntry] = []
-    var filter: AppLogFilter = .all
-    private(set) var shareURL: URL?
-
-    private let store: AppLogStore
-
-    init(store: AppLogStore) {
-        self.store = store
-    }
-
-    func refresh(limit: Int = 200) {
-        Task {
-            let entries = await store.recentEntries(filter: filter, limit: limit)
-            let shareURL = await store.exportLogFileURL(filter: filter)
-            await MainActor.run {
-                self.entries = entries
-                self.shareURL = shareURL
-            }
-        }
-    }
-
-    func updateFilter(_ filter: AppLogFilter) {
-        self.filter = filter
-        refresh()
-    }
-
-    func clear() {
-        Task {
-            await store.clear()
-            await MainActor.run {
-                self.entries = []
-                self.shareURL = nil
-            }
-        }
-    }
-}
-
 struct SyncLogView: View {
-    @Environment(AppLogViewModel.self) private var appLogViewModel
+    @Bindable var controller: SettingsController
 
     var body: some View {
         List {
@@ -53,45 +12,43 @@ struct SyncLogView: View {
             }
 
             Section("Filter") {
-                @Bindable var appLogViewModel = appLogViewModel
-
-                Picker("Ansicht", selection: $appLogViewModel.filter) {
+                Picker("Ansicht", selection: $controller.logFilter) {
                     Text("Alle").tag(AppLogFilter.all)
                     Text("Nur Fehler").tag(AppLogFilter.errors)
                     Text("Nur Sync").tag(AppLogFilter.sync)
                 }
                 .pickerStyle(.segmented)
-                .onChange(of: appLogViewModel.filter) { _, newValue in
-                    appLogViewModel.updateFilter(newValue)
+                .onChange(of: controller.logFilter) { _, _ in
+                    controller.refreshLog()
                 }
             }
 
             Section("Aktionen") {
                 Button("Aktualisieren") {
-                    appLogViewModel.refresh()
+                    controller.refreshLog()
                 }
 
-                if let shareURL = appLogViewModel.shareURL {
+                if let shareURL = controller.logShareURL {
                     ShareLink(item: shareURL) {
                         Label("Protokoll teilen", systemImage: "square.and.arrow.up")
                     }
                 }
 
                 Button("Protokoll löschen", role: .destructive) {
-                    appLogViewModel.clear()
+                    controller.clearLog()
                 }
-                .disabled(appLogViewModel.entries.isEmpty)
+                .disabled(controller.logEntries.isEmpty)
             }
 
             Section("Einträge") {
-                if appLogViewModel.entries.isEmpty {
+                if controller.logEntries.isEmpty {
                     ContentUnavailableView(
                         "Kein Protokoll vorhanden",
                         systemImage: "text.page.slash",
                         description: Text("Sobald Sync-Vorgänge oder Fehler auftreten, erscheinen sie hier.")
                     )
                 } else {
-                    ForEach(appLogViewModel.entries) { entry in
+                    ForEach(controller.logEntries) { entry in
                         VStack(alignment: .leading, spacing: 8) {
                             HStack(alignment: .top, spacing: 10) {
                                 Image(systemName: iconName(for: entry.level))
@@ -122,10 +79,10 @@ struct SyncLogView: View {
         }
         .navigationTitle("Sync-Protokoll")
         .task {
-            appLogViewModel.refresh()
+            controller.refreshLog()
         }
         .refreshable {
-            appLogViewModel.refresh()
+            controller.refreshLog()
         }
     }
 

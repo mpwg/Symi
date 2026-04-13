@@ -1,13 +1,13 @@
 import SwiftUI
 
 struct CaptureView: View {
+    let appContainer: AppContainer
+
     var body: some View {
-        EpisodeEditorView()
+        EpisodeEditorView(appContainer: appContainer)
     }
 }
 
 #Preview {
-    NavigationStack {
-        CaptureView()
-    }
+    Text("Preview nicht verfügbar")
 }

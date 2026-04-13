@@ -1,16 +1,13 @@
-import SwiftData
 import SwiftUI
 
 struct HistoryView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query(sort: [SortDescriptor(\Episode.startedAt, order: .reverse)]) private var storedEpisodes: [Episode]
+    let appContainer: AppContainer
+    @State private var controller: HistoryController
 
-    @State private var selectedDay: Date = .now
-    @State private var displayedMonth: Date = Calendar.current.startOfMonth(for: .now)
-    @State private var editingEpisode: Episode?
-    @State private var pendingDeletion: Episode?
-    @State private var isPresentingNewEpisode = false
-    @State private var isPresentingSettings = false
+    init(appContainer: AppContainer) {
+        self.appContainer = appContainer
+        _controller = State(initialValue: appContainer.makeHistoryController())
+    }
 
     var body: some View {
         ScrollView {
@@ -21,25 +18,24 @@ struct HistoryView: View {
                 ) {
                     VStack(alignment: .leading, spacing: 16) {
                         MonthHeader(
-                            month: displayedMonth,
-                            onPrevious: {
-                                displayedMonth = Calendar.current.date(byAdding: .month, value: -1, to: displayedMonth) ?? displayedMonth
-                            },
-                            onNext: {
-                                displayedMonth = Calendar.current.date(byAdding: .month, value: 1, to: displayedMonth) ?? displayedMonth
-                            }
+                            month: controller.displayedMonth,
+                            onPrevious: controller.goToPreviousMonth,
+                            onNext: controller.goToNextMonth
                         )
 
                         MonthGrid(
-                            month: displayedMonth,
-                            selectedDay: $selectedDay,
-                            episodesByDay: episodesByDay
+                            month: controller.displayedMonth,
+                            selectedDay: Binding(
+                                get: { controller.selectedDay },
+                                set: { controller.selectDay($0) }
+                            ),
+                            episodesByDay: controller.episodesByDay
                         )
                     }
                 }
 
                 Button {
-                    isPresentingNewEpisode = true
+                    controller.isPresentingNewEpisode = true
                 } label: {
                     Label("Migräneanfall hinzufügen", systemImage: "plus.circle.fill")
                         .frame(maxWidth: .infinity, alignment: .center)
@@ -52,14 +48,14 @@ struct HistoryView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         daySummary
 
-                        if episodesForSelectedDay.isEmpty {
+                        if controller.selectedDayEpisodes.isEmpty {
                             ContentUnavailableView(
                                 "Keine Episoden an diesem Tag",
                                 systemImage: "calendar",
-                                description: Text("Für \(selectedDay.formatted(date: .complete, time: .omitted)) sind keine Episoden gespeichert.")
+                                description: Text("Für \(controller.selectedDay.formatted(date: .complete, time: .omitted)) sind keine Episoden gespeichert.")
                             )
                         } else {
-                            ForEach(episodesForSelectedDay) { episode in
+                            ForEach(controller.selectedDayEpisodes) { episode in
                                 episodeLink(for: episode)
                             }
                         }
@@ -68,7 +64,7 @@ struct HistoryView: View {
 
                 contentSection(title: "Export") {
                     NavigationLink {
-                        DataExportView()
+                        DataExportView(appContainer: appContainer)
                     } label: {
                         VStack(alignment: .leading, spacing: 6) {
                             Label("Daten exportieren", systemImage: "square.and.arrow.up")
@@ -88,68 +84,83 @@ struct HistoryView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
-                    isPresentingSettings = true
+                    controller.isPresentingSettings = true
                 } label: {
                     Label("Einstellungen", systemImage: "gearshape")
                 }
             }
         }
-        .onAppear {
-            displayedMonth = Calendar.current.startOfMonth(for: selectedDay)
-        }
-        .onChange(of: selectedDay) { _, newDay in
-            let month = Calendar.current.startOfMonth(for: newDay)
-            if !Calendar.current.isDate(month, equalTo: displayedMonth, toGranularity: .month) {
-                displayedMonth = month
-            }
-        }
-        .sheet(isPresented: $isPresentingNewEpisode) {
+        .sheet(isPresented: $controller.isPresentingNewEpisode) {
             NavigationStack {
                 EpisodeEditorView(
-                    initialStartedAt: defaultStartDate(for: selectedDay),
+                    appContainer: appContainer,
+                    initialStartedAt: controller.defaultStartDateForSelectedDay(),
                     onSaved: {
-                        isPresentingNewEpisode = false
+                        controller.isPresentingNewEpisode = false
+                        controller.reload()
                     }
                 )
             }
         }
-        .sheet(isPresented: $isPresentingSettings) {
+        .sheet(isPresented: $controller.isPresentingSettings) {
             NavigationStack {
-                SettingsView()
+                SettingsView(appContainer: appContainer)
             }
         }
-        .sheet(item: $editingEpisode) { episode in
+        .sheet(item: editingEpisodeBinding) { episodeID in
             NavigationStack {
-                EpisodeEditorView(episode: episode)
+                EpisodeEditorView(
+                    appContainer: appContainer,
+                    episodeID: episodeID.id,
+                    onSaved: {
+                        controller.editingEpisodeID = nil
+                        controller.reload()
+                    }
+                )
             }
         }
         .confirmationDialog(
             "Episode löschen?",
             isPresented: Binding(
-                get: { pendingDeletion != nil },
+                get: { controller.pendingDeletionID != nil },
                 set: { isPresented in
                     if !isPresented {
-                        pendingDeletion = nil
+                        controller.pendingDeletionID = nil
                     }
                 }
             ),
             titleVisibility: .visible,
-            presenting: pendingDeletion
+            presenting: pendingEpisode
         ) { episode in
             Button("Bearbeiten") {
-                editingEpisode = episode
+                controller.editingEpisodeID = episode.id
             }
 
             Button("Löschen", role: .destructive) {
-                deleteEpisode(episode)
+                controller.deletePendingEpisode()
             }
 
             Button("Abbrechen", role: .cancel) {
-                pendingDeletion = nil
+                controller.pendingDeletionID = nil
             }
         } message: { episode in
             Text("\(episode.startedAt.formatted(date: .abbreviated, time: .shortened)) wird in den Papierkorb verschoben.")
         }
+    }
+
+    private var editingEpisodeBinding: Binding<IdentifiedEpisodeID?> {
+        Binding(
+            get: { controller.editingEpisodeID.map(IdentifiedEpisodeID.init) },
+            set: { controller.editingEpisodeID = $0?.id }
+        )
+    }
+
+    private var pendingEpisode: EpisodeRecord? {
+        guard let id = controller.pendingDeletionID else {
+            return nil
+        }
+
+        return controller.selectedDayEpisodes.first(where: { $0.id == id })
     }
 
     @ViewBuilder
@@ -176,15 +187,15 @@ struct HistoryView: View {
 
     private var daySummary: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(selectedDay.formatted(date: .complete, time: .omitted))
+            Text(controller.daySummary.date.formatted(date: .complete, time: .omitted))
                 .font(.headline)
 
-            if episodesForSelectedDay.isEmpty {
+            if controller.daySummary.episodeCount == 0 {
                 Text("Noch kein Eintrag für diesen Tag.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             } else {
-                Text("\(episodesForSelectedDay.count) Eintrag\(episodesForSelectedDay.count == 1 ? "" : "e") · Höchste Intensität \(episodesForSelectedDay.map(\.intensity).max() ?? 0)/10")
+                Text("\(controller.daySummary.episodeCount) Eintrag\(controller.daySummary.episodeCount == 1 ? "" : "e") · Höchste Intensität \(controller.daySummary.highestIntensity)/10")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -193,73 +204,37 @@ struct HistoryView: View {
         .accessibilityElement(children: .combine)
     }
 
-    private var episodesByDay: [Date: [Episode]] {
-        Dictionary(grouping: episodes) { Calendar.current.startOfDay(for: $0.startedAt) }
-    }
-
-    private var episodes: [Episode] {
-        storedEpisodes.filter { !$0.isDeleted }
-    }
-
-    private var episodesForSelectedDay: [Episode] {
-        let day = Calendar.current.startOfDay(for: selectedDay)
-        return (episodesByDay[day] ?? []).sorted { $0.startedAt > $1.startedAt }
-    }
-
     @ViewBuilder
-    private func episodeLink(for episode: Episode) -> some View {
+    private func episodeLink(for episode: EpisodeRecord) -> some View {
         NavigationLink {
-            EpisodeDetailView(episode: episode)
+            EpisodeDetailView(appContainer: appContainer, episodeID: episode.id)
         } label: {
             EpisodeRow(episode: episode)
         }
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
             Button("Löschen", role: .destructive) {
-                pendingDeletion = episode
+                controller.pendingDeletionID = episode.id
             }
 
             Button("Bearbeiten") {
-                editingEpisode = episode
+                controller.editingEpisodeID = episode.id
             }
             .tint(.accentColor)
         }
         .contextMenu {
             Button("Bearbeiten", systemImage: "pencil") {
-                editingEpisode = episode
+                controller.editingEpisodeID = episode.id
             }
 
             Button("Löschen", systemImage: "trash", role: .destructive) {
-                pendingDeletion = episode
+                controller.pendingDeletionID = episode.id
             }
         }
-    }
-
-    private func deleteEpisode(_ episode: Episode) {
-        episode.markDeleted()
-
-        do {
-            try modelContext.save()
-            pendingDeletion = nil
-        } catch {
-            assertionFailure("Löschen fehlgeschlagen: \(error)")
-        }
-    }
-
-    private func defaultStartDate(for selectedDay: Date) -> Date {
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: .now)
-        let day = calendar.startOfDay(for: selectedDay)
-
-        if day == today {
-            return .now
-        }
-
-        return calendar.date(bySettingHour: 12, minute: 0, second: 0, of: day) ?? day
     }
 }
 
 private struct EpisodeRow: View {
-    let episode: Episode
+    let episode: EpisodeRecord
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -347,7 +322,7 @@ private struct MonthHeader: View {
 private struct MonthGrid: View {
     let month: Date
     @Binding var selectedDay: Date
-    let episodesByDay: [Date: [Episode]]
+    let episodesByDay: [Date: [EpisodeRecord]]
 
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 7)
 
@@ -468,14 +443,16 @@ private struct CalendarDay: Identifiable {
     let date: Date?
 }
 
-private extension Calendar {
+private struct IdentifiedEpisodeID: Identifiable {
+    let id: UUID
+}
+
+extension Calendar {
     func startOfMonth(for inputDate: Date) -> Date {
         self.date(from: dateComponents([.year, .month], from: inputDate)) ?? inputDate
     }
 }
 
 #Preview {
-    NavigationStack {
-        HistoryView()
-    }
+    Text("Preview nicht verfügbar")
 }

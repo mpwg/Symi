@@ -1,14 +1,14 @@
-import SwiftData
 import SwiftUI
 
 struct HomeView: View {
+    let appContainer: AppContainer
     @Binding var selectedTab: AppTab
-    @Query(sort: [SortDescriptor(\Episode.startedAt, order: .reverse)]) private var storedEpisodes: [Episode]
+    @State private var overview: HomeOverviewData = .init(latestEpisode: nil, episodeCount: 0)
 
     var body: some View {
         List {
             Section("Heute") {
-                if let latestEpisode = episodes.first {
+                if let latestEpisode = overview.latestEpisode {
                     MetricRow(
                         title: "Letzte Episode: \(latestEpisode.type.rawValue)",
                         detail: "Intensität \(latestEpisode.intensity)/10 · \(latestEpisode.startedAt.formatted(date: .abbreviated, time: .shortened))"
@@ -51,7 +51,7 @@ struct HomeView: View {
             }
 
             Section("Version 1") {
-                MetricRow(title: "Gespeicherte Episoden", detail: "\(episodes.count)")
+                MetricRow(title: "Gespeicherte Episoden", detail: "\(overview.episodeCount)")
                 MetricRow(title: "Lokale Speicherung", detail: "Lokale Primärdaten mit optionaler iCloud-Synchronisation.")
                 MetricRow(title: "Wetterkontext", detail: "Kann optional manuell pro Episode ergänzt und lokal gespeichert werden.")
             }
@@ -68,10 +68,9 @@ struct HomeView: View {
             }
         }
         .navigationTitle("Migraine Tracker")
-    }
-
-    private var episodes: [Episode] {
-        storedEpisodes.filter { !$0.isDeleted }
+        .task {
+            overview = (try? LoadHomeOverviewUseCase(repository: appContainer.episodeRepository).execute()) ?? .init(latestEpisode: nil, episodeCount: 0)
+        }
     }
 }
 
@@ -93,7 +92,5 @@ private struct MetricRow: View {
 }
 
 #Preview {
-    NavigationStack {
-        HomeView(selectedTab: .constant(.home))
-    }
+    Text("Preview nicht verfügbar")
 }

@@ -7,9 +7,9 @@ import OSLog
 struct MigraineTrackerApp: App {
     private static let logger = Logger(subsystem: "MigraineTracker", category: "Persistence")
     private let modelContainer: ModelContainer
+    private let appContainer: AppContainer
     private let appLogStore: AppLogStore
     @State private var syncCoordinator: SyncCoordinator
-    @State private var appLogViewModel: AppLogViewModel
 
     init() {
         let schema = Schema(versionedSchema: MigraineTrackerSchemaV2.self)
@@ -28,8 +28,13 @@ struct MigraineTrackerApp: App {
             self.modelContainer = container
             let appLogStore = AppLogStore()
             self.appLogStore = appLogStore
-            _syncCoordinator = State(initialValue: SyncCoordinator(modelContainer: container, appLogStore: appLogStore))
-            _appLogViewModel = State(initialValue: AppLogViewModel(store: appLogStore))
+            let syncCoordinator = SyncCoordinator(modelContainer: container, appLogStore: appLogStore)
+            _syncCoordinator = State(initialValue: syncCoordinator)
+            self.appContainer = AppContainer(
+                modelContainer: container,
+                syncCoordinator: syncCoordinator,
+                appLogStore: appLogStore
+            )
         } catch {
             fatalError("ModelContainer konnte nicht erstellt werden: \(error)")
         }
@@ -37,9 +42,7 @@ struct MigraineTrackerApp: App {
 
     var body: some Scene {
         WindowGroup {
-            AppShellView()
-                .environment(syncCoordinator)
-                .environment(appLogViewModel)
+            AppShellView(appContainer: appContainer)
         }
         .modelContainer(modelContainer)
     }

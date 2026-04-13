@@ -1,13 +1,15 @@
 import SwiftUI
 
 struct AppShellView: View {
+    let appContainer: AppContainer
+
     var body: some View {
         NavigationStack {
-            HistoryView()
+            HistoryView(appContainer: appContainer)
         }
     }
 }
 
 #Preview {
-    AppShellView()
+    Text("Preview nicht verfügbar")
 }
