@@ -1,88 +1,31 @@
-import SwiftData
 import SwiftUI
 
 struct EpisodeEditorView: View {
-    private enum EditorMode {
-        case create
-        case edit
-    }
-
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) private var modelContext
-    @Query(sort: [SortDescriptor(\MedicationDefinition.sortOrder), SortDescriptor(\MedicationDefinition.name)]) private var storedMedicationDefinitions: [MedicationDefinition]
+    @State private var controller: EpisodeEditorController
 
-    private let mode: EditorMode
-    private let episode: Episode?
     private let onSaved: (() -> Void)?
 
-    @State private var type: EpisodeType
-    @State private var intensity: Double
-    @State private var startedAt: Date
-    @State private var endedAtEnabled: Bool
-    @State private var endedAt: Date
-    @State private var painLocation: String
-    @State private var painCharacter: String
-    @State private var notes: String
-    @State private var functionalImpact: String
-    @State private var menstruationStatus: MenstruationStatus
-    @State private var selectedSymptoms: Set<String>
-    @State private var selectedTriggers: Set<String>
-    @State private var medications: [MedicationSelection]
-    @State private var weatherEnabled: Bool
-    @State private var weatherCondition: String
-    @State private var weatherTemperature: String
-    @State private var weatherHumidity: String
-    @State private var weatherPressure: String
-    @State private var weatherSource: String
-    @State private var medicationSearchText = ""
-    @State private var customMedicationEditor: CustomMedicationEditorState?
-    @State private var pendingMedicationDeletion: MedicationDefinition?
-    @State private var saveMessageVisible = false
-    @State private var validationMessage: String?
-
-    private let symptomOptions = [
-        "Übelkeit",
-        "Lichtempfindlichkeit",
-        "Geräuschempfindlichkeit",
-        "Aura",
-        "Kiefer-/Aufbissschmerz",
-        "Pochen, Pulsieren"
-    ]
-    private let triggerOptions = ["Stress", "Schlafmangel", "Alkohol", "Menstruation", "Bildschirmzeit"]
-    private let weatherConditionOptions = ["Wetterumschwung/Wind"]
-    private let customGroupID = "custom-medications"
-    private let customGroupTitle = "Eigene Medikamente"
-    private let customGroupFooter = "Eigene Medikamente werden lokal in SwiftData gespeichert und bleiben in deiner persönlichen Auswahlliste verfügbar."
-
-    init(episode: Episode? = nil, initialStartedAt: Date? = nil, onSaved: (() -> Void)? = nil) {
-        self.episode = episode
+    init(
+        appContainer: AppContainer,
+        episodeID: UUID? = nil,
+        initialStartedAt: Date? = nil,
+        onSaved: (() -> Void)? = nil
+    ) {
         self.onSaved = onSaved
-        self.mode = episode == nil ? .create : .edit
-
-        _type = State(initialValue: episode?.type ?? .unclear)
-        _intensity = State(initialValue: Double(episode?.intensity ?? 5))
-        _startedAt = State(initialValue: episode?.startedAt ?? initialStartedAt ?? .now)
-        _endedAtEnabled = State(initialValue: episode?.endedAt != nil)
-        _endedAt = State(initialValue: episode?.endedAt ?? initialStartedAt ?? .now)
-        _painLocation = State(initialValue: episode?.painLocation ?? "")
-        _painCharacter = State(initialValue: episode?.painCharacter ?? "")
-        _notes = State(initialValue: episode?.notes ?? "")
-        _functionalImpact = State(initialValue: episode?.functionalImpact ?? "")
-        _menstruationStatus = State(initialValue: episode?.menstruationStatus ?? .unknown)
-        _selectedSymptoms = State(initialValue: Set(episode?.symptoms ?? []))
-        _selectedTriggers = State(initialValue: Set(episode?.triggers ?? []))
-        _medications = State(initialValue: episode?.medications.map(MedicationSelection.init) ?? [])
-        _weatherEnabled = State(initialValue: episode?.weatherSnapshot != nil)
-        _weatherCondition = State(initialValue: episode?.weatherSnapshot?.condition ?? "")
-        _weatherTemperature = State(initialValue: EpisodeEditorView.stringValue(for: episode?.weatherSnapshot?.temperature, fractionDigits: 1))
-        _weatherHumidity = State(initialValue: EpisodeEditorView.stringValue(for: episode?.weatherSnapshot?.humidity, fractionDigits: 0))
-        _weatherPressure = State(initialValue: EpisodeEditorView.stringValue(for: episode?.weatherSnapshot?.pressure, fractionDigits: 0))
-        _weatherSource = State(initialValue: episode?.weatherSnapshot?.source ?? "")
+        _controller = State(
+            initialValue: appContainer.makeEpisodeEditorController(
+                episodeID: episodeID,
+                initialStartedAt: initialStartedAt
+            )
+        )
     }
 
     var body: some View {
+        @Bindable var controller = controller
+
         Form {
-            if let validationMessage {
+            if let validationMessage = controller.validationMessage {
                 Section {
                     Label(validationMessage, systemImage: "exclamationmark.triangle.fill")
                         .font(.subheadline)
@@ -92,7 +35,7 @@ struct EpisodeEditorView: View {
             }
 
             Section {
-                Picker("Typ", selection: $type) {
+                Picker("Typ", selection: $controller.draft.type) {
                     ForEach(EpisodeType.allCases) { episodeType in
                         Text(episodeType.rawValue).tag(episodeType)
                     }
@@ -103,62 +46,70 @@ struct EpisodeEditorView: View {
                     HStack {
                         Text("Intensität")
                         Spacer()
-                        Text("\(Int(intensity))/10")
+                        Text("\(controller.draft.intensity)/10")
                             .font(.headline)
                             .monospacedDigit()
                     }
 
-                    IntensityPicker(value: $intensity)
+                    IntensityPicker(value: Binding(
+                        get: { Double(controller.draft.intensity) },
+                        set: { controller.draft.intensity = Int($0) }
+                    ))
                 }
 
-                DatePicker("Beginn", selection: $startedAt, displayedComponents: [.date, .hourAndMinute])
+                DatePicker("Beginn", selection: $controller.draft.startedAt, displayedComponents: [.date, .hourAndMinute])
             } header: {
                 Text("Schneller Eintrag")
             } footer: {
                 Text("Nur Typ, Intensität und Zeitpunkt sind direkt sichtbar. Alles Weitere ist optional.")
             }
 
-            tagSection(title: "Symptome", options: symptomOptions, selection: $selectedSymptoms)
-            tagSection(title: "Trigger", options: triggerOptions, selection: $selectedTriggers)
+            tagSection(title: "Symptome", options: controller.symptomOptions, selection: $controller.draft.selectedSymptoms)
+            tagSection(title: "Trigger", options: controller.triggerOptions, selection: $controller.draft.selectedTriggers)
 
             Section("Notiz") {
-                TextField("Kurz notieren, was auffällt", text: $notes, axis: .vertical)
+                TextField("Kurz notieren, was auffällt", text: $controller.draft.notes, axis: .vertical)
                     .lineLimit(2 ... 5)
             }
 
             Section("Optionale Details") {
                 DisclosureGroup("Weitere Angaben") {
-                    TextField("Schmerzlokalisation", text: $painLocation)
-                    TextField("Schmerzcharakter", text: $painCharacter)
-                    TextField("Funktionelle Einschränkung", text: $functionalImpact)
+                    TextField("Schmerzlokalisation", text: $controller.draft.painLocation)
+                    TextField("Schmerzcharakter", text: $controller.draft.painCharacter)
+                    TextField("Funktionelle Einschränkung", text: $controller.draft.functionalImpact)
 
-                    Picker("Menstruationsstatus", selection: $menstruationStatus) {
+                    Picker("Menstruationsstatus", selection: $controller.draft.menstruationStatus) {
                         ForEach(MenstruationStatus.allCases) { status in
                             Text(status.rawValue).tag(status)
                         }
                     }
 
-                    Toggle("Ende angeben", isOn: $endedAtEnabled.animation())
-                    if endedAtEnabled {
-                        DatePicker("Ende", selection: $endedAt, in: startedAt..., displayedComponents: [.date, .hourAndMinute])
+                    Toggle("Ende angeben", isOn: $controller.draft.endedAtEnabled.animation())
+                    if controller.draft.endedAtEnabled {
+                        DatePicker(
+                            "Ende",
+                            selection: $controller.draft.endedAt,
+                            in: controller.draft.startedAt...,
+                            displayedComponents: [.date, .hourAndMinute]
+                        )
                     }
                 }
             }
 
             Section {
-                Toggle("Wetterdaten manuell ergänzen", isOn: $weatherEnabled.animation())
+                Toggle("Wetterdaten manuell ergänzen", isOn: $controller.draft.weather.isEnabled.animation())
 
-                if weatherEnabled {
+                if controller.draft.weather.isEnabled {
                     weatherConditionSection
 
-                    TextField("Wetterlage, z. B. sonnig oder Regen", text: $weatherCondition)
-                    TextField("Temperatur in °C", text: $weatherTemperature)
+                    TextField("Wetterlage, z. B. sonnig oder Regen", text: $controller.draft.weather.condition)
+                    TextField("Temperatur in °C", text: $controller.draft.weather.temperatureText)
                         .keyboardType(.decimalPad)
-                    TextField("Luftfeuchte in %", text: $weatherHumidity)
+                    TextField("Luftfeuchte in %", text: $controller.draft.weather.humidityText)
                         .keyboardType(.decimalPad)
-                    TextField("Luftdruck in hPa", text: $weatherPressure)
+                    TextField("Luftdruck in hPa", text: $controller.draft.weather.pressureText)
                         .keyboardType(.decimalPad)
-                    TextField("Quelle, z. B. manuell", text: $weatherSource)
+                    TextField("Quelle, z. B. manuell", text: $controller.draft.weather.source)
                 }
             } header: {
                 Text("Wetter")
@@ -167,11 +118,11 @@ struct EpisodeEditorView: View {
             }
 
             Section("Medikamente") {
-                TextField("Medikament nach Namen filtern", text: $medicationSearchText)
+                TextField("Medikament nach Namen filtern", text: $controller.medicationSearchText)
                     .textInputAutocapitalization(.words)
                     .autocorrectionDisabled()
 
-                if filteredMedicationGroups.isEmpty {
+                if controller.filteredMedicationGroups.isEmpty {
                     ContentUnavailableView(
                         "Kein Medikament gefunden",
                         systemImage: "magnifyingglass",
@@ -179,7 +130,7 @@ struct EpisodeEditorView: View {
                     )
                 } else {
                     VStack(alignment: .leading, spacing: 16) {
-                        ForEach(filteredMedicationGroups) { group in
+                        ForEach(controller.filteredMedicationGroups) { group in
                             VStack(alignment: .leading, spacing: 10) {
                                 Text(group.title)
                                     .font(.headline)
@@ -192,13 +143,13 @@ struct EpisodeEditorView: View {
                                     ForEach(group.items) { definition in
                                         MedicationDefinitionRow(
                                             definition: definition,
-                                            isSelected: isMedicationSelected(definition),
-                                            quantity: quantity(for: definition),
-                                            onToggle: { toggleMedicationSelection(for: definition) },
-                                            onDecrease: { decrementMedicationQuantity(for: definition) },
-                                            onIncrease: { incrementMedicationQuantity(for: definition) },
-                                            onEdit: definition.isCustom ? { presentEditor(for: definition) } : nil,
-                                            onDelete: definition.isCustom ? { pendingMedicationDeletion = definition } : nil
+                                            isSelected: controller.isMedicationSelected(definition),
+                                            quantity: controller.quantity(for: definition),
+                                            onToggle: { controller.toggleMedicationSelection(for: definition) },
+                                            onDecrease: { controller.decrementMedicationQuantity(for: definition) },
+                                            onIncrease: { controller.incrementMedicationQuantity(for: definition) },
+                                            onEdit: definition.isCustom ? { controller.presentEditor(for: definition) } : nil,
+                                            onDelete: definition.isCustom ? { controller.pendingMedicationDeletion = definition } : nil
                                         )
                                     }
                                 }
@@ -217,7 +168,7 @@ struct EpisodeEditorView: View {
                     .padding(.vertical, 4)
                 }
 
-                if selectedMedications.isEmpty {
+                if controller.selectedMedications.isEmpty {
                     Text("Nur ergänzen, wenn du heute etwas genommen hast.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
@@ -227,29 +178,31 @@ struct EpisodeEditorView: View {
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.secondary)
 
-                        ForEach(selectedMedications) { medication in
+                        ForEach(controller.selectedMedications) { medication in
                             SelectedMedicationSummaryRow(draft: medication) {
-                                removeMedicationSelection(id: medication.id)
+                                controller.removeMedicationSelection(id: medication.id)
                             }
                         }
                     }
                 }
 
                 Button {
-                    presentEditor(for: nil)
+                    controller.presentEditor(for: nil)
                 } label: {
                     Label("Eigenes Medikament hinzufügen", systemImage: "plus.circle")
                 }
             }
 
             Section {
-                Button(mode == .create ? "Episode speichern" : "Änderungen speichern") {
-                    saveEpisode()
+                Button(controller.mode == .create ? "Episode speichern" : "Änderungen speichern") {
+                    controller.save(onSaved: onSaved) {
+                        dismiss()
+                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
             }
         }
-        .navigationTitle(mode == .create ? "Erfassen" : "Episode bearbeiten")
+        .navigationTitle(controller.mode == .create ? "Erfassen" : "Episode bearbeiten")
         .toolbar {
             if showsDismissButton {
                 ToolbarItem(placement: dismissButtonPlacement) {
@@ -260,18 +213,18 @@ struct EpisodeEditorView: View {
             }
         }
         .scrollDismissesKeyboard(.interactively)
-        .alert("Episode gespeichert", isPresented: $saveMessageVisible) {
+        .alert("Episode gespeichert", isPresented: $controller.saveMessageVisible) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text("Die Episode wurde lokal in SwiftData gespeichert.")
+            Text("Die Episode wurde lokal gespeichert.")
         }
-        .sheet(item: $customMedicationEditor) { editorState in
+        .sheet(item: $controller.customMedicationEditor) { editorState in
             NavigationStack {
                 CustomMedicationEditorSheet(
                     state: editorState,
-                    onCancel: { customMedicationEditor = nil },
+                    onCancel: { controller.customMedicationEditor = nil },
                     onSave: { draft in
-                        saveCustomMedication(from: draft)
+                        controller.saveCustomMedication(from: draft)
                     }
                 )
             }
@@ -280,20 +233,20 @@ struct EpisodeEditorView: View {
         .alert(
             "Eigenes Medikament löschen?",
             isPresented: Binding(
-                get: { pendingMedicationDeletion != nil },
+                get: { controller.pendingMedicationDeletion != nil },
                 set: { isPresented in
                     if !isPresented {
-                        pendingMedicationDeletion = nil
+                        controller.pendingMedicationDeletion = nil
                     }
                 }
             ),
-            presenting: pendingMedicationDeletion
+            presenting: controller.pendingMedicationDeletion
         ) { definition in
             Button("Löschen", role: .destructive) {
-                deleteCustomMedication(definition)
+                controller.deleteCustomMedication(definition)
             }
             Button("Abbrechen", role: .cancel) {
-                pendingMedicationDeletion = nil
+                controller.pendingMedicationDeletion = nil
             }
         } message: { definition in
             Text("\(definition.name) wird aus SwiftData entfernt.")
@@ -345,11 +298,11 @@ struct EpisodeEditorView: View {
                 .foregroundStyle(.secondary)
 
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 10)], spacing: 10) {
-                ForEach(weatherConditionOptions, id: \.self) { option in
-                    let isSelected = weatherCondition == option
+                ForEach(controller.weatherConditionOptions, id: \.self) { option in
+                    let isSelected = controller.draft.weather.condition == option
 
                     Button {
-                        weatherCondition = isSelected ? "" : option
+                        controller.draft.weather.condition = isSelected ? "" : option
                     } label: {
                         HStack(spacing: 8) {
                             Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
@@ -374,9 +327,8 @@ struct EpisodeEditorView: View {
             }
         }
     }
-
     private var showsDismissButton: Bool {
-        onSaved != nil || episode != nil
+        onSaved != nil || controller.mode == .edit
     }
 
     private var dismissButtonPlacement: ToolbarItemPlacement {
@@ -385,369 +337,6 @@ struct EpisodeEditorView: View {
         #else
         .topBarLeading
         #endif
-    }
-
-    private func saveEpisode() {
-        validationMessage = nil
-
-        if endedAtEnabled, endedAt < startedAt {
-            validationMessage = "Das Ende darf nicht vor dem Beginn liegen."
-            return
-        }
-
-        let parsedWeather: ValidatedWeatherSnapshot?
-
-        do {
-            parsedWeather = try validatedWeatherSnapshot()
-        } catch {
-            validationMessage = error.localizedDescription
-            return
-        }
-
-        let target = episode ?? Episode(startedAt: startedAt, intensity: Int(intensity))
-
-        target.markUpdated()
-        target.type = type
-        target.startedAt = startedAt
-        target.endedAt = endedAtEnabled ? endedAt : nil
-        target.intensity = Int(intensity)
-        target.painLocation = painLocation.trimmingCharacters(in: .whitespacesAndNewlines)
-        target.painCharacter = painCharacter.trimmingCharacters(in: .whitespacesAndNewlines)
-        target.notes = notes.trimmingCharacters(in: .whitespacesAndNewlines)
-        target.functionalImpact = functionalImpact.trimmingCharacters(in: .whitespacesAndNewlines)
-        target.menstruationStatus = menstruationStatus
-        target.symptoms = Array(selectedSymptoms).sorted()
-        target.triggers = Array(selectedTriggers).sorted()
-
-        for medication in target.medications {
-            modelContext.delete(medication)
-        }
-
-        if let existingWeatherSnapshot = target.weatherSnapshot {
-            modelContext.delete(existingWeatherSnapshot)
-            target.weatherSnapshot = nil
-        }
-
-        if episode == nil {
-            modelContext.insert(target)
-        }
-
-        for draft in selectedMedications {
-            let entry = MedicationEntry(
-                name: draft.name,
-                category: draft.category,
-                dosage: draft.dosage,
-                quantity: draft.quantity,
-                takenAt: startedAt,
-                effectiveness: .partial,
-                episode: target
-            )
-            target.medications.append(entry)
-        }
-
-        if let parsedWeather {
-            let snapshot = WeatherSnapshot(
-                recordedAt: startedAt,
-                temperature: parsedWeather.temperature,
-                condition: parsedWeather.condition,
-                humidity: parsedWeather.humidity,
-                pressure: parsedWeather.pressure,
-                source: parsedWeather.source,
-                episode: target
-            )
-            target.weatherSnapshot = snapshot
-        }
-
-        do {
-            try modelContext.save()
-            validationMessage = nil
-
-            if mode == .create, onSaved == nil {
-                resetForm()
-                saveMessageVisible = true
-            } else {
-                onSaved?()
-                dismiss()
-            }
-        } catch {
-            validationMessage = "Speichern fehlgeschlagen. Bitte versuche es erneut."
-        }
-    }
-
-    private func resetForm() {
-        type = .unclear
-        intensity = 5
-        startedAt = .now
-        endedAtEnabled = false
-        endedAt = .now
-        painLocation = ""
-        painCharacter = ""
-        notes = ""
-        functionalImpact = ""
-        menstruationStatus = .unknown
-        selectedSymptoms = []
-        selectedTriggers = []
-        medications = []
-        weatherEnabled = false
-        weatherCondition = ""
-        weatherTemperature = ""
-        weatherHumidity = ""
-        weatherPressure = ""
-        weatherSource = ""
-        medicationSearchText = ""
-        customMedicationEditor = nil
-        pendingMedicationDeletion = nil
-        validationMessage = nil
-    }
-
-    private var filteredMedicationGroups: [MedicationDefinitionGroup] {
-        let query = medicationSearchText.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        guard !query.isEmpty else {
-            return allMedicationGroups
-        }
-
-        return allMedicationGroups.compactMap { group in
-            let items = group.items.filter { $0.name.localizedCaseInsensitiveContains(query) }
-
-            guard !items.isEmpty else {
-                return nil
-            }
-
-            return MedicationDefinitionGroup(
-                id: group.id,
-                title: group.title,
-                footer: group.footer,
-                items: items
-            )
-        }
-    }
-
-    private var allMedicationGroups: [MedicationDefinitionGroup] {
-        let knownKeys = Set(medicationDefinitions.map(\.selectionKey))
-        let persistedGroups = Dictionary(grouping: medicationDefinitions) { $0.groupID }
-        let sortedGroupIDs = persistedGroups.keys.sorted { lhs, rhs in
-            let leftOrder = persistedGroups[lhs]?.map(\.sortOrder).min() ?? .max
-            let rightOrder = persistedGroups[rhs]?.map(\.sortOrder).min() ?? .max
-            return leftOrder < rightOrder
-        }
-
-        var groups = sortedGroupIDs.compactMap { groupID -> MedicationDefinitionGroup? in
-            guard let items = persistedGroups[groupID], let first = items.first else {
-                return nil
-            }
-
-            return MedicationDefinitionGroup(
-                id: groupID,
-                title: first.groupTitle,
-                footer: first.groupFooter,
-                items: items.sorted { $0.sortOrder < $1.sortOrder }
-            )
-        }
-
-        let orphanSelections = medications.compactMap { selection -> MedicationDefinition? in
-            guard !knownKeys.contains(selection.selectionKey) else {
-                return nil
-            }
-
-            return MedicationDefinition(
-                catalogKey: "selection:\(selection.selectionKey)",
-                groupID: customGroupID,
-                groupTitle: customGroupTitle,
-                groupFooter: customGroupFooter,
-                name: selection.name,
-                category: selection.category,
-                suggestedDosage: selection.dosage,
-                sortOrder: Int.max - 1,
-                isCustom: true
-            )
-        }
-
-        if !orphanSelections.isEmpty {
-            groups.removeAll { $0.id == customGroupID }
-            let customItems = (persistedGroups[customGroupID] ?? []) + orphanSelections
-            let deduped = Dictionary(uniqueKeysWithValues: customItems.map { ($0.selectionKey, $0) }).values
-                .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
-
-            groups.append(
-                MedicationDefinitionGroup(
-                    id: customGroupID,
-                    title: customGroupTitle,
-                    footer: customGroupFooter,
-                    items: deduped
-                )
-            )
-        }
-
-        return groups
-    }
-
-    private var selectedMedications: [MedicationSelection] {
-        medications
-            .filter(\.isSelected)
-            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
-    }
-
-    private func isMedicationSelected(_ definition: MedicationDefinition) -> Bool {
-        medications.contains { $0.selectionKey == definition.selectionKey && $0.isSelected }
-    }
-
-    private func quantity(for definition: MedicationDefinition) -> Int {
-        medications.first(where: { $0.selectionKey == definition.selectionKey })?.quantity ?? 1
-    }
-
-    private func toggleMedicationSelection(for definition: MedicationDefinition) {
-        if let index = medications.firstIndex(where: { $0.selectionKey == definition.selectionKey }) {
-            medications[index].isSelected.toggle()
-            medications[index].quantity = max(1, medications[index].quantity)
-        } else {
-            medications.append(MedicationSelection(definition: definition))
-        }
-    }
-
-    private func incrementMedicationQuantity(for definition: MedicationDefinition) {
-        if let index = medications.firstIndex(where: { $0.selectionKey == definition.selectionKey }) {
-            medications[index].quantity += 1
-            medications[index].isSelected = true
-        } else {
-            medications.append(MedicationSelection(definition: definition))
-        }
-    }
-
-    private func decrementMedicationQuantity(for definition: MedicationDefinition) {
-        guard let index = medications.firstIndex(where: { $0.selectionKey == definition.selectionKey }) else {
-            return
-        }
-
-        medications[index].quantity = max(1, medications[index].quantity - 1)
-        medications[index].isSelected = true
-    }
-
-    private func removeMedicationSelection(id: UUID) {
-        guard let index = medications.firstIndex(where: { $0.id == id }) else {
-            return
-        }
-
-        medications[index].isSelected = false
-        medications[index].quantity = 1
-    }
-
-    private func presentEditor(for definition: MedicationDefinition?) {
-        customMedicationEditor = CustomMedicationEditorState(definition: definition)
-    }
-
-    private func saveCustomMedication(from draft: CustomMedicationDraft) {
-        let trimmedName = draft.name.trimmingCharacters(in: .whitespacesAndNewlines)
-        let trimmedDosage = draft.dosage.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        guard !trimmedName.isEmpty else {
-            validationMessage = "Bitte gib einen Namen für das eigene Medikament ein."
-            return
-        }
-
-        if let existing = medicationDefinitions.first(where: {
-            $0.catalogKey != draft.id &&
-            $0.name.compare(trimmedName, options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame
-        }) {
-            toggleMedicationSelection(for: existing)
-            customMedicationEditor = nil
-            validationMessage = nil
-            return
-        }
-
-        let existingSelectionKey = draft.originalSelectionKey
-        let definition: MedicationDefinition
-
-        if let existingDefinition = medicationDefinitions.first(where: { $0.catalogKey == draft.id }) {
-            definition = existingDefinition
-            definition.markUpdated()
-            definition.name = trimmedName
-            definition.category = draft.category
-            definition.suggestedDosage = trimmedDosage
-        } else {
-            let nextSortOrder = (medicationDefinitions.map(\.sortOrder).max() ?? 0) + 1
-            definition = MedicationDefinition(
-                catalogKey: "custom:\(UUID().uuidString)",
-                groupID: customGroupID,
-                groupTitle: customGroupTitle,
-                groupFooter: customGroupFooter,
-                name: trimmedName,
-                category: draft.category,
-                suggestedDosage: trimmedDosage,
-                sortOrder: nextSortOrder,
-                isCustom: true
-            )
-            modelContext.insert(definition)
-        }
-
-        do {
-            try modelContext.save()
-            customMedicationEditor = nil
-            validationMessage = nil
-
-            if let existingSelectionKey {
-                updateMedicationSelection(
-                    from: existingSelectionKey,
-                    to: definition
-                )
-            } else {
-                toggleMedicationSelection(for: definition)
-            }
-        } catch {
-            validationMessage = "Eigenes Medikament konnte nicht gespeichert werden."
-        }
-    }
-
-    private func updateMedicationSelection(from oldSelectionKey: String, to definition: MedicationDefinition) {
-        guard let index = medications.firstIndex(where: { $0.selectionKey == oldSelectionKey }) else {
-            return
-        }
-
-        medications[index].selectionKey = definition.selectionKey
-        medications[index].name = definition.name
-        medications[index].category = definition.category
-        medications[index].dosage = definition.suggestedDosage
-        medications[index].isSelected = true
-    }
-
-    private func deleteCustomMedication(_ definition: MedicationDefinition) {
-        medications.removeAll { $0.selectionKey == definition.selectionKey }
-        definition.markDeleted()
-
-        do {
-            try modelContext.save()
-            pendingMedicationDeletion = nil
-            validationMessage = nil
-        } catch {
-            validationMessage = "Eigenes Medikament konnte nicht gelöscht werden."
-        }
-    }
-
-    private func validatedWeatherSnapshot() throws -> ValidatedWeatherSnapshot? {
-        guard weatherEnabled else {
-            return nil
-        }
-
-        return try WeatherInputValidator.validate(
-            isEnabled: weatherEnabled,
-            condition: weatherCondition,
-            temperatureText: weatherTemperature,
-            humidityText: weatherHumidity,
-            pressureText: weatherPressure,
-            source: weatherSource
-        )
-    }
-
-    private static func stringValue(for value: Double?, fractionDigits: Int) -> String {
-        guard let value else {
-            return ""
-        }
-
-        return value.formatted(.number.precision(.fractionLength(fractionDigits)))
-    }
-
-    private var medicationDefinitions: [MedicationDefinition] {
-        storedMedicationDefinitions.filter { !$0.isDeleted }
     }
 }
 
@@ -780,57 +369,8 @@ private struct IntensityPicker: View {
     }
 }
 
-private struct MedicationDefinitionGroup: Identifiable {
-    let id: String
-    let title: String
-    let footer: String?
-    let items: [MedicationDefinition]
-}
-
-private struct MedicationSelection: Identifiable {
-    let id: UUID
-    var selectionKey: String
-    var name: String
-    var category: MedicationCategory
-    var dosage: String
-    var quantity: Int
-    var isSelected: Bool
-
-    init(entry: MedicationEntry) {
-        self.id = entry.id
-        self.name = entry.name
-        self.category = entry.category
-        self.dosage = entry.dosage
-        self.quantity = max(1, entry.quantity)
-        self.isSelected = true
-        self.selectionKey = MedicationSelection.makeSelectionKey(
-            name: entry.name,
-            category: entry.category,
-            dosage: entry.dosage
-        )
-    }
-
-    init(definition: MedicationDefinition) {
-        self.id = UUID()
-        self.name = definition.name
-        self.category = definition.category
-        self.dosage = definition.suggestedDosage
-        self.quantity = 1
-        self.isSelected = true
-        self.selectionKey = definition.selectionKey
-    }
-
-    private static func makeSelectionKey(name: String, category: MedicationCategory, dosage: String) -> String {
-        [
-            name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
-            category.rawValue,
-            dosage.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        ].joined(separator: "|")
-    }
-}
-
 private struct MedicationDefinitionRow: View {
-    let definition: MedicationDefinition
+    let definition: MedicationDefinitionRecord
     let isSelected: Bool
     let quantity: Int
     let onToggle: () -> Void
@@ -924,47 +464,19 @@ private struct MedicationDefinitionRow: View {
     }
 }
 
-private struct CustomMedicationEditorState: Identifiable {
-    let id: String
-    let originalSelectionKey: String?
-    let initialName: String
-    let initialCategory: MedicationCategory
-    let initialDosage: String
-
-    init(definition: MedicationDefinition?) {
-        id = definition?.catalogKey ?? UUID().uuidString
-        originalSelectionKey = definition?.selectionKey
-        initialName = definition?.name ?? ""
-        initialCategory = definition?.category ?? .other
-        initialDosage = definition?.suggestedDosage ?? ""
-    }
-
-    var isEditing: Bool {
-        originalSelectionKey != nil
-    }
-}
-
-private struct CustomMedicationDraft {
-    let id: String
-    let originalSelectionKey: String?
-    let name: String
-    let category: MedicationCategory
-    let dosage: String
-}
-
 private struct CustomMedicationEditorSheet: View {
-    let state: CustomMedicationEditorState
+    let state: CustomMedicationEditorSheetState
     let onCancel: () -> Void
-    let onSave: (CustomMedicationDraft) -> Void
+    let onSave: (CustomMedicationDefinitionDraft) -> Void
 
     @State private var name: String
     @State private var category: MedicationCategory
     @State private var dosage: String
 
     init(
-        state: CustomMedicationEditorState,
+        state: CustomMedicationEditorSheetState,
         onCancel: @escaping () -> Void,
-        onSave: @escaping (CustomMedicationDraft) -> Void
+        onSave: @escaping (CustomMedicationDefinitionDraft) -> Void
     ) {
         self.state = state
         self.onCancel = onCancel
@@ -1002,7 +514,7 @@ private struct CustomMedicationEditorSheet: View {
             ToolbarItem(placement: .confirmationAction) {
                 Button(state.isEditing ? "Speichern" : "Hinzufügen") {
                     onSave(
-                        CustomMedicationDraft(
+                        CustomMedicationDefinitionDraft(
                             id: state.id,
                             originalSelectionKey: state.originalSelectionKey,
                             name: name,
@@ -1017,7 +529,7 @@ private struct CustomMedicationEditorSheet: View {
 }
 
 private struct SelectedMedicationSummaryRow: View {
-    let draft: MedicationSelection
+    let draft: MedicationSelectionDraft
     let onRemove: () -> Void
 
     var body: some View {
@@ -1056,7 +568,5 @@ private struct SelectedMedicationSummaryRow: View {
 }
 
 #Preview {
-    NavigationStack {
-        EpisodeEditorView()
-    }
+    Text("Preview nicht verfügbar")
 }

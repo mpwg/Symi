@@ -1,0 +1,223 @@
+import Foundation
+import Testing
+@testable import MigraineTracker
+
+struct CoreArchitectureTests {
+    @Test
+    func saveEpisodeUseCaseRejectsInvalidDateRange() {
+        let repository = EpisodeRepositoryMock()
+        let useCase = SaveEpisodeUseCase(repository: repository)
+        var draft = EpisodeDraft.makeNew()
+        draft.endedAtEnabled = true
+        draft.startedAt = Date(timeIntervalSince1970: 2_000)
+        draft.endedAt = Date(timeIntervalSince1970: 1_000)
+
+        #expect(throws: EpisodeSaveError.invalidDateRange) {
+            try useCase.execute(draft)
+        }
+    }
+
+    @Test
+    func saveEpisodeUseCasePassesValidatedWeatherToRepository() throws {
+        let repository = EpisodeRepositoryMock()
+        let useCase = SaveEpisodeUseCase(repository: repository)
+        var draft = EpisodeDraft.makeNew()
+        draft.weather = WeatherInputDraft(
+            isEnabled: true,
+            condition: "Regen",
+            temperatureText: "18,5",
+            humidityText: "72",
+            pressureText: "1004",
+            source: ""
+        )
+
+        let savedID = try useCase.execute(draft)
+
+        #expect(savedID == repository.savedDraftID)
+        #expect(repository.lastValidatedWeather == ValidatedWeatherSnapshot(
+            condition: "Regen",
+            temperature: 18.5,
+            humidity: 72,
+            pressure: 1004,
+            source: "Manuell"
+        ))
+    }
+
+    @Test
+    func loadHistoryMonthUseCaseGroupsByCalendarDay() throws {
+        let repository = EpisodeRepositoryMock()
+        let firstDay = Date(timeIntervalSince1970: 10_000)
+        let sameDayLater = firstDay.addingTimeInterval(60 * 60)
+        let secondDay = firstDay.addingTimeInterval(60 * 60 * 24)
+        repository.monthRecords = [
+            makeEpisode(id: UUID(), startedAt: firstDay, intensity: 5),
+            makeEpisode(id: UUID(), startedAt: sameDayLater, intensity: 7),
+            makeEpisode(id: UUID(), startedAt: secondDay, intensity: 3)
+        ]
+
+        let result = try LoadHistoryMonthUseCase(repository: repository).execute(month: firstDay)
+
+        #expect(result.episodesByDay.count == 2)
+        #expect(result.episodesByDay[Calendar.current.startOfDay(for: firstDay)]?.count == 2)
+        #expect(result.episodesByDay[Calendar.current.startOfDay(for: secondDay)]?.count == 1)
+    }
+
+    @Test
+    func loadSettingsUseCaseCountsActiveTrashAndConflicts() throws {
+        let episodeRepository = EpisodeRepositoryMock()
+        let medicationRepository = MedicationCatalogRepositoryMock()
+        let syncService = SyncServiceMock()
+        episodeRepository.recentRecords = [
+            makeEpisode(id: UUID(), startedAt: .now, intensity: 5),
+            makeEpisode(id: UUID(), startedAt: .now.addingTimeInterval(-1_000), intensity: 3)
+        ]
+        episodeRepository.deletedRecords = [
+            makeEpisode(id: UUID(), startedAt: .now.addingTimeInterval(-2_000), intensity: 7, deletedAt: .now)
+        ]
+        medicationRepository.deletedDefinitions = [
+            MedicationDefinitionRecord(
+                catalogKey: "custom:1",
+                groupID: "custom-medications",
+                groupTitle: "Eigene Medikamente",
+                groupFooter: nil,
+                name: "Sumatriptan",
+                category: .triptan,
+                suggestedDosage: "50 mg",
+                sortOrder: 1,
+                isCustom: true,
+                isDeleted: true
+            )
+        ]
+        syncService.conflictsStorage = [
+            SyncConflict(
+                documentID: "episode-1",
+                entityType: .episode,
+                local: sampleEnvelope(),
+                remote: sampleEnvelope(),
+                conflictingFields: ["notes"]
+            )
+        ]
+
+        let summary = try LoadSettingsUseCase(
+            episodeRepository: episodeRepository,
+            medicationRepository: medicationRepository,
+            syncService: syncService
+        ).execute()
+
+        #expect(summary.activeEpisodeCount == 2)
+        #expect(summary.trashCount == 2)
+        #expect(summary.conflictCount == 1)
+    }
+}
+
+@MainActor
+private final class EpisodeRepositoryMock: EpisodeRepository {
+    var recentRecords: [EpisodeRecord] = []
+    var monthRecords: [EpisodeRecord] = []
+    var dayRecords: [EpisodeRecord] = []
+    var loadedRecord: EpisodeRecord?
+    var deletedRecords: [EpisodeRecord] = []
+    var lastSavedDraft: EpisodeDraft?
+    var lastValidatedWeather: ValidatedWeatherSnapshot?
+    let savedDraftID = UUID()
+
+    func fetchRecent() throws -> [EpisodeRecord] { recentRecords }
+    func fetchByDay(_ day: Date) throws -> [EpisodeRecord] { dayRecords }
+    func fetchByMonth(_ month: Date) throws -> [EpisodeRecord] { monthRecords }
+    func load(id: UUID) throws -> EpisodeRecord? { loadedRecord }
+    func save(draft: EpisodeDraft, validatedWeather: ValidatedWeatherSnapshot?) throws -> UUID {
+        lastSavedDraft = draft
+        lastValidatedWeather = validatedWeather
+        return savedDraftID
+    }
+    func softDelete(id: UUID) throws {}
+    func restore(id: UUID) throws {}
+    func fetchDeleted() throws -> [EpisodeRecord] { deletedRecords }
+}
+
+@MainActor
+private final class MedicationCatalogRepositoryMock: MedicationCatalogRepository {
+    var definitions: [MedicationDefinitionRecord] = []
+    var deletedDefinitions: [MedicationDefinitionRecord] = []
+
+    func fetchDefinitions(searchText: String?) throws -> [MedicationDefinitionRecord] { definitions }
+    func saveCustomDefinition(_ draft: CustomMedicationDefinitionDraft) throws -> MedicationDefinitionRecord {
+        MedicationDefinitionRecord(
+            catalogKey: draft.id,
+            groupID: "custom-medications",
+            groupTitle: "Eigene Medikamente",
+            groupFooter: nil,
+            name: draft.name,
+            category: draft.category,
+            suggestedDosage: draft.dosage,
+            sortOrder: 1,
+            isCustom: true,
+            isDeleted: false
+        )
+    }
+    func softDeleteCustomDefinition(catalogKey: String) throws {}
+    func fetchDeletedDefinitions() throws -> [MedicationDefinitionRecord] { deletedDefinitions }
+}
+
+@MainActor
+private final class SyncServiceMock: SyncService {
+    var isEnabled = false
+    var status = SyncStatusSnapshot()
+    var conflictsStorage: [SyncConflict] = []
+    var conflicts: [SyncConflict] { conflictsStorage }
+
+    func setSyncEnabled(_ enabled: Bool) { isEnabled = enabled }
+    func refreshStatus() {}
+    func syncNow() async {}
+    func retryLastError() async {}
+    func resolveConflictKeepingLocal(_ conflict: SyncConflict) {}
+    func resolveConflictUsingRemote(_ conflict: SyncConflict) {}
+}
+
+private func makeEpisode(id: UUID, startedAt: Date, intensity: Int, deletedAt: Date? = nil) -> EpisodeRecord {
+    EpisodeRecord(
+        id: id,
+        startedAt: startedAt,
+        endedAt: nil,
+        updatedAt: startedAt,
+        deletedAt: deletedAt,
+        type: .migraine,
+        intensity: intensity,
+        painLocation: "",
+        painCharacter: "",
+        notes: "",
+        symptoms: [],
+        triggers: [],
+        functionalImpact: "",
+        menstruationStatus: .unknown,
+        medications: [],
+        weather: nil
+    )
+}
+
+private func sampleEnvelope() -> SyncDocumentEnvelope {
+    SyncDocumentEnvelope(
+        documentID: "episode-1",
+        entityType: .episode,
+        modifiedAt: .now,
+        authorDeviceID: "device-a",
+        payload: .episode(
+            SyncEpisodePayload(
+                id: "episode-1",
+                startedAt: .now,
+                endedAt: nil,
+                type: "Migräne",
+                intensity: 5,
+                painLocation: "",
+                painCharacter: "",
+                notes: "",
+                symptoms: [],
+                triggers: [],
+                functionalImpact: "",
+                menstruationStatus: MenstruationStatus.unknown.rawValue,
+                medications: [],
+                weatherSnapshot: nil
+            )
+        )
+    )
+}

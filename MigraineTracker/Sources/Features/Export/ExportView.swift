@@ -1,18 +1,20 @@
-import SwiftData
 import SwiftUI
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(SyncCoordinator.self) private var syncCoordinator
-    @Environment(AppLogViewModel.self) private var appLogViewModel
-    @Query(sort: [SortDescriptor(\Episode.startedAt, order: .reverse)]) private var storedEpisodes: [Episode]
-    @Query(sort: [SortDescriptor(\MedicationDefinition.name)]) private var storedDefinitions: [MedicationDefinition]
+    let appContainer: AppContainer
+    @State private var controller: SettingsController
+
+    init(appContainer: AppContainer) {
+        self.appContainer = appContainer
+        _controller = State(initialValue: appContainer.makeSettingsController())
+    }
 
     var body: some View {
         List {
             Section {
                 NavigationLink {
-                    SyncStatusView()
+                    SyncStatusView(controller: controller)
                 } label: {
                     VStack(alignment: .leading, spacing: 10) {
                         HStack {
@@ -26,28 +28,28 @@ struct SettingsView: View {
                             .foregroundStyle(.secondary)
 
                         HStack(spacing: 16) {
-                            statValue(title: "Ausstehend", value: "\(syncCoordinator.status.queuedUpdates)")
-                            statValue(title: "Ungesynct", value: "\(syncCoordinator.status.unsyncedRecords)")
-                            statValue(title: "Konflikte", value: "\(syncCoordinator.conflicts.count)")
+                            statValue(title: "Ausstehend", value: "\(controller.syncStatus.queuedUpdates)")
+                            statValue(title: "Ungesynct", value: "\(controller.syncStatus.unsyncedRecords)")
+                            statValue(title: "Konflikte", value: "\(controller.conflicts.count)")
                         }
                     }
                     .padding(.vertical, 6)
-            }
+                }
 
                 Toggle("Sync aktivieren", isOn: Binding(
-                    get: { syncCoordinator.isEnabled },
-                    set: { syncCoordinator.setSyncEnabled($0) }
+                    get: { controller.isSyncEnabled },
+                    set: { controller.setSyncEnabled($0) }
                 ))
                 .tint(.green)
 
                 NavigationLink {
-                    ManageCloudDataView()
+                    ManageCloudDataView(appContainer: appContainer, controller: controller)
                 } label: {
                     Label("Cloud-Daten verwalten", systemImage: "icloud")
                 }
 
                 NavigationLink {
-                    SyncLogView()
+                    SyncLogView(controller: controller)
                 } label: {
                     VStack(alignment: .leading, spacing: 4) {
                         Label("Sync-Protokoll", systemImage: "text.document")
@@ -58,14 +60,13 @@ struct SettingsView: View {
                 }
             } header: {
                 Text("Synchronisation")
-            }
-            footer: {
+            } footer: {
                 Text("Die App bleibt lokal vollständig nutzbar. iCloud-Sync ist optional, arbeitet getrennt von SwiftData und kann jederzeit wieder deaktiviert werden.")
             }
 
             Section("Allgemein") {
                 NavigationLink {
-                    DataExportView()
+                    DataExportView(appContainer: appContainer)
                 } label: {
                     Label("Datenexport", systemImage: "square.and.arrow.up")
                 }
@@ -78,9 +79,9 @@ struct SettingsView: View {
             }
 
             Section("Übersicht") {
-                LabeledContent("Aktive Episoden", value: "\(storedEpisodes.filter { !$0.isDeleted }.count)")
-                LabeledContent("Papierkorb", value: "\(storedEpisodes.filter(\.isDeleted).count + storedDefinitions.filter(\.isDeleted).count)")
-                LabeledContent("Konflikte", value: "\(syncCoordinator.conflicts.count)")
+                LabeledContent("Aktive Episoden", value: "\(controller.summary.activeEpisodeCount)")
+                LabeledContent("Papierkorb", value: "\(controller.summary.trashCount)")
+                LabeledContent("Konflikte", value: "\(controller.summary.conflictCount)")
             }
         }
         .navigationTitle("Einstellungen")
@@ -92,17 +93,17 @@ struct SettingsView: View {
             }
         }
         .task {
-            syncCoordinator.refreshStatus()
-            appLogViewModel.refresh(limit: 1)
+            controller.load()
+            controller.refreshLog(limit: 1)
         }
         .refreshable {
-            syncCoordinator.refreshStatus()
-            appLogViewModel.refresh(limit: 1)
+            controller.load()
+            controller.refreshLog(limit: 1)
         }
     }
 
     private var statusColor: Color {
-        switch syncCoordinator.status.state {
+        switch controller.syncStatus.state {
         case .ready:
             .green
         case .syncing:
@@ -117,19 +118,19 @@ struct SettingsView: View {
     }
 
     private var statusSubtitle: String {
-        if let lastError = syncCoordinator.status.lastError, !lastError.isEmpty {
+        if let lastError = controller.syncStatus.lastError, !lastError.isEmpty {
             return lastError
         }
 
-        if let lastUploadedAt = syncCoordinator.status.lastUploadedAt {
+        if let lastUploadedAt = controller.syncStatus.lastUploadedAt {
             return "Letzter Upload: \(formatted(lastUploadedAt))"
         }
 
-        if let lastDownloadedAt = syncCoordinator.status.lastDownloadedAt {
+        if let lastDownloadedAt = controller.syncStatus.lastDownloadedAt {
             return "Letzter Download: \(formatted(lastDownloadedAt))"
         }
 
-        return syncCoordinator.isEnabled
+        return controller.isSyncEnabled
             ? "Synchronisation ist bereit. Lokale Änderungen bleiben bis zum nächsten Lauf sicher auf dem Gerät."
             : "Synchronisation ist deaktiviert. Alle Daten bleiben lokal auf diesem Gerät erhalten."
     }
@@ -139,7 +140,7 @@ struct SettingsView: View {
             Circle()
                 .fill(statusColor)
                 .frame(width: 10, height: 10)
-            Text(syncCoordinator.status.state.displayTitle)
+            Text(controller.syncStatus.state.displayTitle)
                 .foregroundStyle(.secondary)
         }
     }
@@ -160,7 +161,7 @@ struct SettingsView: View {
     }
 
     private var logSubtitle: String {
-        if let latest = appLogViewModel.entries.first {
+        if let latest = controller.logEntries.first {
             return "Letzter Eintrag: \(formatted(latest.timestamp))"
         }
 
@@ -177,19 +178,19 @@ struct SettingsView: View {
 }
 
 private struct SyncStatusView: View {
-    @Environment(SyncCoordinator.self) private var syncCoordinator
+    @Bindable var controller: SettingsController
 
     var body: some View {
         List {
             Section {
-                statusRow("Status", syncCoordinator.status.state.displayTitle)
-                statusRow("Dienst", syncCoordinator.status.service)
-                statusRow("Ausstehende Uploads", "\(syncCoordinator.status.queuedUpdates)")
-                statusRow("Ungesyncte Einträge", "\(syncCoordinator.status.unsyncedRecords)")
-                statusRow("Letzter Download", formatted(syncCoordinator.status.lastDownloadedAt))
-                statusRow("Letzter Upload", formatted(syncCoordinator.status.lastUploadedAt))
+                statusRow("Status", controller.syncStatus.state.displayTitle)
+                statusRow("Dienst", controller.syncStatus.service)
+                statusRow("Ausstehende Uploads", "\(controller.syncStatus.queuedUpdates)")
+                statusRow("Ungesyncte Einträge", "\(controller.syncStatus.unsyncedRecords)")
+                statusRow("Letzter Download", formatted(controller.syncStatus.lastDownloadedAt))
+                statusRow("Letzter Upload", formatted(controller.syncStatus.lastUploadedAt))
 
-                if let lastError = syncCoordinator.status.lastError {
+                if let lastError = controller.syncStatus.lastError {
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Letzter Fehler")
                         Text(lastError)
@@ -200,14 +201,13 @@ private struct SyncStatusView: View {
                 }
             } header: {
                 Text("Status")
-            }
-            footer: {
+            } footer: {
                 Text(statusFooter)
             }
         }
         .navigationTitle("Status")
         .refreshable {
-            syncCoordinator.refreshStatus()
+            controller.load()
         }
     }
 
@@ -229,7 +229,7 @@ private struct SyncStatusView: View {
     }
 
     private var statusFooter: String {
-        switch syncCoordinator.status.state {
+        switch controller.syncStatus.state {
         case .disabled:
             "Der Cloud-Sync ist ausgeschaltet. Lokale Daten bleiben unverändert verfügbar."
         case .ready:
@@ -249,49 +249,45 @@ private struct SyncStatusView: View {
 }
 
 private struct ManageCloudDataView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Environment(SyncCoordinator.self) private var syncCoordinator
-    @Query(sort: [SortDescriptor(\Episode.startedAt, order: .reverse)]) private var storedEpisodes: [Episode]
-    @Query(sort: [SortDescriptor(\MedicationDefinition.updatedAt, order: .reverse)]) private var storedDefinitions: [MedicationDefinition]
+    let appContainer: AppContainer
+    @Bindable var controller: SettingsController
 
     var body: some View {
         List {
             Section {
-                statusRow("Sync", syncCoordinator.isEnabled ? "Aktiviert" : "Deaktiviert")
-                statusRow("Offene Konflikte", "\(syncCoordinator.conflicts.count)")
-                statusRow("Papierkorb", "\(deletedEpisodes.count + deletedDefinitions.count)")
+                statusRow("Sync", controller.isSyncEnabled ? "Aktiviert" : "Deaktiviert")
+                statusRow("Offene Konflikte", "\(controller.conflicts.count)")
+                statusRow("Papierkorb", "\(controller.summary.trashCount)")
             } header: {
                 Text("Übersicht")
-            }
-            footer: {
+            } footer: {
                 Text("Papierkorb-Einträge bleiben lokal und in der Cloud erhalten, bis du sie bewusst wiederherstellst oder später einmal endgültig entfernst.")
             }
 
             Section {
                 Button("Jetzt synchronisieren") {
                     Task {
-                        await syncCoordinator.syncNow()
+                        await controller.syncNow()
                     }
                 }
-                .disabled(!syncCoordinator.isEnabled)
+                .disabled(!controller.isSyncEnabled)
 
                 Button("Fehler erneut versuchen") {
                     Task {
-                        await syncCoordinator.retryLastError()
+                        await controller.retryLastError()
                     }
                 }
-                .disabled(!syncCoordinator.isEnabled || syncCoordinator.status.lastError == nil)
+                .disabled(!controller.isSyncEnabled || controller.syncStatus.lastError == nil)
 
                 NavigationLink {
-                    DataExportView()
+                    DataExportView(appContainer: appContainer)
                 } label: {
                     Text("Lokales JSON5-Backup erstellen")
                 }
             } header: {
                 Text("Aktionen")
-            }
-            footer: {
-                if !syncCoordinator.isEnabled {
+            } footer: {
+                if !controller.isSyncEnabled {
                     Text("Aktiviere den Sync, um iCloud-Synchronisation und Konfliktbehandlung zu verwenden.")
                 } else {
                     Text("Der Abgleich arbeitet defensiv: Konflikte werden nicht still überschrieben, sondern hier sichtbar gemacht.")
@@ -299,11 +295,11 @@ private struct ManageCloudDataView: View {
             }
 
             Section("Konflikte") {
-                if syncCoordinator.conflicts.isEmpty {
+                if controller.conflicts.isEmpty {
                     Text("Keine offenen Konflikte.")
                         .foregroundStyle(.secondary)
                 } else {
-                    ForEach(syncCoordinator.conflicts) { conflict in
+                    ForEach(controller.conflicts) { conflict in
                         VStack(alignment: .leading, spacing: 8) {
                             Text(conflictTitle(for: conflict))
                                 .font(.headline)
@@ -312,11 +308,11 @@ private struct ManageCloudDataView: View {
                                 .foregroundStyle(.secondary)
 
                             Button("Lokale Version behalten") {
-                                syncCoordinator.resolveConflictKeepingLocal(conflict)
+                                controller.resolveConflictKeepingLocal(conflict)
                             }
 
                             Button("Cloud-Version übernehmen") {
-                                syncCoordinator.resolveConflictUsingRemote(conflict)
+                                controller.resolveConflictUsingRemote(conflict)
                             }
                         }
                         .padding(.vertical, 4)
@@ -325,11 +321,11 @@ private struct ManageCloudDataView: View {
             }
 
             Section("Papierkorb") {
-                if deletedEpisodes.isEmpty && deletedDefinitions.isEmpty {
+                if controller.deletedEpisodes.isEmpty && controller.deletedDefinitions.isEmpty {
                     Text("Keine gelöschten Einträge.")
                         .foregroundStyle(.secondary)
                 } else {
-                    ForEach(deletedEpisodes, id: \.id) { episode in
+                    ForEach(controller.deletedEpisodes) { episode in
                         HStack {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(episode.startedAt.formatted(date: .abbreviated, time: .shortened))
@@ -339,12 +335,12 @@ private struct ManageCloudDataView: View {
                             }
                             Spacer()
                             Button("Wiederherstellen") {
-                                restore(episode)
+                                controller.restoreEpisode(id: episode.id)
                             }
                         }
                     }
 
-                    ForEach(deletedDefinitions, id: \.catalogKey) { definition in
+                    ForEach(controller.deletedDefinitions) { definition in
                         HStack {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(definition.name)
@@ -354,7 +350,7 @@ private struct ManageCloudDataView: View {
                             }
                             Spacer()
                             Button("Wiederherstellen") {
-                                restore(definition)
+                                controller.restoreMedicationDefinition(definition)
                             }
                         }
                     }
@@ -363,28 +359,8 @@ private struct ManageCloudDataView: View {
         }
         .navigationTitle("Cloud-Daten")
         .refreshable {
-            syncCoordinator.refreshStatus()
+            controller.load()
         }
-    }
-
-    private var deletedEpisodes: [Episode] {
-        storedEpisodes.filter(\.isDeleted)
-    }
-
-    private var deletedDefinitions: [MedicationDefinition] {
-        storedDefinitions.filter(\.isDeleted)
-    }
-
-    private func restore(_ episode: Episode) {
-        episode.restore()
-        try? modelContext.save()
-        syncCoordinator.refreshStatus()
-    }
-
-    private func restore(_ definition: MedicationDefinition) {
-        definition.restore()
-        try? modelContext.save()
-        syncCoordinator.refreshStatus()
     }
 
     private func conflictTitle(for conflict: SyncConflict) -> String {
@@ -407,7 +383,5 @@ private struct ManageCloudDataView: View {
 }
 
 #Preview {
-    NavigationStack {
-        SettingsView()
-    }
+    Text("Preview nicht verfügbar")
 }
