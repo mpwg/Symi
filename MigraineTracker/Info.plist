@@ -4,6 +4,8 @@
 <dict>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Dein ungefährer Standort wird verwendet, um Wetterdaten für den ausgewählten Episodentag über Open-Meteo auf Basis von DWD ICON abzurufen. Die Koordinaten werden nicht gespeichert.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
