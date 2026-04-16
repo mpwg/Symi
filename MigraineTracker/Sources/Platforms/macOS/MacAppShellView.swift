@@ -1,45 +1,105 @@
+#if os(macOS)
 import SwiftUI
 
 struct MacAppShellView: View {
-    let appContainer: AppContainer
-
-    @State private var selectedSection: AppSection? = AppSection.macOSDefaultSection
+    let model: MacAppModel
 
     var body: some View {
-        NavigationSplitView {
-            List(AppSection.allCases, selection: $selectedSection) { section in
-                Label(section.title, systemImage: section.systemImage)
-                    .tag(section)
+        NavigationSplitView(
+            columnVisibility: Binding(
+                get: { model.columnVisibility },
+                set: { model.columnVisibility = $0 }
+            )
+        ) {
+            List(
+                MacRoute.allCases,
+                selection: Binding(
+                    get: { model.selectedRoute },
+                    set: { model.selectRoute($0 ?? .defaultRoute) }
+                )
+            ) { route in
+                VStack(alignment: .leading, spacing: 6) {
+                    Label(route.title, systemImage: route.systemImage)
+                        .font(.headline)
+
+                    Text(route.subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(.vertical, 6)
+                .tag(route)
             }
+            .listStyle(.sidebar)
             .navigationTitle("Migraine Tracker")
-        } detail: {
-            NavigationStack {
-                detailView(for: selectedSection ?? .history)
+        } content: {
+            ZStack {
+                MacWorkspaceBackground()
+                workspaceContent
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color.appPrimaryBackground)
+        } detail: {
+            ZStack {
+                MacWorkspaceBackground()
+                workspaceInspector
+            }
         }
         .navigationSplitViewStyle(.balanced)
+        .toolbar {
+            ToolbarItemGroup(placement: .primaryAction) {
+                Button {
+                    model.focusToday()
+                } label: {
+                    Label("Heute", systemImage: "calendar.badge.clock")
+                }
+
+                Button {
+                    model.startNewEpisode()
+                } label: {
+                    Label("Neue Episode", systemImage: "plus")
+                }
+
+                Button {
+                    model.toggleInspector()
+                } label: {
+                    Label(
+                        model.showsInspector ? "Inspector ausblenden" : "Inspector einblenden",
+                        systemImage: model.showsInspector ? "sidebar.right" : "sidebar.right"
+                    )
+                }
+            }
+        }
         .task {
-            await appContainer.weatherBackfillService.runIfNeeded()
+            await model.appContainer.weatherBackfillService.runIfNeeded()
+            model.prepare()
         }
     }
 
     @ViewBuilder
-    private func detailView(for section: AppSection) -> some View {
-        switch section {
-        case .home:
-            HomeView(appContainer: appContainer) { destination in
-                selectedSection = destination
-            }
-        case .capture:
-            CaptureView(appContainer: appContainer)
+    private var workspaceContent: some View {
+        switch model.selectedRoute {
         case .history:
-            HistoryView(appContainer: appContainer, showsSettingsShortcut: false)
-        case .syncAndExport:
-            SyncAndExportView(appContainer: appContainer)
-        case .settings:
-            SettingsView(appContainer: appContainer, showsCloseButton: false)
+            MacHistoryWorkspaceView(model: model)
+        case .capture:
+            MacEpisodeCaptureWorkspaceView(model: model)
+        case .sync:
+            MacSyncWorkspaceView(model: model)
+        case .export:
+            MacExportWorkspaceView(model: model)
+        }
+    }
+
+    @ViewBuilder
+    private var workspaceInspector: some View {
+        switch model.selectedRoute {
+        case .history:
+            MacHistoryInspectorView(model: model)
+        case .capture:
+            MacEpisodeCaptureInspectorView(controller: model.captureController, resetCapture: model.resetCapture)
+        case .sync:
+            MacSyncInspectorView(controller: model.settingsController)
+        case .export:
+            MacExportInspectorView(controller: model.exportController)
         }
     }
 }
+#endif

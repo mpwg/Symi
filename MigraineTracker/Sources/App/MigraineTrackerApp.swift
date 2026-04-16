@@ -9,6 +9,9 @@ struct MigraineTrackerApp: App {
     private let modelContainer: ModelContainer
     private let appContainer: AppContainer
     private let appLogStore: AppLogStore
+    #if os(macOS)
+    private let macAppModel: MacAppModel
+    #endif
     @State private var syncCoordinator: SyncCoordinator
 
     init() {
@@ -39,16 +42,38 @@ struct MigraineTrackerApp: App {
                 syncCoordinator: syncCoordinator,
                 appLogStore: appLogStore
             )
+            #if os(macOS)
+            self.macAppModel = MacAppModel(appContainer: self.appContainer)
+            #endif
         } catch {
             fatalError("ModelContainer konnte nicht erstellt werden: \(error)")
         }
     }
 
     var body: some Scene {
+        #if os(macOS)
+        WindowGroup {
+            AppShellView(appContainer: appContainer, macAppModel: macAppModel)
+        }
+        .modelContainer(modelContainer)
+        .commands {
+            MacAppCommands(model: macAppModel)
+        }
+
+        Settings {
+            MacSettingsRootView(model: macAppModel)
+        }
+
+        Window("Datenschutz und Hinweise", id: MacWindowIdentifier.privacyInformation) {
+            MacPrivacyInformationWindowView()
+        }
+        .defaultSize(width: 680, height: 760)
+        #else
         WindowGroup {
             AppShellView(appContainer: appContainer)
         }
         .modelContainer(modelContainer)
+        #endif
     }
 
     private static func makeContainer(schema: Schema, configuration: ModelConfiguration) throws -> ModelContainer {

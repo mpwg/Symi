@@ -1,5 +1,4 @@
 import Foundation
-import SwiftUI
 
 enum AppTab: String, CaseIterable, Identifiable {
     case home
@@ -8,9 +7,9 @@ enum AppTab: String, CaseIterable, Identifiable {
     case syncAndExport
     case settings
 
-    var id: String { rawValue }
+    nonisolated var id: String { rawValue }
 
-    var title: String {
+    nonisolated var title: String {
         switch self {
         case .home:
             "Heute"
@@ -25,7 +24,7 @@ enum AppTab: String, CaseIterable, Identifiable {
         }
     }
 
-    var systemImage: String {
+    nonisolated var systemImage: String {
         switch self {
         case .home:
             "house"
@@ -40,35 +39,35 @@ enum AppTab: String, CaseIterable, Identifiable {
         }
     }
 
-    var section: AppSection {
+    nonisolated var capabilities: Set<AppCapability> {
         switch self {
         case .home:
-            .home
+            [.todayFocus]
         case .capture:
-            .capture
+            [.episodeCapture]
         case .history:
-            .history
+            [.historyReview]
         case .syncAndExport:
-            .syncAndExport
+            [.syncManagement, .dataExport]
         case .settings:
-            .settings
+            [.settings, .privacyInformation]
         }
     }
-}
 
-extension AppSection {
-    var tab: AppTab {
-        switch self {
-        case .home:
-            .home
-        case .capture:
-            .capture
-        case .history:
-            .history
-        case .syncAndExport:
-            .syncAndExport
-        case .settings:
-            .settings
+    nonisolated static let defaultTab: AppTab = .history
+
+    init(capability: AppCapability) {
+        switch capability {
+        case .todayFocus:
+            self = .home
+        case .episodeCapture:
+            self = .capture
+        case .historyReview:
+            self = .history
+        case .syncManagement, .dataExport:
+            self = .syncAndExport
+        case .settings, .privacyInformation:
+            self = .settings
         }
     }
 }

@@ -3,7 +3,7 @@ import SwiftUI
 struct IOSAppShellView: View {
     let appContainer: AppContainer
 
-    @State private var selectedTab: AppTab = AppSection.iOSDefaultTab
+    @State private var selectedTab: AppTab = .defaultTab
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -26,8 +26,8 @@ struct IOSAppShellView: View {
     private func rootView(for tab: AppTab) -> some View {
         switch tab {
         case .home:
-            HomeView(appContainer: appContainer) { section in
-                selectedTab = section.tab
+            HomeView(appContainer: appContainer) { tab in
+                selectedTab = tab
             }
         case .capture:
             CaptureView(appContainer: appContainer)
