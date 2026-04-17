@@ -41,8 +41,6 @@ struct MigraineTrackerApp: App {
         } else {
             Self.logger.notice("Sentry ist deaktiviert, weil keine gültige DSN in der App-Konfiguration gefunden wurde.")
         }
-        // Remove the next line after confirming that your Sentry integration is working.
-        SentrySDK.capture(message: "This app uses Sentry! :)")
 
         let schema = Schema(versionedSchema: MigraineTrackerSchemaV3.self)
         let storeURL = Self.defaultStoreURL()
