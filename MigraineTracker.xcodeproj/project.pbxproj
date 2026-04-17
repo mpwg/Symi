@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		2EFF94F7A2D745EF888B0D8A /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = D4D545BA725D43399E1538D3 /* Sentry */; };
+		2EFF94F7A2D745EF888B0D8A /* Sentry-Dynamic in Frameworks */ = {isa = PBXBuildFile; productRef = D4D545BA725D43399E1538D3 /* Sentry-Dynamic */; };
 		4066A4372F92AB4700724B7B /* TelemetryDeck in Frameworks */ = {isa = PBXBuildFile; productRef = 4066A4362F92AB4700724B7B /* TelemetryDeck */; };
 		40D264B02F929DBC0017627F /* (null) in Frameworks */ = {isa = PBXBuildFile; };
 		4A1000013A00000100000001 /* OpenMeteoSdk in Frameworks */ = {isa = PBXBuildFile; productRef = 4A1000023A00000100000001 /* OpenMeteoSdk */; };
@@ -61,7 +61,7 @@
 			isa = PBXFrameworksBuildPhase;
 			files = (
 				4A1000013A00000100000001 /* OpenMeteoSdk in Frameworks */,
-				2EFF94F7A2D745EF888B0D8A /* Sentry in Frameworks */,
+				2EFF94F7A2D745EF888B0D8A /* Sentry-Dynamic in Frameworks */,
 				4066A4372F92AB4700724B7B /* TelemetryDeck in Frameworks */,
 			);
 		};
@@ -122,7 +122,7 @@
 			name = MigraineTracker;
 			packageProductDependencies = (
 				4A1000023A00000100000001 /* OpenMeteoSdk */,
-				D4D545BA725D43399E1538D3 /* Sentry */,
+				D4D545BA725D43399E1538D3 /* Sentry-Dynamic */,
 				4066A4362F92AB4700724B7B /* TelemetryDeck */,
 			);
 			productName = MigraineTracker;
@@ -630,10 +630,10 @@
 			package = 4A1000033A00000100000001 /* XCRemoteSwiftPackageReference "sdk" */;
 			productName = OpenMeteoSdk;
 		};
-		D4D545BA725D43399E1538D3 /* Sentry */ = {
+		D4D545BA725D43399E1538D3 /* Sentry-Dynamic */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 42059BA48DA44B529C1A1851 /* XCRemoteSwiftPackageReference "sentry-cocoa" */;
-			productName = Sentry;
+			productName = "Sentry-Dynamic";
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
