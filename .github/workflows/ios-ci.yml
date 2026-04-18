@@ -21,6 +21,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Xcode 26.4 auswählen
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '26.4'
+
       - name: Xcode-Version ausgeben
         run: |
           xcodebuild -version
@@ -44,7 +49,7 @@ jobs:
 
       - name: Simulator-Ziel wählen
         run: |
-          DEVICE_NAME="$(xcrun simctl list devices available | grep -E 'iPhone (16|17)' | head -n 1 | sed -E 's/^[[:space:]]*([^()]+) \(.*/\1/' | xargs)"
+          DEVICE_NAME="$(xcrun simctl list devices available | grep -E 'iPhone (17|Air)' | head -n 1 | sed -E 's/^[[:space:]]*([^()]+) \(.*/\1/' | xargs)"
           if [ -z "${DEVICE_NAME}" ]; then
             echo "Kein passender iPhone-Simulator gefunden."
             xcrun simctl list devices available
