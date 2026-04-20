@@ -37,9 +37,16 @@ struct HomeView: View {
                 .accessibilityHint("Zeigt die gespeicherten Episoden in Liste oder Kalender.")
 
                 Button {
+                    selectedTab = .doctors
+                } label: {
+                    Label("Ärzte & Termine", systemImage: "cross.case")
+                }
+                .accessibilityHint("Öffnet die Verwaltung für Ärztinnen, Ärzte und kommende Termine.")
+
+                Button {
                     selectedTab = .export
                 } label: {
-                    Label("Sync & Datenexport", systemImage: "arrow.trianglehead.2.clockwise.icloud")
+                    Label("Sync, Export & Einstellungen", systemImage: "gearshape")
                 }
                 .accessibilityHint("Öffnet den Bereich für Sync-Status, Cloud-Daten und Exporte.")
 
@@ -54,6 +61,7 @@ struct HomeView: View {
                 MetricRow(title: "Gespeicherte Episoden", detail: "\(overview.episodeCount)")
                 MetricRow(title: "Lokale Speicherung", detail: "Lokale Primärdaten mit optionaler iCloud-Synchronisation.")
                 MetricRow(title: "Wetterkontext", detail: "Wird automatisch über Open-Meteo auf Basis von DWD ICON ergänzt, wenn Standortfreigabe vorliegt.")
+                MetricRow(title: "Ärzte & Termine", detail: "Ärzte können manuell oder über den ÖGK-Suchkatalog angelegt und mit Erinnerungen verknüpft werden.")
             }
 
             Section("Medizinischer Hinweis") {

@@ -5,6 +5,7 @@ enum AppTab: String, CaseIterable, Identifiable {
     case home
     case capture
     case history
+    case doctors
     case export
 
     var id: String { rawValue }
@@ -17,8 +18,10 @@ enum AppTab: String, CaseIterable, Identifiable {
             "Erfassen"
         case .history:
             "Verlauf"
+        case .doctors:
+            "Ärzte"
         case .export:
-            "Sync"
+            "Mehr"
         }
     }
 
@@ -30,8 +33,10 @@ enum AppTab: String, CaseIterable, Identifiable {
             "plus.circle"
         case .history:
             "calendar"
+        case .doctors:
+            "cross.case"
         case .export:
-            "arrow.trianglehead.2.clockwise.icloud"
+            "gearshape"
         }
     }
 }
