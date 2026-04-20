@@ -1,101 +1,28 @@
 import SwiftUI
 
-struct DoctorsHubView: View {
-    let appContainer: AppContainer
-    @State private var controller: DoctorHubController
-    @State private var isPresentingNewDoctor = false
+enum DoctorAddEntryMode: Identifiable {
+    case oegkDirectory
+    case manual
 
-    init(appContainer: AppContainer) {
-        self.appContainer = appContainer
-        _controller = State(initialValue: appContainer.makeDoctorHubController())
-    }
-
-    var body: some View {
-        List {
-            Section {
-                Button {
-                    isPresentingNewDoctor = true
-                } label: {
-                    Label("Arzt oder Ärztin hinzufügen", systemImage: "plus.circle.fill")
-                }
-            }
-
-            Section("Kommende Termine") {
-                if controller.upcomingAppointments.isEmpty {
-                    ContentUnavailableView(
-                        "Keine kommenden Termine",
-                        systemImage: "calendar.badge.clock",
-                        description: Text("Lege einen Arzt an und erfasse danach den ersten Termin mit Erinnerung.")
-                    )
-                } else {
-                    ForEach(controller.upcomingAppointments) { appointment in
-                        if let doctor = controller.doctors.first(where: { $0.id == appointment.doctorID }) {
-                            NavigationLink {
-                                DoctorDetailView(appContainer: appContainer, doctorID: doctor.id)
-                            } label: {
-                                AppointmentSummaryRow(appointment: appointment, doctor: doctor)
-                            }
-                        }
-                    }
-                }
-            }
-
-            Section {
-                if controller.doctors.isEmpty {
-                    ContentUnavailableView(
-                        "Noch keine Ärztinnen oder Ärzte",
-                        systemImage: "cross.case",
-                        description: Text("Nutze den ÖGK-Suchkatalog als Startpunkt oder lege die Daten vollständig manuell an.")
-                    )
-                } else {
-                    ForEach(controller.doctors) { doctor in
-                        NavigationLink {
-                            DoctorDetailView(appContainer: appContainer, doctorID: doctor.id)
-                        } label: {
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text(doctor.name)
-                                    .font(.headline)
-
-                                if !doctor.specialty.isEmpty {
-                                    Text(doctor.specialty)
-                                        .foregroundStyle(.secondary)
-                                }
-
-                                if !doctor.addressLine.isEmpty {
-                                    Text(doctor.addressLine)
-                                        .font(.subheadline)
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                            .padding(.vertical, 2)
-                        }
-                    }
-                }
-            } header: {
-                Text("Ärzte")
-            } footer: {
-                Text("Suchquelle: ÖGK Vertragspartner Fachärztinnen und Fachärzte. Fehlende Kontaktdaten können danach manuell ergänzt werden.")
-            }
-        }
-        .navigationTitle("Ärzte & Termine")
-        .fullScreenCover(isPresented: $isPresentingNewDoctor) {
-            NavigationStack {
-                DoctorEditorView(appContainer: appContainer, doctorID: nil) {
-                    isPresentingNewDoctor = false
-                    controller.reload()
-                }
-            }
-        }
-        .task {
-            controller.reload()
-        }
-        .refreshable {
-            controller.reload()
+    var id: String {
+        switch self {
+        case .oegkDirectory:
+            "oegkDirectory"
+        case .manual:
+            "manual"
         }
     }
 }
 
-private struct AppointmentSummaryRow: View {
+struct DoctorsHubView: View {
+    let appContainer: AppContainer
+
+    var body: some View {
+        HomeView(appContainer: appContainer)
+    }
+}
+
+struct AppointmentSummaryRow: View {
     let appointment: AppointmentRecord
     let doctor: DoctorRecord
 
@@ -252,7 +179,7 @@ struct DoctorDetailView: View {
         }
         .fullScreenCover(isPresented: $isEditingDoctor) {
             NavigationStack {
-                DoctorEditorView(appContainer: appContainer, doctorID: doctorID) {
+                DoctorEditorView(appContainer: appContainer, doctorID: doctorID) { _ in
                     isEditingDoctor = false
                     reload()
                 }
@@ -339,34 +266,66 @@ struct DoctorDetailView: View {
     }
 }
 
-struct DoctorEditorView: View {
+struct DoctorAddFlowView: View {
     @Environment(\.dismiss) private var dismiss
 
     let appContainer: AppContainer
-    let doctorID: UUID?
-    let onSaved: (() -> Void)?
+    let startMode: DoctorAddEntryMode
+    let onSaved: ((UUID) -> Void)?
 
-    @State private var controller: DoctorEditorController
+    @State private var mode: DoctorAddEntryMode
+    @State private var selectedEntry: DoctorDirectoryRecord?
 
-    init(appContainer: AppContainer, doctorID: UUID?, onSaved: (() -> Void)? = nil) {
+    init(appContainer: AppContainer, startMode: DoctorAddEntryMode, onSaved: ((UUID) -> Void)? = nil) {
         self.appContainer = appContainer
-        self.doctorID = doctorID
+        self.startMode = startMode
         self.onSaved = onSaved
-        let doctor = doctorID.flatMap { try? appContainer.doctorRepository.load(id: $0) }
-        _controller = State(initialValue: appContainer.makeDoctorEditorController(doctor: doctor))
+        _mode = State(initialValue: startMode)
     }
 
     var body: some View {
-        @Bindable var controller = controller
+        Group {
+            switch mode {
+            case .oegkDirectory:
+                DoctorDirectoryPickerView(appContainer: appContainer) { entry in
+                    selectedEntry = entry
+                    mode = .manual
+                } onManualEntry: {
+                    selectedEntry = nil
+                    mode = .manual
+                }
 
-        List {
-            if let validationMessage = controller.validationMessage {
-                Section {
-                    Label(validationMessage, systemImage: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.red)
+            case .manual:
+                DoctorEditorView(appContainer: appContainer, doctorID: nil, initialDirectoryEntry: selectedEntry) { id in
+                    onSaved?(id)
                 }
             }
+        }
+    }
+}
 
+private struct DoctorDirectoryPickerView: View {
+    @Environment(\.dismiss) private var dismiss
+
+    let appContainer: AppContainer
+    let onSelectEntry: (DoctorDirectoryRecord) -> Void
+    let onManualEntry: () -> Void
+
+    @State private var controller: DoctorEditorController
+
+    init(
+        appContainer: AppContainer,
+        onSelectEntry: @escaping (DoctorDirectoryRecord) -> Void,
+        onManualEntry: @escaping () -> Void
+    ) {
+        self.appContainer = appContainer
+        self.onSelectEntry = onSelectEntry
+        self.onManualEntry = onManualEntry
+        _controller = State(initialValue: appContainer.makeDoctorEditorController(doctor: nil))
+    }
+
+    var body: some View {
+        List {
             Section {
                 TextField("Nach Name, Fachgebiet oder Ort suchen", text: $controller.searchText)
                     .textInputAutocapitalization(.words)
@@ -379,9 +338,17 @@ struct DoctorEditorView: View {
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             } header: {
-                Text("ÖGK-Suchkatalog")
+                Text("Arzt aus ÖGK-Liste hinzufügen")
             } footer: {
                 Text("Die Treffer sind nach relevanten Fachgebieten gruppiert und innerhalb der Gruppen nach PLZ und Name sortiert.")
+            }
+
+            Section {
+                Button {
+                    onManualEntry()
+                } label: {
+                    Label("Arzt manuell hinzufügen", systemImage: "square.and.pencil")
+                }
             }
 
             if controller.groupedSearchResults.isEmpty {
@@ -389,7 +356,7 @@ struct DoctorEditorView: View {
                     ContentUnavailableView(
                         "Keine passenden Ärztinnen oder Ärzte",
                         systemImage: "magnifyingglass",
-                        description: Text("Passe den Suchbegriff an oder erfasse die Daten manuell.")
+                        description: Text("Passe den Suchbegriff an oder nutze die manuelle Anlage.")
                     )
                 }
             } else {
@@ -397,7 +364,7 @@ struct DoctorEditorView: View {
                     Section(section.title) {
                         ForEach(section.entries) { entry in
                             Button {
-                                controller.applyDirectoryEntry(entry)
+                                onSelectEntry(entry)
                             } label: {
                                 VStack(alignment: .leading, spacing: 4) {
                                     HStack(alignment: .firstTextBaseline, spacing: 8) {
@@ -420,6 +387,65 @@ struct DoctorEditorView: View {
                             }
                             .buttonStyle(.plain)
                         }
+                    }
+                }
+            }
+        }
+        .navigationTitle("Arzt hinzufügen")
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button("Abbrechen") {
+                    dismiss()
+                }
+            }
+        }
+        .navigationBarTitleDisplayMode(.large)
+    }
+}
+
+struct DoctorEditorView: View {
+    @Environment(\.dismiss) private var dismiss
+
+    let appContainer: AppContainer
+    let doctorID: UUID?
+    let onSaved: ((UUID) -> Void)?
+
+    @State private var controller: DoctorEditorController
+
+    init(
+        appContainer: AppContainer,
+        doctorID: UUID?,
+        initialDirectoryEntry: DoctorDirectoryRecord? = nil,
+        onSaved: ((UUID) -> Void)? = nil
+    ) {
+        self.appContainer = appContainer
+        self.doctorID = doctorID
+        self.onSaved = onSaved
+
+        let doctor = doctorID.flatMap { try? appContainer.doctorRepository.load(id: $0) }
+        let controller = appContainer.makeDoctorEditorController(doctor: doctor)
+        if let initialDirectoryEntry {
+            controller.applyDirectoryEntry(initialDirectoryEntry)
+        }
+        _controller = State(initialValue: controller)
+    }
+
+    var body: some View {
+        @Bindable var controller = controller
+
+        Form {
+            if let validationMessage = controller.validationMessage {
+                Section {
+                    Label(validationMessage, systemImage: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.red)
+                }
+            }
+
+            if doctorID == nil, controller.draft.source == .oegkDirectory {
+                Section("ÖGK-Auswahl") {
+                    detailRow("Quelle", controller.draft.source.rawValue)
+                    if !controller.draft.name.isEmpty {
+                        detailRow("Übernommen", controller.draft.name)
                     }
                 }
             }
@@ -450,8 +476,8 @@ struct DoctorEditorView: View {
 
             Section {
                 Button(doctorID == nil ? "Arzt speichern" : "Änderungen speichern") {
-                    controller.save { _ in
-                        onSaved?()
+                    controller.save { id in
+                        onSaved?(id)
                         dismiss()
                     }
                 }
@@ -466,7 +492,135 @@ struct DoctorEditorView: View {
                 }
             }
         }
-        .navigationBarTitleDisplayMode(.large)
+    }
+
+    private func detailRow(_ title: String, _ value: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+            Text(value)
+                .foregroundStyle(.secondary)
+        }
+        .padding(.vertical, 2)
+    }
+}
+
+struct AppointmentCreationFlowView: View {
+    @Environment(\.dismiss) private var dismiss
+
+    let appContainer: AppContainer
+    let onSaved: (() -> Void)?
+
+    @State private var doctors: [DoctorRecord]
+    @State private var selectedDoctorID: UUID?
+    @State private var doctorAddMode: DoctorAddEntryMode?
+
+    init(appContainer: AppContainer, onSaved: (() -> Void)? = nil) {
+        self.appContainer = appContainer
+        self.onSaved = onSaved
+        _doctors = State(initialValue: (try? appContainer.doctorRepository.fetchAll()) ?? [])
+    }
+
+    var body: some View {
+        Group {
+            if let selectedDoctor {
+                AppointmentEditorView(appContainer: appContainer, doctor: selectedDoctor, appointmentID: nil) {
+                    onSaved?()
+                }
+            } else if doctors.isEmpty {
+                List {
+                    Section {
+                        ContentUnavailableView(
+                            "Für Termine brauchst du zuerst einen Arzt",
+                            systemImage: "cross.case",
+                            description: Text("Füge zuerst eine Ärztin oder einen Arzt aus der ÖGK-Liste hinzu oder lege den Eintrag manuell an.")
+                        )
+                    }
+
+                    Section("Arzt zuerst anlegen") {
+                        Button {
+                            doctorAddMode = .oegkDirectory
+                        } label: {
+                            Label("Arzt aus ÖGK-Liste hinzufügen", systemImage: "cross.case.fill")
+                        }
+
+                        Button {
+                            doctorAddMode = .manual
+                        } label: {
+                            Label("Arzt manuell hinzufügen", systemImage: "square.and.pencil")
+                        }
+                    }
+                }
+                .navigationTitle("Termin hinzufügen")
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button("Abbrechen") {
+                            dismiss()
+                        }
+                    }
+                }
+            } else {
+                List {
+                    Section("Arzt auswählen") {
+                        ForEach(doctors) { doctor in
+                            Button {
+                                selectedDoctorID = doctor.id
+                            } label: {
+                                DoctorSummaryRow(doctor: doctor)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+
+                    Section {
+                        Button {
+                            doctorAddMode = .oegkDirectory
+                        } label: {
+                            Label("Arzt aus ÖGK-Liste hinzufügen", systemImage: "cross.case.fill")
+                        }
+
+                        Button {
+                            doctorAddMode = .manual
+                        } label: {
+                            Label("Arzt manuell hinzufügen", systemImage: "square.and.pencil")
+                        }
+                    }
+                }
+                .navigationTitle("Termin hinzufügen")
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button("Abbrechen") {
+                            dismiss()
+                        }
+                    }
+                }
+                .task {
+                    if doctors.count == 1, selectedDoctorID == nil {
+                        selectedDoctorID = doctors[0].id
+                    }
+                }
+            }
+        }
+        .fullScreenCover(item: $doctorAddMode) { mode in
+            NavigationStack {
+                DoctorAddFlowView(appContainer: appContainer, startMode: mode) { doctorID in
+                    reloadDoctors(selecting: doctorID)
+                    doctorAddMode = nil
+                }
+            }
+        }
+    }
+
+    private var selectedDoctor: DoctorRecord? {
+        guard let selectedDoctorID else {
+            return nil
+        }
+
+        return doctors.first(where: { $0.id == selectedDoctorID })
+    }
+
+    private func reloadDoctors(selecting doctorID: UUID?) {
+        doctors = (try? appContainer.doctorRepository.fetchAll()) ?? []
+        selectedDoctorID = doctorID
     }
 }
 
@@ -557,7 +711,7 @@ struct AppointmentEditorView: View {
                 .frame(maxWidth: .infinity, alignment: .center)
             }
         }
-        .navigationTitle(appointmentID == nil ? "Termin anlegen" : "Termin bearbeiten")
+        .navigationTitle(appointmentID == nil ? "Termin speichern" : "Termin bearbeiten")
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button("Abbrechen") {
