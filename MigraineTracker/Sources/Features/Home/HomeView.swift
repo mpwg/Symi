@@ -19,6 +19,8 @@ struct HomeView: View {
         List {
             Section {
                 DiaryWelcomeCard(overview: overview)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 8)
 
                 Button {
                     isPresentingEpisodeEditor = true
@@ -174,7 +176,7 @@ private struct DiaryWelcomeCard: View {
     let overview: HomeOverviewData
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 18) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 14) {
                     Text(ProductBranding.displayName)
@@ -190,9 +192,7 @@ private struct DiaryWelcomeCard: View {
                         .foregroundStyle(AppTheme.foam.opacity(0.86))
 
                     if overview.episodeCount > 0 {
-                        LabeledContent("Bisher dokumentiert", value: "\(overview.episodeCount) Eintrag\(overview.episodeCount == 1 ? "" : "e")")
-                            .font(.subheadline)
-                            .foregroundStyle(AppTheme.foam)
+                        statsRow
                     }
                 }
 
@@ -202,17 +202,12 @@ private struct DiaryWelcomeCard: View {
                     Image(systemName: "book.closed.fill")
                         .font(.title2)
                         .foregroundStyle(AppTheme.foam)
-
-                    Capsule()
-                        .fill(AppTheme.coral)
-                        .frame(width: 14, height: 44)
                 }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 12)
+                .frame(width: 90, height: 120, alignment: .top)
                 .background(.white.opacity(0.12), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
             }
         }
-        .padding(20)
+        .padding(24)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(AppTheme.heroGradient)
         .overlay(alignment: .bottomLeading) {
@@ -236,6 +231,21 @@ private struct DiaryWelcomeCard: View {
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .shadow(color: AppTheme.shadowColor.opacity(1.2), radius: 24, y: 12)
         .accessibilityElement(children: .combine)
+    }
+
+    private var statsRow: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            Text("Bisher dokumentiert")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(AppTheme.foam.opacity(0.96))
+
+            Spacer(minLength: 12)
+
+            Text("\(overview.episodeCount) Eintrag\(overview.episodeCount == 1 ? "" : "e")")
+                .font(.title3.weight(.bold))
+                .foregroundStyle(Color.white)
+                .shadow(color: AppTheme.ink.opacity(0.35), radius: 3, y: 1)
+        }
     }
 
     private var summaryTitle: String {
