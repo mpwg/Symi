@@ -58,6 +58,9 @@ open class Snapshot: NSObject {
         do {
             let cacheDir = try getCacheDirectory()
             Snapshot.cacheDirectory = cacheDir
+            if let screenshotsDirectory {
+                try FileManager.default.createDirectory(at: screenshotsDirectory, withIntermediateDirectories: true)
+            }
             setLanguage(app)
             setLocale(app)
             setLaunchArguments(app)

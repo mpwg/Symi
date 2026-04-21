@@ -65,7 +65,9 @@ def app_store_api_key
 end
 
 def write_local_secrets!
-  require_env_vars!("APPLE_DEVELOPER_TEAM_ID", "SENTRY_DSN")
+  return if ENV["APPLE_DEVELOPER_TEAM_ID"].to_s.empty? && File.exist?(LOCAL_SECRETS_PATH)
+
+  require_env_vars!("APPLE_DEVELOPER_TEAM_ID")
 
   FileUtils.mkdir_p(File.dirname(LOCAL_SECRETS_PATH))
   File.write(
@@ -73,8 +75,8 @@ def write_local_secrets!
     <<~XCCONFIG
       // Von fastlane in CI erzeugt. Nicht committen.
       APPLE_DEVELOPER_TEAM_ID = #{ENV["APPLE_DEVELOPER_TEAM_ID"]}
-      SENTRY_DSN = #{ENV["SENTRY_DSN"]}
-      TELEMETRY_APP_ID = #{ENV["TELEMETRY_APP_ID"]}
+      SENTRY_DSN = #{ENV["SENTRY_DSN"].to_s}
+      TELEMETRY_APP_ID = #{ENV["TELEMETRY_APP_ID"].to_s}
     XCCONFIG
   )
 end
