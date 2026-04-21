@@ -50,6 +50,7 @@ struct AppointmentSummaryRow: View {
             .foregroundStyle(.secondary)
         }
         .padding(.vertical, 2)
+        .brandGroupedRow()
     }
 }
 
@@ -146,6 +147,7 @@ struct DoctorDetailView: View {
                                     .foregroundStyle(.secondary)
                             }
                             .padding(.vertical, 2)
+                            .brandGroupedRow()
                             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                 Button("Löschen", role: .destructive) {
                                     pendingDeletion = appointment
@@ -236,6 +238,7 @@ struct DoctorDetailView: View {
                 .foregroundStyle(.secondary)
         }
         .padding(.vertical, 2)
+        .brandGroupedRow()
         .accessibilityElement(children: .combine)
     }
 
@@ -385,6 +388,7 @@ private struct DoctorDirectoryPickerView: View {
                                         .multilineTextAlignment(.leading)
                                 }
                                 .padding(.vertical, 2)
+                                .brandGroupedRow()
                             }
                             .buttonStyle(.plain)
                         }
@@ -504,6 +508,7 @@ struct DoctorEditorView: View {
                 .foregroundStyle(.secondary)
         }
         .padding(.vertical, 2)
+        .brandGroupedRow()
     }
 }
 

@@ -100,6 +100,7 @@ struct DataExportView: View {
                             }
                         }
                         .padding(.vertical, 2)
+                        .brandGroupedRow()
                     }
                 }
             }

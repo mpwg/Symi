@@ -150,6 +150,7 @@ struct ProductInformationView: View {
                 .foregroundStyle(.secondary)
         }
         .padding(.vertical, 4)
+        .brandGroupedRow()
     }
 }
 

@@ -9,6 +9,7 @@ struct SyncLogView: View {
                 Text("Das Protokoll bleibt lokal auf diesem Gerät. Es enthält technische Metadaten zu Synchronisation, Konflikten und Fehlern, aber keine sensiblen Freitextinhalte im Klartext.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+                    .brandGroupedRow()
             }
 
             Section("Filter") {
@@ -73,6 +74,7 @@ struct SyncLogView: View {
                             }
                         }
                         .padding(.vertical, 4)
+                        .brandGroupedRow()
                     }
                 }
             }

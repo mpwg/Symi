@@ -124,7 +124,7 @@ struct HomeView: View {
         }
         .listStyle(.insetGrouped)
         .brandGroupedScreen()
-        .navigationTitle("Willkommen")
+        .navigationTitle("Schmerztagebuch")
         .task {
             reload()
         }
