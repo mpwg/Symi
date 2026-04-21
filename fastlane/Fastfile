@@ -165,6 +165,7 @@ end
 
 def capture_screenshot_set!(devices:, output_directory:, override_status_bar:)
   FileUtils.rm_rf(output_directory)
+  FileUtils.rm_rf(File.join(output_directory, "test_output"))
   FileUtils.mkdir_p(output_directory)
 
   snapshot(
