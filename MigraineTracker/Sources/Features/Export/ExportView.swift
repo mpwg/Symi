@@ -85,7 +85,7 @@ struct SettingsView: View {
             }
         }
         .navigationTitle("Einstellungen")
-        .brandScreen()
+        .brandGroupedScreen()
         .toolbar {
             ToolbarItem(placement: closeButtonPlacement) {
                 Button("Schließen") {
@@ -207,7 +207,7 @@ private struct SyncStatusView: View {
             }
         }
         .navigationTitle("Status")
-        .brandScreen()
+        .brandGroupedScreen()
         .refreshable {
             controller.load()
         }
@@ -360,7 +360,7 @@ private struct ManageCloudDataView: View {
             }
         }
         .navigationTitle("Cloud-Daten")
-        .brandScreen()
+        .brandGroupedScreen()
         .disabled(isResolvingConflict)
         .overlay {
             if isResolvingConflict {

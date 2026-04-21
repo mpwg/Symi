@@ -32,6 +32,7 @@ struct EpisodeEditorView: View {
                         .font(.subheadline)
                         .foregroundStyle(.red)
                         .accessibilityLabel("Fehler: \(validationMessage)")
+                        .formAlignedRow()
                 }
             }
 
@@ -57,6 +58,7 @@ struct EpisodeEditorView: View {
                         set: { controller.draft.intensity = Int($0) }
                     ))
                 }
+                .formAlignedRow()
 
                 DatePicker(
                     "Beginn",
@@ -76,6 +78,7 @@ struct EpisodeEditorView: View {
             Section("Notiz") {
                 TextField("Kurz notieren, was auffällt", text: $controller.draft.notes, axis: .vertical)
                     .lineLimit(2 ... 5)
+                    .formAlignedRow()
             }
 
             Section("Optionale Details") {
@@ -104,6 +107,7 @@ struct EpisodeEditorView: View {
 
             Section {
                 WeatherStatusContent(state: controller.weatherLoadState)
+                    .formAlignedRow()
             } header: {
                 Text("Wetter")
             } footer: {
@@ -158,12 +162,14 @@ struct EpisodeEditorView: View {
                         }
                     }
                     .padding(.vertical, 4)
+                    .formAlignedRow()
                 }
 
                 if controller.selectedMedications.isEmpty {
                     Text("Nur ergänzen, wenn du heute etwas genommen hast.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
+                        .formAlignedRow()
                 } else {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Ausgewählt")
@@ -176,6 +182,7 @@ struct EpisodeEditorView: View {
                             }
                         }
                     }
+                    .formAlignedRow()
                 }
 
                 Button {
@@ -183,6 +190,7 @@ struct EpisodeEditorView: View {
                 } label: {
                     Label("Eigenes Medikament hinzufügen", systemImage: "plus.circle")
                 }
+                .formAlignedRow()
             }
 
             Section {
@@ -193,10 +201,11 @@ struct EpisodeEditorView: View {
                 }
                 .disabled(controller.isSaving)
                 .frame(maxWidth: .infinity, alignment: .center)
+                .formAlignedRow()
             }
         }
         .navigationTitle(controller.mode == .create ? "Neuer Eintrag" : "Eintrag bearbeiten")
-        .brandScreen()
+        .brandGroupedScreen()
         .toolbar {
             if showsDismissButton {
                 ToolbarItem(placement: dismissButtonPlacement) {
@@ -289,6 +298,7 @@ struct EpisodeEditorView: View {
                     .accessibilityAddTraits(isSelected ? .isSelected : [])
                 }
             }
+            .formAlignedRow()
         }
     }
 
@@ -302,6 +312,18 @@ struct EpisodeEditorView: View {
         #else
         .topBarLeading
         #endif
+    }
+}
+
+private struct FormAlignedRowModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        content.brandGroupedRow()
+    }
+}
+
+private extension View {
+    func formAlignedRow() -> some View {
+        modifier(FormAlignedRowModifier())
     }
 }
 
@@ -556,6 +578,7 @@ private struct CustomMedicationEditorSheet: View {
             }
         }
         .navigationTitle(state.isEditing ? "Medikament bearbeiten" : "Eigenes Medikament")
+        .brandGroupedScreen()
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {

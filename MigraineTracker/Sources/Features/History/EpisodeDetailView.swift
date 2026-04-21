@@ -143,6 +143,7 @@ struct EpisodeDetailView: View {
             }
         }
         .navigationTitle("Episodendetail")
+        .brandGroupedScreen()
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Bearbeiten") {

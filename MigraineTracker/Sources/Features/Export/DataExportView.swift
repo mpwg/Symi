@@ -105,7 +105,7 @@ struct DataExportView: View {
             }
         }
         .navigationTitle("Datenexport")
-        .brandScreen()
+        .brandGroupedScreen()
         .scrollDismissesKeyboard(.interactively)
         .onAppear {
             controller.reloadSummary()

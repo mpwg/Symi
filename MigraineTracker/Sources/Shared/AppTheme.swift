@@ -1,6 +1,10 @@
 import SwiftUI
 
 enum AppTheme {
+    static let groupedHorizontalInset: CGFloat = 20
+    static let groupedTopInset: CGFloat = 12
+    static let groupedRowInsets = EdgeInsets(top: 10, leading: 20, bottom: 10, trailing: 20)
+
     static let ink = Color(red: 0.04, green: 0.30, blue: 0.38)
     static let ocean = Color(red: 0.08, green: 0.56, blue: 0.62)
     static let seaGlass = Color(red: 0.67, green: 0.86, blue: 0.82)
@@ -52,6 +56,15 @@ private struct BrandScreenModifier: ViewModifier {
     }
 }
 
+private struct BrandGroupedScreenModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .brandScreen()
+            .contentMargins(.horizontal, AppTheme.groupedHorizontalInset, for: .scrollContent)
+            .contentMargins(.top, AppTheme.groupedTopInset, for: .scrollContent)
+    }
+}
+
 private struct BrandCardModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
@@ -68,6 +81,14 @@ private struct BrandCardModifier: ViewModifier {
 extension View {
     func brandScreen() -> some View {
         modifier(BrandScreenModifier())
+    }
+
+    func brandGroupedScreen() -> some View {
+        modifier(BrandGroupedScreenModifier())
+    }
+
+    func brandGroupedRow() -> some View {
+        listRowInsets(AppTheme.groupedRowInsets)
     }
 
     func brandCard() -> some View {

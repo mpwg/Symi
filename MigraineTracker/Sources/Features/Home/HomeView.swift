@@ -19,8 +19,7 @@ struct HomeView: View {
         List {
             Section {
                 DiaryWelcomeCard(overview: overview)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 8)
+                    .padding(.vertical, 6)
 
                 Button {
                     isPresentingEpisodeEditor = true
@@ -124,7 +123,7 @@ struct HomeView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .brandScreen()
+        .brandGroupedScreen()
         .navigationTitle("Willkommen")
         .task {
             reload()

@@ -78,7 +78,7 @@ struct SyncLogView: View {
             }
         }
         .navigationTitle("Sync-Protokoll")
-        .brandScreen()
+        .brandGroupedScreen()
         .task {
             controller.refreshLog()
         }
