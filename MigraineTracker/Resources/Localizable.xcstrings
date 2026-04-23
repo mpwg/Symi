@@ -4,46 +4,6 @@
     "" : {
 
     },
-    "%@ %% Luftfeuchte" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ %% humidity"
-          }
-        }
-      }
-    },
-    "%@ Bericht" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ report"
-          }
-        }
-      }
-    },
-    "%@ mm Niederschlag" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ mm precipitation"
-          }
-        }
-      }
-    },
-    "%@ · %@ · Intensität %lld/10" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ · %2$@ · Intensity %3$lld/10"
-          }
-        }
-      }
-    },
     ", Anzahl: %lld" : {
       "localizations" : {
         "en" : {
@@ -64,472 +24,12 @@
         }
       }
     },
-    "Antiemetikum" : {
+    "%@ · %@ · Intensität %lld/10" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Antiemetic"
-          }
-        }
-      }
-    },
-    "App herunterladen" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Download the app"
-          }
-        }
-      }
-    },
-    "Dokumentierte Medikamente: %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Documented medications: %1$@"
-          }
-        }
-      }
-    },
-    "Detaillierte Einträge" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Detailed entries"
-          }
-        }
-      }
-    },
-    "Detaillierter Bericht" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Detailed report"
-          }
-        }
-      }
-    },
-    "Durchschnittliche Intensität: %@/10" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Average intensity: %1$@/10"
-          }
-        }
-      }
-    },
-    "Einträge: %lld" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Entries: %1$lld"
-          }
-        }
-      }
-    },
-    "Einschränkung: %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Functional impact: %1$@"
-          }
-        }
-      }
-    },
-    "Ende: %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "End: %1$@"
-          }
-        }
-      }
-    },
-    "Erstellt mit %@." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Created with %1$@."
-          }
-        }
-      }
-    },
-    "Auswertung" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Analysis"
-          }
-        }
-      }
-    },
-    "Episodentypen" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Episode types"
-          }
-        }
-      }
-    },
-    "Gut" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Good"
-          }
-        }
-      }
-    },
-    "Herzfrequenz %@ bpm" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Heart rate %1$@ bpm"
-          }
-        }
-      }
-    },
-    "Häufige Symptome: %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Common symptoms: %1$@"
-          }
-        }
-      }
-    },
-    "Häufige Trigger: %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Common triggers: %1$@"
-          }
-        }
-      }
-    },
-    "Intensität im Verlauf" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Intensity over time"
-          }
-        }
-      }
-    },
-    "Keine" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "None"
-          }
-        }
-      }
-    },
-    "Kopfschmerz" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Headache"
-          }
-        }
-      }
-    },
-    "Kompakter Arztbericht" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Compact doctor report"
-          }
-        }
-      }
-    },
-    "Kurzüberblick" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Executive summary"
-          }
-        }
-      }
-    },
-    "Medikamente: %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Medications: %1$@"
-          }
-        }
-      }
-    },
-    "Medikamente" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Medications"
-          }
-        }
-      }
-    },
-    "Menstruation %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Menstruation %1$@"
-          }
-        }
-      }
-    },
-    "Migräne" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Migraine"
-          }
-        }
-      }
-    },
-    "Notiz: %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Note: %1$@"
-          }
-        }
-      }
-    },
-    "NSAR" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "NSAID"
-          }
-        }
-      }
-    },
-    "Professioneller Bericht für Arztgespräche" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Professional report for doctor appointments"
-          }
-        }
-      }
-    },
-    "PDF-Modus" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "PDF mode"
-          }
-        }
-      }
-    },
-    "Quelle: %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Source: %1$@"
-          }
-        }
-      }
-    },
-    "Ruhepuls %@ bpm" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Resting heart rate %1$@ bpm"
-          }
-        }
-      }
-    },
-    "Schlaf %@ min" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sleep %1$@ min"
-          }
-        }
-      }
-    },
-    "Schmerztage im Zeitraum: %lld" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pain days in period: %1$lld"
-          }
-        }
-      }
-    },
-    "Schmerztagebuch-Bericht" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pain-Diary-Report"
-          }
-        }
-      }
-    },
-    "Schritte %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Steps %1$@"
-          }
-        }
-      }
-    },
-    "Sonstiges" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Other"
-          }
-        }
-      }
-    },
-    "Stärkste Episode: %@ · %lld/10" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Strongest episode: %1$@ · %2$lld/10"
-          }
-        }
-      }
-    },
-    "Symptome" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Symptoms"
-          }
-        }
-      }
-    },
-    "Symptome %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Symptoms %1$@"
-          }
-        }
-      }
-    },
-    "Symptome: %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Symptoms: %1$@"
-          }
-        }
-      }
-    },
-    "Tagebuchübersicht" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Diary overview"
-          }
-        }
-      }
-    },
-    "Teilweise" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Partial"
-          }
-        }
-      }
-    },
-    "Trigger" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Triggers"
-          }
-        }
-      }
-    },
-    "Trigger: %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Triggers: %1$@"
-          }
-        }
-      }
-    },
-    "Unklar" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Unclear"
-          }
-        }
-      }
-    },
-    "Wetter: %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Weather: %1$@"
-          }
-        }
-      }
-    },
-    "Zeitraum: %@ bis %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Period: %1$@ to %2$@"
+            "value" : "%1$@ · %2$@ · Intensity %3$lld/10"
           }
         }
       }
@@ -550,6 +50,16 @@
         }
       }
     },
+    "%@ %% Luftfeuchte" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %% humidity"
+          }
+        }
+      }
+    },
     "%@ abwählen" : {
       "localizations" : {
         "en" : {
@@ -560,12 +70,32 @@
         }
       }
     },
+    "%@ Bericht" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ report"
+          }
+        }
+      }
+    },
     "%@ ist dein persönliches Schmerztagebuch. Du hältst fest, was passiert ist, und entscheidest selbst, welche zusätzlichen Daten du einbeziehst." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ is your personal pain diary. You record what happened and decide which additional data you want to include."
+          }
+        }
+      }
+    },
+    "%@ mm Niederschlag" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ mm precipitation"
           }
         }
       }
@@ -839,6 +369,16 @@
         }
       }
     },
+    "Antiemetikum" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Antiemetic"
+          }
+        }
+      }
+    },
     "Anzahl" : {
       "localizations" : {
         "en" : {
@@ -855,6 +395,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Quantity: %lld"
+          }
+        }
+      }
+    },
+    "App herunterladen" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Download the app"
           }
         }
       }
@@ -1077,6 +627,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Selected"
+          }
+        }
+      }
+    },
+    "Auswertung" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Analysis"
           }
         }
       }
@@ -1394,6 +954,26 @@
         }
       }
     },
+    "Detaillierte Einträge" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detailed entries"
+          }
+        }
+      }
+    },
+    "Detaillierter Bericht" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detailed report"
+          }
+        }
+      }
+    },
     "Die App bleibt lokal vollständig nutzbar. iCloud-Sync ist optional, arbeitet getrennt von SwiftData und kann jederzeit wieder deaktiviert werden." : {
       "localizations" : {
         "en" : {
@@ -1515,6 +1095,16 @@
         }
       }
     },
+    "Dokumentierte Medikamente: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Documented medications: %1$@"
+          }
+        }
+      }
+    },
     "Dosierung" : {
       "localizations" : {
         "en" : {
@@ -1611,6 +1201,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Delete Custom Medication?"
+          }
+        }
+      }
+    },
+    "Einschränkung: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Functional impact: %1$@"
           }
         }
       }
@@ -1716,6 +1316,16 @@
         }
       }
     },
+    "Einträge: %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entries: %1$lld"
+          }
+        }
+      }
+    },
     "Ende" : {
       "localizations" : {
         "en" : {
@@ -1732,6 +1342,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Specify End"
+          }
+        }
+      }
+    },
+    "Ende: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "End: %1$@"
           }
         }
       }
@@ -1806,6 +1426,16 @@
         }
       }
     },
+    "Episodentypen" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Episode types"
+          }
+        }
+      }
+    },
     "Erinnerung" : {
       "localizations" : {
         "en" : {
@@ -1853,6 +1483,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Create a PDF report or JSON5 backup for a freely selectable period."
+          }
+        }
+      }
+    },
+    "Erstellt mit %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Created with %1$@."
           }
         }
       }
@@ -2018,6 +1658,46 @@
         }
       }
     },
+    "Gut" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Good"
+          }
+        }
+      }
+    },
+    "Häufige Symptome: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Common symptoms: %1$@"
+          }
+        }
+      }
+    },
+    "Häufige Trigger: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Common triggers: %1$@"
+          }
+        }
+      }
+    },
+    "Herzfrequenz %@ bpm" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heart rate %1$@ bpm"
+          }
+        }
+      }
+    },
     "Heute" : {
       "localizations" : {
         "en" : {
@@ -2074,6 +1754,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Intensity %lld"
+          }
+        }
+      }
+    },
+    "Intensität im Verlauf" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intensity over time"
           }
         }
       }
@@ -2179,6 +1869,16 @@
         }
       }
     },
+    "Keine" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "None"
+          }
+        }
+      }
+    },
     "Keine Diagnose, keine Therapieempfehlung" : {
       "localizations" : {
         "en" : {
@@ -2259,6 +1959,16 @@
         }
       }
     },
+    "Kompakter Arztbericht" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compact doctor report"
+          }
+        }
+      }
+    },
     "Konflikt lösen" : {
       "localizations" : {
         "en" : {
@@ -2299,12 +2009,32 @@
         }
       }
     },
+    "Kopfschmerz" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Headache"
+          }
+        }
+      }
+    },
     "Kurz notieren, was auffällt" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Briefly note what stands out"
+          }
+        }
+      }
+    },
+    "Kurzüberblick" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Executive summary"
           }
         }
       }
@@ -2501,6 +2231,16 @@
         }
       }
     },
+    "Medikamente: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Medications: %1$@"
+          }
+        }
+      }
+    },
     "Medizinische Einordnung" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2543,12 +2283,32 @@
         }
       }
     },
+    "Menstruation %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menstruation %1$@"
+          }
+        }
+      }
+    },
     "Menstruationsstatus" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Menstruation Status"
+          }
+        }
+      }
+    },
+    "Migräne" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Migraine"
           }
         }
       }
@@ -2640,6 +2400,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Note"
+          }
+        }
+      }
+    },
+    "Notiz: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Note: %1$@"
+          }
+        }
+      }
+    },
+    "NSAR" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NSAID"
           }
         }
       }
@@ -2875,6 +2655,16 @@
         }
       }
     },
+    "PDF-Modus" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF mode"
+          }
+        }
+      }
+    },
     "PLZ" : {
       "localizations" : {
         "en" : {
@@ -2891,6 +2681,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Practice / Place"
+          }
+        }
+      }
+    },
+    "Professioneller Bericht für Arztgespräche" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Professional report for doctor appointments"
           }
         }
       }
@@ -2965,6 +2765,26 @@
         }
       }
     },
+    "Ruhepuls %@ bpm" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resting heart rate %1$@ bpm"
+          }
+        }
+      }
+    },
+    "Schlaf %@ min" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sleep %1$@ min"
+          }
+        }
+      }
+    },
     "Schließen" : {
       "localizations" : {
         "en" : {
@@ -3005,12 +2825,32 @@
         }
       }
     },
+    "Schmerztage im Zeitraum: %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pain days in period: %1$lld"
+          }
+        }
+      }
+    },
     "Schmerztagebuch" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pain Diary"
+          }
+        }
+      }
+    },
+    "Schmerztagebuch-Bericht" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pain-Diary-Report"
           }
         }
       }
@@ -3041,6 +2881,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Request Write Access"
+          }
+        }
+      }
+    },
+    "Schritte %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Steps %1$@"
           }
         }
       }
@@ -3086,6 +2936,16 @@
         }
       }
     },
+    "Sonstiges" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Other"
+          }
+        }
+      }
+    },
     "Speichern" : {
       "localizations" : {
         "en" : {
@@ -3112,6 +2972,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Location for Weather"
+          }
+        }
+      }
+    },
+    "Stärkste Episode: %@ · %lld/10" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Strongest episode: %1$@ · %2$lld/10"
           }
         }
       }
@@ -3166,6 +3036,26 @@
         }
       }
     },
+    "Symptome %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Symptoms %1$@"
+          }
+        }
+      }
+    },
+    "Symptome: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Symptoms: %1$@"
+          }
+        }
+      }
+    },
     "Sync aktivieren" : {
       "localizations" : {
         "en" : {
@@ -3213,6 +3103,27 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Open Diary"
+          }
+        }
+      }
+    },
+    "Tagebuchübersicht" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diary overview"
+          }
+        }
+      }
+    },
+    "Teilweise" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partial"
           }
         }
       }
@@ -3317,6 +3228,16 @@
         }
       }
     },
+    "Trigger: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Triggers: %1$@"
+          }
+        }
+      }
+    },
     "Typ" : {
       "localizations" : {
         "en" : {
@@ -3333,6 +3254,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Overview"
+          }
+        }
+      }
+    },
+    "Unklar" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unclear"
           }
         }
       }
@@ -3659,6 +3590,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Period"
+          }
+        }
+      }
+    },
+    "Zeitraum: %@ bis %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Period: %1$@ to %2$@"
           }
         }
       }
