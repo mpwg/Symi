@@ -15,26 +15,46 @@ struct ProductInformationView: View {
         List {
             if mode == .onboarding {
                 Section("Bevor du startest") {
-                    Text("\(ProductBranding.displayName) speichert deine Angaben ausschließlich lokal auf diesem Gerät. Die App hilft dir, Migräne, Kopfschmerzen und andere Schmerzereignisse für dich und für Arztgespräche strukturiert festzuhalten.")
-                    Text("Sie ersetzt keine medizinische Diagnose, keine Therapieentscheidung und keinen Notfallkontakt.")
+                    Text("\(ProductBranding.displayName) hilft dir, Schmerzereignisse ruhig und nachvollziehbar festzuhalten. Deine Angaben bleiben zuerst auf diesem Gerät und du entscheidest, welche Zusatzdienste du nutzt.")
+                    Text("Die App ist eine Dokumentationshilfe. Sie ersetzt keine medizinische Diagnose, keine Therapieentscheidung und keinen Notfallkontakt.")
                         .foregroundStyle(.secondary)
                 }
             }
 
-            Section("Datenschutz") {
+            Section("Was die App macht") {
                 infoRow(
-                    title: "Lokale Gesundheitsdaten",
-                    detail: "Episoden, Medikamente, Notizen, Trigger, Symptome, Wetter-Snapshots und gelesener Apple-Health-Kontext werden lokal auf dem Gerät gespeichert."
+                    title: "Schmerzen dokumentieren",
+                    detail: "Du kannst Beginn, Dauer, Intensität, Symptome, Trigger, Medikamente und Notizen zu deinen Einträgen festhalten.",
+                    systemImage: "square.and.pencil"
                 )
                 infoRow(
-                    title: "Optionale iCloud-Synchronisation",
-                    detail: "Cloud-Sync ist freiwillig. Ohne Aktivierung bleiben die Daten ausschließlich lokal auf diesem Gerät."
+                    title: "Kontext ergänzen",
+                    detail: "Wetterdaten und optional freigegebene Apple-Health-Daten können helfen, einen Tag später besser einzuordnen.",
+                    systemImage: "cloud.sun"
                 )
                 infoRow(
-                    title: "PDF-Export nur auf deinen Befehl",
-                    detail: "Ein Bericht wird erst lokal erzeugt, wenn du ihn exportierst und bewusst teilst."
+                    title: "Arztgespräche vorbereiten",
+                    detail: "PDF-Berichte und Backups entstehen nur, wenn du sie bewusst erzeugst. Teilen läuft über die iOS-Teilen-Funktion.",
+                    systemImage: "doc.text"
                 )
+            }
 
+            Section("Deine Daten") {
+                infoRow(
+                    title: "Lokal zuerst",
+                    detail: "Einträge, Medikamente, Notizen, Trigger, Symptome, Wetter-Snapshots und gelesener Apple-Health-Kontext werden auf diesem Gerät gespeichert.",
+                    systemImage: "lock"
+                )
+                infoRow(
+                    title: "iCloud ist freiwillig",
+                    detail: "Die App bleibt ohne iCloud vollständig nutzbar. Wenn du Sync aktivierst, werden App-Daten über deinen iCloud-Account abgeglichen.",
+                    systemImage: "icloud"
+                )
+                infoRow(
+                    title: "Export nur auf deinen Befehl",
+                    detail: "PDF-Berichte und Backups werden lokal erstellt und erst geteilt, wenn du das aktiv auswählst.",
+                    systemImage: "square.and.arrow.up"
+                )
                 Link(destination: privacyURL) {
                     Label("Datenschutzerklärung öffnen", systemImage: "link")
                 }
@@ -42,74 +62,106 @@ struct ProductInformationView: View {
 
             Section("Berechtigungen") {
                 infoRow(
-                    title: "Standort nur für Wetter",
-                    detail: "Die App fragt beim Wetterabruf nach dem ungefähren Standort. Die Koordinaten werden nicht gespeichert."
+                    title: "Standort für Wetter",
+                    detail: "Beim Wetterabruf fragt die App nach deinem ungefähren Standort. Die Koordinaten werden nicht als eigener Tagebuchwert gespeichert.",
+                    systemImage: "location"
                 )
                 infoRow(
                     title: "Apple Health optional",
-                    detail: "Apple Health wird nur nach deiner Freigabe pro Datentyp genutzt. Nicht auf deiner iOS-Version verfügbare HealthKit-Daten werden nicht erzwungen."
+                    detail: "Apple Health wird nur genutzt, wenn du einzelne Datentypen freigibst. Nicht verfügbare Health-Daten werden einfach ausgelassen.",
+                    systemImage: "heart.text.square"
+                )
+                infoRow(
+                    title: "Erinnerungen bleiben lokal",
+                    detail: "Terminerinnerungen werden als lokale iOS-Mitteilungen geplant. Ein Termin bleibt auch ohne Mitteilungsberechtigung gespeichert.",
+                    systemImage: "bell"
                 )
             }
 
-            Section("Wetterdaten") {
+            Section("Apple Health") {
+                infoRow(
+                    title: "Du behältst die Kontrolle",
+                    detail: "Lesen und Schreiben sind getrennt. Du kannst einzelne Health-Datentypen jederzeit in der App oder in iOS wieder deaktivieren.",
+                    systemImage: "checklist"
+                )
+                infoRow(
+                    title: "Was geschrieben wird",
+                    detail: "Version 1 schreibt nur einfache Symptomdaten wie Kopfschmerz und ausgewählte Begleitsymptome. Notizen und Medikamente werden nicht an Apple Health übergeben.",
+                    systemImage: "pencil.and.list.clipboard"
+                )
+                infoRow(
+                    title: "Nicht alles ist überall verfügbar",
+                    detail: "Manche Health-Datentypen gibt es erst ab neueren iOS-Versionen. Die App bleibt trotzdem nutzbar und zeigt nur verfügbare Werte.",
+                    systemImage: "info.circle"
+                )
+            }
+
+            Section("Wetter") {
                 infoRow(
                     title: "Quelle",
-                    detail: "Wetterdaten werden über WeatherKit von Apple Weather geladen."
+                    detail: "Wetterdaten kommen von Apple Weather. Die App speichert daraus einen Snapshot passend zum Zeitpunkt deines Eintrags.",
+                    systemImage: "cloud.sun"
                 )
                 infoRow(
                     title: "Attribution",
-                    detail: WeatherAttribution.modifiedSourceDescription
+                    detail: LocalizedStringKey(WeatherAttribution.modifiedSourceDescription),
+                    systemImage: "text.badge.checkmark"
                 )
 
                 WeatherAttributionView(showsDescription: false)
             }
 
-            Section("Medizinische Einordnung") {
+            Section("Medizinischer Hinweis") {
                 infoRow(
                     title: "Dokumentationshilfe",
-                    detail: "Die App hilft dir, Migräne, Kopfschmerzen, Medikamente und mögliche Auslöser strukturiert festzuhalten."
+                    detail: "Die App hilft beim Festhalten und Wiederfinden deiner eigenen Beobachtungen.",
+                    systemImage: "list.clipboard"
                 )
                 infoRow(
                     title: "Keine Diagnose, keine Therapieempfehlung",
-                    detail: "Inhalte in der App sind keine ärztliche Einschätzung und keine Behandlungsempfehlung."
+                    detail: "Die App bewertet deine Beschwerden nicht medizinisch und ersetzt keine ärztliche Einschätzung oder Behandlungsempfehlung.",
+                    systemImage: "stethoscope"
                 )
                 infoRow(
-                    title: "Bei akuten Beschwerden medizinisch abklären",
-                    detail: "Bei Unsicherheit, starken neuen Symptomen oder Notfällen ist medizinische Hilfe erforderlich."
+                    title: "Bei Warnzeichen Hilfe holen",
+                    detail: "Bei neuen, starken oder ungewohnten Symptomen, Unsicherheit oder Notfällen solltest du medizinische Hilfe kontaktieren.",
+                    systemImage: "exclamationmark.triangle"
                 )
             }
 
-            Section("Version 1") {
+            Section("Version und Plattform") {
                 infoRow(
                     title: "Aktueller Umfang",
-                    detail: "Neuer Eintrag, Tagebuch, Medikamente, Export und hilfreicher Kontext wie Wetter und Apple Health."
+                    detail: "Version 1 umfasst Tagebuch, Medikamente, Wetter, optionale Apple-Health-Anbindung, Export, Arztkontakte und lokale Termine.",
+                    systemImage: "app"
                 )
                 infoRow(
-                    title: "Plattform und Sprache",
-                    detail: "Version 1 ist auf iPhone, Deutsch und iOS 17.6 oder neuer ausgelegt."
-                )
-                infoRow(
-                    title: "Technische Mindestversion",
-                    detail: "Die App nutzt moderne SwiftUI- und SwiftData-Funktionen ohne Backport-Kompromisse. Einzelne HealthKit-Datentypen können je nach iOS-Version fehlen."
+                    title: "iPhone und Deutsch",
+                    detail: "Die App ist aktuell für iPhone, Deutsch und iOS 17.6 oder neuer ausgelegt.",
+                    systemImage: "iphone"
                 )
                 infoRow(
                     title: "Weiterentwicklung",
-                    detail: "Dies ist Version 1. Weitere Punkte können später folgen."
+                    detail: "Weitere Funktionen können später folgen. Medizinische Auswertungen, zusätzliche Plattformen und komplexere Health-Abgleiche brauchen eigene Konzepte.",
+                    systemImage: "arrow.triangle.branch"
                 )
             }
 
             Section("Open Source") {
                 infoRow(
                     title: "Lizenz",
-                    detail: "Das Projekt steht unter der GNU GPL v3."
+                    detail: "Das Projekt steht unter der GNU GPL v3.",
+                    systemImage: "doc.plaintext"
                 )
                 infoRow(
                     title: "Feedback und Ideen",
-                    detail: "Weitere Punkte können gerne als GitHub-Issue eingemeldet werden."
+                    detail: "Fehler, Ideen und Verbesserungsvorschläge können als GitHub-Issue eingemeldet werden.",
+                    systemImage: "bubble.left.and.text.bubble.right"
                 )
                 infoRow(
                     title: "Beiträge",
-                    detail: "Pull Requests sind willkommen."
+                    detail: "Pull Requests sind willkommen.",
+                    systemImage: "arrow.triangle.pull"
                 )
 
                 Link(destination: repositoryURL) {
@@ -137,13 +189,21 @@ struct ProductInformationView: View {
     private var repositoryURL: URL { ProductBranding.repositoryURL }
 
     @ViewBuilder
-    private func infoRow(title: LocalizedStringKey, detail: LocalizedStringKey) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title)
-                .font(.headline)
-            Text(detail)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+    private func infoRow(title: LocalizedStringKey, detail: LocalizedStringKey, systemImage: String) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: systemImage)
+                .font(.title3)
+                .foregroundStyle(.accent)
+                .frame(width: 28)
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text(title)
+                    .font(.headline)
+                Text(detail)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
         }
         .padding(.vertical, 4)
         .brandGroupedRow()
