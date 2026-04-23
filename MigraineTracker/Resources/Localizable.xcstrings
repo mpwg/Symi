@@ -329,6 +329,9 @@
         }
       }
     },
+    "Alle Details" : {
+
+    },
     "Allgemein" : {
       "localizations" : {
         "en" : {
@@ -641,6 +644,18 @@
         }
       }
     },
+    "Backup" : {
+
+    },
+    "Backup einlesen" : {
+
+    },
+    "Backup erstellen" : {
+
+    },
+    "Backup teilen" : {
+
+    },
     "Bearbeiten" : {
       "localizations" : {
         "en" : {
@@ -712,6 +727,7 @@
       }
     },
     "Bericht" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -791,6 +807,9 @@
         }
       }
     },
+    "Das Backup enthält alle Einträge sowie eigene Medikamentenvorlagen, inklusive Papierkorb-Einträgen." : {
+
+    },
     "Das Projekt steht unter der GNU GPL v3." : {
       "localizations" : {
         "en" : {
@@ -833,6 +852,7 @@
       }
     },
     "Daten sichern" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -935,6 +955,7 @@
       }
     },
     "Der PDF-Bericht von %@ wird lokal erzeugt und kann systemweit geteilt werden." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1286,6 +1307,7 @@
       }
     },
     "Einträge im Zeitraum: %lld" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1800,6 +1822,7 @@
       }
     },
     "JSON5 erstellen" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1810,6 +1833,7 @@
       }
     },
     "JSON5 importieren" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1820,6 +1844,7 @@
       }
     },
     "JSON5 teilen" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1830,6 +1855,7 @@
       }
     },
     "JSON5-Export enthält alle Einträge sowie eigene Medikamentenvorlagen, inklusive Papierkorb-Einträgen." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1890,6 +1916,7 @@
       }
     },
     "Keine Einträge im Zeitraum" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2585,6 +2612,7 @@
       }
     },
     "Passe den Zeitraum an, damit ein Bericht aus deinem Tagebuch erstellt werden kann." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2605,6 +2633,7 @@
       }
     },
     "PDF erstellen" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2656,6 +2685,7 @@
       }
     },
     "PDF-Modus" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2965,6 +2995,9 @@
           }
         }
       }
+    },
+    "Standardmäßig startet der Zeitraum am ersten Tag des vorvorherigen Monats und endet inklusive heute." : {
+
     },
     "Standort für Wetter" : {
       "localizations" : {
@@ -3373,6 +3406,7 @@
       }
     },
     "Vorschau" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3452,6 +3486,9 @@
           }
         }
       }
+    },
+    "Wenn aktiviert, enthält das PDF zusätzlich die detaillierten Einträge mit Medikamenten, Triggern, Wetterdaten, Apple-Health-Kontext und Notizen." : {
+
     },
     "Wetter" : {
       "localizations" : {

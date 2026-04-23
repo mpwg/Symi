@@ -20,7 +20,7 @@ enum PDFExportWriter {
 
     private static func writeRawPDF(summary: ExportPeriodSummary, mode: PDFReportMode, to url: URL, layout: PDFLayout) throws {
         var mediaBox = layout.pageRect
-        let documentTitle = formatted("%@ Bericht", ProductBranding.displayName)
+        let documentTitle = localized("Schmerztagebuch")
         let metadata = [
             kCGPDFContextCreator: ProductBranding.displayName,
             kCGPDFContextAuthor: ProductBranding.displayName,
@@ -33,13 +33,17 @@ enum PDFExportWriter {
             throw PDFExportError.contextCreationFailed
         }
 
-        var page = PDFPageContext(context: context, layout: layout)
-        page.beginPage()
-        try page.drawBrandHeader(
-            title: documentTitle,
-            subtitle: localized("Professioneller Bericht für Arztgespräche"),
-            logo: brandLogo()
+        var page = PDFPageContext(
+            context: context,
+            layout: layout,
+            headerTitle: localized("Schmerztagebuch"),
+            headerLogo: brandLogo(),
+            footerTitle: localized("App herunterladen"),
+            footerLinkLabel: localized("App Store"),
+            footerURL: ProductBranding.appStoreURL.absoluteString,
+            footerQRCode: appStoreQRCode()
         )
+        page.beginPage()
         try page.drawBodyLine(
             formatted(
                 "Zeitraum: %@ bis %@",
@@ -66,15 +70,6 @@ enum PDFExportWriter {
 
         try drawExecutiveSummary(summary: summary, on: &page)
 
-        page.addSpacing(16)
-        try page.drawAppStorePanel(
-            title: localized("App herunterladen"),
-            body: formatted("Erstellt mit %@.", ProductBranding.displayName),
-            linkLabel: localized("App Store"),
-            url: ProductBranding.appStoreURL.absoluteString,
-            qrCode: appStoreQRCode()
-        )
-
         page.addSpacing(18)
         try drawCharts(summary: summary, on: &page)
 
@@ -95,7 +90,7 @@ enum PDFExportWriter {
         guard let document = PDFDocument(url: url), document.pageCount > 0 else {
             throw PDFExportError.documentValidationFailed
         }
-        let documentTitle = formatted("%@ Bericht", ProductBranding.displayName)
+        let documentTitle = localized("Schmerztagebuch")
 
         document.documentAttributes = [
             PDFDocumentAttribute.titleAttribute: documentTitle,
@@ -123,6 +118,18 @@ enum PDFExportWriter {
 
         if let endedAt = record.endedAt {
             lines.append(formatted("Ende: %@", endedAt.formatted(date: .abbreviated, time: .shortened)))
+        }
+
+        if !record.painLocation.isEmpty {
+            lines.append(formatted("Schmerzort: %@", record.painLocation))
+        }
+
+        if !record.painCharacter.isEmpty {
+            lines.append(formatted("Schmerzcharakter: %@", record.painCharacter))
+        }
+
+        if record.menstruationStatus != MenstruationStatus.unknown.rawValue {
+            lines.append(formatted("Menstruationsstatus: %@", localizedExportValue(record.menstruationStatus)))
         }
 
         if !record.symptoms.isEmpty {
@@ -200,6 +207,7 @@ enum PDFExportWriter {
                 parts.append(formatted("Symptome %@", health.symptoms.joined(separator: ", ")))
             }
             parts.append(formatted("Quelle: %@", health.source))
+            parts.append(formatted("Erfasst: %@", health.recordedAt.formatted(date: .abbreviated, time: .shortened)))
 
             lines.append("Apple Health: \(parts.joined(separator: ", "))")
         }
@@ -300,6 +308,10 @@ enum PDFExportWriter {
             MedicationCategory.paracetamol.rawValue,
             MedicationCategory.antiemetic.rawValue,
             MedicationCategory.other.rawValue,
+            MenstruationStatus.unknown.rawValue,
+            MenstruationStatus.none.rawValue,
+            MenstruationStatus.active.rawValue,
+            MenstruationStatus.expected.rawValue,
             MedicationEffectiveness.none.rawValue,
             MedicationEffectiveness.partial.rawValue,
             MedicationEffectiveness.good.rawValue:
@@ -367,25 +379,50 @@ private struct PDFLayout {
     let brandStrokeColor = CGColor(red: 0.68, green: 0.77, blue: 0.77, alpha: 1)
     let separatorColor = CGColor(gray: 0.82, alpha: 1)
     let lineSpacing: CGFloat = 5
+    let footerHeight: CGFloat = 108
 
     var contentWidth: CGFloat { pageRect.width - (margin * 2) }
-    var topY: CGFloat { margin }
-    var bottomY: CGFloat { pageRect.height - margin }
+    var topY: CGFloat { margin + 72 }
+    var bottomY: CGFloat { pageRect.height - margin - footerHeight }
+    var footerTopY: CGFloat { pageRect.height - margin - footerHeight + 10 }
 }
 
 private struct PDFPageContext {
     let context: CGContext
     let layout: PDFLayout
+    let headerTitle: String
+    let headerLogo: CGImage?
+    let footerTitle: String
+    let footerLinkLabel: String
+    let footerURL: String
+    let footerQRCode: CGImage?
     var cursorY: CGFloat = 0
 
-    init(context: CGContext, layout: PDFLayout) {
+    init(
+        context: CGContext,
+        layout: PDFLayout,
+        headerTitle: String,
+        headerLogo: CGImage?,
+        footerTitle: String,
+        footerLinkLabel: String,
+        footerURL: String,
+        footerQRCode: CGImage?
+    ) {
         self.context = context
         self.layout = layout
+        self.headerTitle = headerTitle
+        self.headerLogo = headerLogo
+        self.footerTitle = footerTitle
+        self.footerLinkLabel = footerLinkLabel
+        self.footerURL = footerURL
+        self.footerQRCode = footerQRCode
         self.cursorY = layout.topY
     }
 
     mutating func beginPage() {
         context.beginPDFPage(nil)
+        cursorY = layout.margin
+        try? drawBrandHeader(title: headerTitle, logo: headerLogo)
         cursorY = layout.topY
     }
 
@@ -393,8 +430,8 @@ private struct PDFPageContext {
         try draw(text: text, font: layout.titleFont, extraSpacing: 10)
     }
 
-    mutating func drawBrandHeader(title: String, subtitle: String, logo: CGImage?) throws {
-        let headerHeight: CGFloat = 58
+    mutating func drawBrandHeader(title: String, logo: CGImage?) throws {
+        let headerHeight: CGFloat = 48
         ensureSpace(headerHeight + 12)
         let headerTop = cursorY
 
@@ -414,13 +451,6 @@ private struct PDFPageContext {
             rect: CGRect(x: textX, y: headerTop + 2, width: textWidth, height: height(for: title, font: layout.titleFont)),
             extraSpacing: 0
         )
-        try draw(
-            text: subtitle,
-            font: layout.bodyFont,
-            color: layout.mutedTextColor,
-            rect: CGRect(x: textX, y: headerTop + 32, width: textWidth, height: height(for: subtitle, font: layout.bodyFont)),
-            extraSpacing: 0
-        )
 
         cursorY = headerTop + headerHeight
         drawSeparator()
@@ -436,10 +466,8 @@ private struct PDFPageContext {
     }
 
     mutating func drawAppStorePanel(title: String, body: String, linkLabel: String, url: String, qrCode: CGImage?) throws {
-        let panelHeight: CGFloat = 102
-        ensureSpace(panelHeight + 8)
-
-        let panelRect = CGRect(x: layout.margin, y: cursorY, width: layout.contentWidth, height: panelHeight)
+        let panelHeight: CGFloat = 92
+        let panelRect = CGRect(x: layout.margin, y: layout.footerTopY, width: layout.contentWidth, height: panelHeight)
         drawPanelBackground(panelRect)
 
         let qrRect = CGRect(
@@ -455,10 +483,10 @@ private struct PDFPageContext {
         let textX = panelRect.minX + 14
         let textWidth = qrRect.minX - textX - 14
         try draw(text: title, font: layout.brandFont, color: layout.textColor, rect: CGRect(x: textX, y: panelRect.minY + 14, width: textWidth, height: 16), extraSpacing: 0)
-        try draw(text: body, font: layout.bodyFont, color: layout.textColor, rect: CGRect(x: textX, y: panelRect.minY + 34, width: textWidth, height: 18), extraSpacing: 0)
-        try draw(text: "\(linkLabel): \(url)", font: layout.smallFont, color: layout.mutedTextColor, rect: CGRect(x: textX, y: panelRect.minY + 58, width: textWidth, height: 30), extraSpacing: 0)
-
-        cursorY = panelRect.maxY
+        if !body.isEmpty {
+            try draw(text: body, font: layout.bodyFont, color: layout.textColor, rect: CGRect(x: textX, y: panelRect.minY + 34, width: textWidth, height: 18), extraSpacing: 0)
+        }
+        try draw(text: "\(linkLabel): \(url)", font: layout.smallFont, color: layout.mutedTextColor, rect: CGRect(x: textX, y: panelRect.minY + 48, width: textWidth, height: 30), extraSpacing: 0)
     }
 
     mutating func drawHorizontalBarChart(title: String, rows: [PDFChartRow], maximumValue: Int? = nil) throws {
@@ -641,6 +669,13 @@ private struct PDFPageContext {
     }
 
     mutating func endPage() {
+        try? drawAppStorePanel(
+            title: footerTitle,
+            body: "",
+            linkLabel: footerLinkLabel,
+            url: footerURL,
+            qrCode: footerQRCode
+        )
         context.endPDFPage()
     }
 }
