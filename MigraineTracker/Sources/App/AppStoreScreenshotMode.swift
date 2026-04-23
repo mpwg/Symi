@@ -94,29 +94,29 @@ enum AppStoreScreenshotMode {
                 postalCode: "1010",
                 phone: "01 2345678",
                 email: "ordination.clara.heiden@example.com",
-                notes: "Beispielkontakt für App-Store-Screenshots.",
+                notes: "Sample contact for App Store screenshots.",
                 sourceRaw: DoctorSource.manual.rawValue
             )
 
             let doctorTwo = Doctor(
                 name: "Dr. Mira Sonnberg",
-                specialty: "Allgemeinmedizin",
+                specialty: "General medicine",
                 street: "Auenweg 5",
                 city: "Wien",
                 state: "Wien",
                 postalCode: "1070",
                 phone: "01 8765432",
                 email: "ordination.mira.sonnberg@example.com",
-                notes: "Anonymisierte Demo-Daten.",
+                notes: "Anonymized demo data.",
                 sourceRaw: DoctorSource.manual.rawValue
             )
 
             let appointment = DoctorAppointment(
                 scheduledAt: calendar.date(bySettingHour: 9, minute: 15, second: 0, of: today.addingTimeInterval(2 * 24 * 60 * 60)) ?? today,
                 endsAt: calendar.date(bySettingHour: 9, minute: 45, second: 0, of: today.addingTimeInterval(2 * 24 * 60 * 60)),
-                practiceName: "Ordination Dr. Clara Heiden",
+                practiceName: "Practice Dr. Clara Heiden",
                 addressText: "Lindenhofgasse 12, 1010 Wien",
-                note: "Verlaufsgespräch und Anpassung des Akutplans.",
+                note: "Follow-up discussion and adjustment of the acute plan.",
                 reminderEnabled: true,
                 reminderLeadTimeMinutes: 24 * 60,
                 notificationStatusRaw: AppointmentReminderStatus.scheduled.rawValue,
@@ -143,7 +143,7 @@ enum AppStoreScreenshotMode {
 
             try context.save()
         } catch {
-            assertionFailure("Screenshot-Daten konnten nicht vorbereitet werden: \(error)")
+            assertionFailure("Screenshot data could not be prepared: \(error)")
         }
     }
 
@@ -158,13 +158,13 @@ enum AppStoreScreenshotMode {
             startedAt: startedAt,
             endedAtEnabled: false,
             endedAt: startedAt,
-            painLocation: "rechte Schläfe",
-            painCharacter: "pochend",
-            notes: "Beispieldaten für den App Store. Nach einer ruhigen Pause wurde es besser.",
-            functionalImpact: "Arbeit in ruhiger Umgebung fortgesetzt",
+            painLocation: "right temple",
+            painCharacter: "throbbing",
+            notes: "Sample App Store data. It improved after a quiet break.",
+            functionalImpact: "Work continued in a quiet environment",
             menstruationStatus: .unknown,
-            selectedSymptoms: ["Übelkeit", "Lichtempfindlichkeit"],
-            selectedTriggers: ["Stress", "Bildschirmzeit"],
+            selectedSymptoms: ["Nausea", "Light sensitivity"],
+            selectedTriggers: ["Stress", "Screen time"],
             medications: [
                 MedicationSelectionDraft(
                     selectionKey: MedicationSelectionDraft.makeSelectionKey(
@@ -184,13 +184,13 @@ enum AppStoreScreenshotMode {
     static func sampleWeatherSnapshot(for startedAt: Date) -> WeatherSnapshotData {
         WeatherSnapshotData(
             recordedAt: startedAt,
-            condition: "Leicht bewölkt",
+            condition: "Partly cloudy",
             temperature: 17.8,
             humidity: 62,
             pressure: 1016,
             precipitation: 0.0,
             weatherCode: 2,
-            source: "Beispielwetter"
+            source: "Sample weather"
         )
     }
 
@@ -205,12 +205,12 @@ enum AppStoreScreenshotMode {
             endedAt: calendar.date(byAdding: .hour, value: 3, to: todayMorning),
             type: .migraine,
             intensity: 6,
-            painLocation: "rechte Schläfe",
-            painCharacter: "pochend",
-            notes: "Beispieldaten für App-Store-Screenshots.",
-            symptoms: ["Übelkeit", "Lichtempfindlichkeit"],
-            triggers: ["Stress", "Bildschirmzeit"],
-            functionalImpact: "Ruhiger Vormittag mit Pausen",
+            painLocation: "right temple",
+            painCharacter: "throbbing",
+            notes: "Sample data for App Store screenshots.",
+            symptoms: ["Nausea", "Light sensitivity"],
+            triggers: ["Stress", "Screen time"],
+            functionalImpact: "Quiet morning with breaks",
             medications: [
                 MedicationEntry(
                     name: "Paracetamol",
@@ -229,12 +229,12 @@ enum AppStoreScreenshotMode {
             endedAt: calendar.date(byAdding: .hour, value: 2, to: threeDaysAgo),
             type: .headache,
             intensity: 4,
-            painLocation: "Stirn",
-            painCharacter: "dumpf",
-            notes: "Nach Wasser und kurzer Pause abgeklungen.",
-            symptoms: ["Geräuschempfindlichkeit"],
-            triggers: ["Schlafmangel"],
-            functionalImpact: "Kurze Pause am Nachmittag",
+            painLocation: "forehead",
+            painCharacter: "dull",
+            notes: "Settled after water and a short break.",
+            symptoms: ["Sound sensitivity"],
+            triggers: ["Lack of sleep"],
+            functionalImpact: "Short break in the afternoon",
             medications: [
                 MedicationEntry(
                     name: "Ibuprofen",
@@ -252,12 +252,12 @@ enum AppStoreScreenshotMode {
             endedAt: calendar.date(byAdding: .hour, value: 5, to: eightDaysAgo),
             type: .migraine,
             intensity: 8,
-            painLocation: "links frontal",
-            painCharacter: "pulsierend",
-            notes: "Rückzug in einen abgedunkelten Raum.",
-            symptoms: ["Aura", "Lichtempfindlichkeit", "Übelkeit"],
+            painLocation: "left frontal",
+            painCharacter: "pulsating",
+            notes: "Retreated to a darkened room.",
+            symptoms: ["Aura", "Light sensitivity", "Nausea"],
             triggers: ["Stress"],
-            functionalImpact: "Termine verschoben",
+            functionalImpact: "Appointments postponed",
             medications: [
                 MedicationEntry(
                     name: "Metoclopramid",
@@ -278,10 +278,10 @@ enum AppStoreScreenshotMode {
             intensity: 3,
             painLocation: "Nacken",
             painCharacter: "ziehend",
-            notes: "Beobachtet und ohne Medikament dokumentiert.",
+            notes: "Observed and documented without medication.",
             symptoms: ["Kiefer-/Aufbissschmerz"],
             triggers: ["Bildschirmzeit"],
-            functionalImpact: "Späterer Feierabend",
+            functionalImpact: "Later finish to the workday",
             medications: []
         )
         episodeFour.weatherSnapshot = WeatherSnapshot(snapshot: sampleWeatherSnapshot(for: fifteenDaysAgo), episode: episodeFour)
@@ -295,7 +295,7 @@ enum AppStoreScreenshotMode {
                 catalogKey: "screenshot:acute",
                 groupID: "screenshot-medications",
                 groupTitle: "Beispielmedikamente",
-                groupFooter: "Diese anonymisierten Medikamentnamen dienen ausschließlich der Screenshot-Erstellung.",
+                groupFooter: "These anonymized medication names are only used to create screenshots.",
                 name: "Paracetamol",
                 category: .paracetamol,
                 suggestedDosage: "500 mg",
@@ -306,7 +306,7 @@ enum AppStoreScreenshotMode {
                 catalogKey: "screenshot:support",
                 groupID: "screenshot-medications",
                 groupTitle: "Beispielmedikamente",
-                groupFooter: "Diese anonymisierten Medikamentnamen dienen ausschließlich der Screenshot-Erstellung.",
+                groupFooter: "These anonymized medication names are only used to create screenshots.",
                 name: "Ibuprofen",
                 category: .nsar,
                 suggestedDosage: "400 mg",
@@ -317,7 +317,7 @@ enum AppStoreScreenshotMode {
                 catalogKey: "screenshot:reserve",
                 groupID: "screenshot-medications",
                 groupTitle: "Beispielmedikamente",
-                groupFooter: "Diese anonymisierten Medikamentnamen dienen ausschließlich der Screenshot-Erstellung.",
+                groupFooter: "These anonymized medication names are only used to create screenshots.",
                 name: "Metoclopramid",
                 category: .antiemetic,
                 suggestedDosage: "10 mg",
@@ -337,7 +337,7 @@ enum AppStoreScreenshotMode {
                 city: "Wien",
                 state: "Wien",
                 postalCode: "1010",
-                sourceLabel: "Musterverzeichnis für App-Store-Screenshots",
+                sourceLabel: "Sample directory for App Store screenshots",
                 sourceURL: "https://example.com/app-store-screenshots"
             ),
             DoctorDirectoryEntry(
@@ -348,7 +348,7 @@ enum AppStoreScreenshotMode {
                 city: "Wien",
                 state: "Wien",
                 postalCode: "1070",
-                sourceLabel: "Musterverzeichnis für App-Store-Screenshots",
+                sourceLabel: "Sample directory for App Store screenshots",
                 sourceURL: "https://example.com/app-store-screenshots"
             ),
             DoctorDirectoryEntry(
@@ -359,7 +359,7 @@ enum AppStoreScreenshotMode {
                 city: "Graz",
                 state: "Steiermark",
                 postalCode: "8010",
-                sourceLabel: "Musterverzeichnis für App-Store-Screenshots",
+                sourceLabel: "Sample directory for App Store screenshots",
                 sourceURL: "https://example.com/app-store-screenshots"
             )
         ]

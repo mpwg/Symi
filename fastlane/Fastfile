@@ -15,7 +15,7 @@ LOCAL_SECRETS_PATH = File.join(REPO_ROOT, "MigraineTracker/Configs/LocalSecrets.
 SCREENSHOT_SCHEME = "MigraineTrackerScreenshots"
 SCREENSHOT_TEST_TARGET = "MigraineTrackerUITests"
 SCREENSHOT_TEST_IDENTIFIER = "MigraineTrackerUITests/MigraineTrackerScreenshotTests/testCaptureMainStoreScreens"
-SCREENSHOT_LANGUAGE = "de-DE"
+SCREENSHOT_LANGUAGE = "en-US"
 SCREENSHOT_SEED = "default"
 SCREENSHOT_ROOT = File.join(REPO_ROOT, "fastlane", "screenshots")
 IOS_SCREENSHOT_OUTPUT = File.join(SCREENSHOT_ROOT, "ios")
@@ -56,7 +56,7 @@ end
 def write_snapshot_configuration_files!
   FileUtils.mkdir_p(screenshot_cache_directory)
   File.write(File.join(screenshot_cache_directory, "language.txt"), "#{SCREENSHOT_LANGUAGE}\n")
-  File.write(File.join(screenshot_cache_directory, "locale.txt"), "de_DE\n")
+  File.write(File.join(screenshot_cache_directory, "locale.txt"), "en_US\n")
   File.write(File.join(screenshot_cache_directory, "snapshot-launch_arguments.txt"), "-mt_screenshot_seed #{SCREENSHOT_SEED}\n")
 end
 

@@ -154,12 +154,12 @@ private enum ScreenshotSeedFactory {
             endedAt: todayAtNine.addingTimeInterval(3.5 * 60 * 60),
             type: .migraine,
             intensity: 8,
-            painLocation: "links orbital",
-            painCharacter: "pochend",
-            notes: "Screen-Seed: Dunkler Raum, Wasser und kurze Pause haben geholfen.",
-            symptoms: ["Übelkeit", "Lichtempfindlichkeit", "Aura"],
-            triggers: ["Wetterumschwung", "Schlafmangel"],
-            functionalImpact: "Arbeit nur eingeschränkt möglich",
+            painLocation: "left orbital",
+            painCharacter: "throbbing",
+            notes: "Screen seed: a dark room, water and a short break helped.",
+            symptoms: ["Nausea", "Light sensitivity", "Aura"],
+            triggers: ["Weather change", "Lack of sleep"],
+            functionalImpact: "Work only possible with limitations",
             menstruationStatus: .expected,
             medications: [sumatriptan]
         )
@@ -169,12 +169,12 @@ private enum ScreenshotSeedFactory {
             endedAt: fourDaysAgo.addingTimeInterval(2 * 60 * 60),
             type: .headache,
             intensity: 6,
-            painLocation: "beidseitig frontal",
-            painCharacter: "drückend",
-            notes: "Viel Bildschirmarbeit am Nachmittag.",
-            symptoms: ["Verspannung"],
+            painLocation: "bilateral frontal",
+            painCharacter: "pressing",
+            notes: "A lot of screen work in the afternoon.",
+            symptoms: ["Tension"],
             triggers: ["Stress"],
-            functionalImpact: "Konzentration reduziert",
+            functionalImpact: "Reduced concentration",
             menstruationStatus: .none,
             medications: [magnesium]
         )
@@ -184,12 +184,12 @@ private enum ScreenshotSeedFactory {
             endedAt: twelveDaysAgo.addingTimeInterval(90 * 60),
             type: .unclear,
             intensity: 4,
-            painLocation: "Hinterkopf",
-            painCharacter: "dumpf",
-            notes: "Kurzer Verlauf ohne weitere Auffälligkeiten.",
-            symptoms: ["Müdigkeit"],
-            triggers: ["Zu wenig Wasser"],
-            functionalImpact: "Leicht eingeschränkt",
+            painLocation: "back of head",
+            painCharacter: "dull",
+            notes: "Short episode without other notable issues.",
+            symptoms: ["Fatigue"],
+            triggers: ["Too little water"],
+            functionalImpact: "Slightly limited",
             menstruationStatus: .unknown,
             medications: [ibuprofen]
         )
@@ -197,7 +197,7 @@ private enum ScreenshotSeedFactory {
         let weatherSnapshot = WeatherSnapshot(
             snapshot: WeatherSnapshotData(
                 recordedAt: todayAtNine,
-                condition: "Leichter Regen",
+                condition: "Light rain",
                 temperature: 16.3,
                 humidity: 74,
                 pressure: 1007,
@@ -214,14 +214,14 @@ private enum ScreenshotSeedFactory {
             createdAt: calendar.date(byAdding: .month, value: -4, to: now) ?? now,
             updatedAt: now,
             name: "Dr. Clara Heiden",
-            specialty: "Neurologie",
+            specialty: "Neurology",
             street: "Lindenhofgasse 12",
             city: "Wien",
             state: "Wien",
             postalCode: "1010",
             phone: "+43 1 000 12 34",
             email: "ordination.heiden@example.com",
-            notes: "Fiktive Beispielärztin für Migräneprophylaxe.",
+            notes: "Fictional sample doctor for migraine prevention.",
             sourceRaw: DoctorSource.oegkDirectory.rawValue
         )
         let secondDoctor = Doctor(
@@ -229,14 +229,14 @@ private enum ScreenshotSeedFactory {
             createdAt: calendar.date(byAdding: .month, value: -2, to: now) ?? now,
             updatedAt: now,
             name: "Dr. Mira Sonnberg",
-            specialty: "Allgemeinmedizin",
+            specialty: "General medicine",
             street: "Auenweg 5",
             city: "Wien",
             state: "Wien",
             postalCode: "1070",
             phone: "+43 1 000 56 78",
             email: "praxis.sonnberg@example.com",
-            notes: "Fiktiver Beispielkontakt für Verlaufskontrollen.",
+            notes: "Fictional sample contact for follow-up visits.",
             sourceRaw: DoctorSource.manual.rawValue
         )
 
@@ -248,7 +248,7 @@ private enum ScreenshotSeedFactory {
             endsAt: calendar.date(bySettingHour: 14, minute: 45, second: 0, of: nextWeek),
             practiceName: "Ordination Dr. Clara Heiden",
             addressText: "Lindenhofgasse 12, 1010 Wien",
-            note: "Gespräch zu Triggern und Prophylaxe.",
+            note: "Discussion about triggers and prevention.",
             reminderEnabled: true,
             reminderLeadTimeMinutes: 24 * 60,
             notificationStatusRaw: AppointmentReminderStatus.scheduled.rawValue,
@@ -261,7 +261,7 @@ private enum ScreenshotSeedFactory {
             updatedAt: now,
             scheduledAt: calendar.date(bySettingHour: 9, minute: 30, second: 0, of: nextMonth) ?? nextMonth,
             endsAt: nil,
-            practiceName: "Praxis Dr. Mira Sonnberg",
+            practiceName: "Practice Dr. Mira Sonnberg",
             addressText: "Auenweg 5, 1070 Wien",
             note: "Kontrolle Blutdruck und Begleitmedikation.",
             reminderEnabled: true,
@@ -305,7 +305,7 @@ private enum ScreenshotSeedFactory {
                 city: "Wien",
                 state: "Wien",
                 postalCode: "1010",
-                sourceLabel: "Musterverzeichnis für App-Store-Screenshots",
+                sourceLabel: "Sample directory for App Store screenshots",
                 sourceURL: "https://example.com/app-store-screenshots"
             ),
             DoctorDirectoryEntry(
@@ -316,7 +316,7 @@ private enum ScreenshotSeedFactory {
                 city: "Wien",
                 state: "Wien",
                 postalCode: "1070",
-                sourceLabel: "Musterverzeichnis für App-Store-Screenshots",
+                sourceLabel: "Sample directory for App Store screenshots",
                 sourceURL: "https://example.com/app-store-screenshots"
             ),
             DoctorDirectoryEntry(
@@ -327,7 +327,7 @@ private enum ScreenshotSeedFactory {
                 city: "Graz",
                 state: "Steiermark",
                 postalCode: "8010",
-                sourceLabel: "Musterverzeichnis für App-Store-Screenshots",
+                sourceLabel: "Sample directory for App Store screenshots",
                 sourceURL: "https://example.com/app-store-screenshots"
             )
         ]
@@ -431,13 +431,13 @@ private struct ScreenshotDoctorsListView: View {
     var body: some View {
         List {
             Section {
-                Label("Arzt hinzufügen", systemImage: "cross.case.fill")
+                Label("Add Doctor", systemImage: "cross.case.fill")
                     .brandGroupedRow()
             } footer: {
-                Text("Die Liste zeigt Beispieldaten für den Screenshot-Modus.")
+                Text("The list shows sample data for screenshot mode.")
             }
 
-            Section("Meine Ärzte") {
+            Section("My Doctors") {
                 ForEach(doctors) { doctor in
                     NavigationLink {
                         DoctorDetailView(appContainer: appContainer, doctorID: doctor.id)
@@ -447,7 +447,7 @@ private struct ScreenshotDoctorsListView: View {
                 }
             }
         }
-        .navigationTitle("Ärzte")
+        .navigationTitle("Doctors")
         .brandGroupedScreen()
         .refreshable {
             doctors = (try? appContainer.doctorRepository.fetchAll()) ?? []
@@ -472,7 +472,7 @@ private struct ScreenshotAppointmentFlowView: View {
             if let doctor {
                 AppointmentEditorView(appContainer: appContainer, doctor: doctor, appointmentID: nil)
             } else {
-                ContentUnavailableView("Arzt nicht gefunden", systemImage: "exclamationmark.triangle")
+                ContentUnavailableView("Doctor not found", systemImage: "exclamationmark.triangle")
             }
         }
     }

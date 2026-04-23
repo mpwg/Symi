@@ -13,16 +13,16 @@ final class MigraineTrackerScreenshotTests: XCTestCase {
 
     func testCaptureMainStoreScreens() throws {
         let screens: [Screen] = [
-            .init(route: "home", snapshotName: "01-startseite"),
-            .init(route: "new-entry", snapshotName: "02-neuer-eintrag"),
-            .init(route: "history", snapshotName: "03-tagebuch"),
-            .init(route: "episode-detail", snapshotName: "04-eintragsdetail"),
+            .init(route: "home", snapshotName: "01-home"),
+            .init(route: "new-entry", snapshotName: "02-new-entry"),
+            .init(route: "history", snapshotName: "03-diary"),
+            .init(route: "episode-detail", snapshotName: "04-entry-detail"),
             .init(route: "export", snapshotName: "05-export"),
-            .init(route: "doctors", snapshotName: "06-aerzteliste"),
-            .init(route: "doctor-detail", snapshotName: "07-arztdetail"),
-            .init(route: "doctor-add", snapshotName: "08-arzt-hinzufuegen"),
-            .init(route: "appointment-flow", snapshotName: "09-termin-flow"),
-            .init(route: "privacy-info", snapshotName: "10-datenschutz")
+            .init(route: "doctors", snapshotName: "06-doctors"),
+            .init(route: "doctor-detail", snapshotName: "07-doctor-detail"),
+            .init(route: "doctor-add", snapshotName: "08-add-doctor"),
+            .init(route: "appointment-flow", snapshotName: "09-appointment-flow"),
+            .init(route: "privacy-info", snapshotName: "10-privacy")
         ]
 
         for screen in screens {
