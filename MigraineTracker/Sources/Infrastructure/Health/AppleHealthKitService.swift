@@ -173,7 +173,11 @@ final class AppleHealthKitService: HealthService {
         case .heartRateVariability:
             HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN)
         case .menstrualFlow:
-            HKObjectType.categoryType(forIdentifier: .menstrualFlow)
+            if #available(iOS 18.0, *) {
+                HKObjectType.categoryType(forIdentifier: .menstrualFlow)
+            } else {
+                nil
+            }
         case .headache:
             HKObjectType.categoryType(forIdentifier: .headache)
         case .nausea:
@@ -231,6 +235,10 @@ final class AppleHealthKitService: HealthService {
     }
 
     private func latestMenstrualFlow(from start: Date, to end: Date) async throws -> String? {
+        guard #available(iOS 18.0, *) else {
+            return nil
+        }
+
         guard let type = HKObjectType.categoryType(forIdentifier: .menstrualFlow) else {
             return nil
         }
