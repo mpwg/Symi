@@ -185,6 +185,12 @@ struct EpisodeDetailView: View {
                     }
                 }
 
+                if let healthContext = episode.healthContext {
+                    Section("Apple Health") {
+                        healthRows(for: healthContext)
+                    }
+                }
+
                 if !episode.notes.isEmpty {
                     Section("Notiz") {
                         Text(episode.notes)
@@ -281,6 +287,12 @@ struct EpisodeDetailView: View {
                         }
                     }
 
+                    if let healthContext = episode.healthContext {
+                        AdaptiveDashboardCard(title: "Apple Health") {
+                            healthValues(for: healthContext)
+                        }
+                    }
+
                     if !episode.notes.isEmpty {
                         AdaptiveDashboardCard(title: "Notiz") {
                             Text(episode.notes)
@@ -330,6 +342,53 @@ struct EpisodeDetailView: View {
                     .background(AppTheme.secondaryFill, in: Capsule())
             }
         }
+    }
+
+    @ViewBuilder
+    private func healthRows(for context: HealthContextRecord) -> some View {
+        ForEach(healthDetailLines(for: context), id: \.title) { line in
+            detailRow(line.title, line.value)
+        }
+    }
+
+    @ViewBuilder
+    private func healthValues(for context: HealthContextRecord) -> some View {
+        ForEach(healthDetailLines(for: context), id: \.title) { line in
+            detailValue(line.title, line.value)
+        }
+    }
+
+    private func healthDetailLines(for context: HealthContextRecord) -> [(title: String, value: String)] {
+        var lines: [(String, String)] = []
+
+        if let sleepMinutes = context.sleepMinutes {
+            lines.append(("Schlaf", "\(Int(sleepMinutes.rounded())) min"))
+        }
+        if let stepCount = context.stepCount {
+            lines.append(("Schritte", stepCount.formatted()))
+        }
+        if let averageHeartRate = context.averageHeartRate {
+            lines.append(("Herzfrequenz", averageHeartRate.formatted(.number.precision(.fractionLength(0))) + " bpm"))
+        }
+        if let restingHeartRate = context.restingHeartRate {
+            lines.append(("Ruhepuls", restingHeartRate.formatted(.number.precision(.fractionLength(0))) + " bpm"))
+        }
+        if let heartRateVariability = context.heartRateVariability {
+            lines.append(("HRV", heartRateVariability.formatted(.number.precision(.fractionLength(0))) + " ms"))
+        }
+        if let menstrualFlow = context.menstrualFlow {
+            lines.append(("Menstruation", menstrualFlow))
+        }
+        if !context.symptoms.isEmpty {
+            let symptoms = context.symptoms
+                .map { "\($0.type.displayName): \($0.severity)" }
+                .joined(separator: ", ")
+            lines.append(("Symptome", symptoms))
+        }
+
+        lines.append(("Quelle", context.source))
+        lines.append(("Gelesen", context.recordedAt.formatted(date: .abbreviated, time: .shortened)))
+        return lines
     }
 
     private func medicationHeadline(for medication: MedicationRecord) -> String {

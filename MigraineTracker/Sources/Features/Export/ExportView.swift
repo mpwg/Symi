@@ -68,6 +68,31 @@ struct SettingsView: View {
                 Text("Die App bleibt lokal vollständig nutzbar. iCloud-Sync ist optional, arbeitet getrennt von SwiftData und kann jederzeit wieder deaktiviert werden.")
             }
 
+            Section {
+                NavigationLink {
+                    AppleHealthSettingsView(controller: controller)
+                } label: {
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            Label("Apple Health", systemImage: "heart.text.square")
+                            Spacer()
+                            Text(healthStatusTitle)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Text("Lesen und Schreiben werden getrennt verwaltet. Die App nutzt nur Daten, die für Schmerzepisoden als Kontext sinnvoll sind.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.vertical, 6)
+                    .brandGroupedRow()
+                }
+            } header: {
+                Text("Gesundheit")
+            } footer: {
+                Text("Apple-Health-Daten bleiben optional. Gelesene Werte werden als Apple-Health-Kontext gekennzeichnet; geschriebene Symptome enthalten keine Notizen.")
+            }
+
             Section("Allgemein") {
                 NavigationLink {
                     DataExportView(appContainer: appContainer)
@@ -175,12 +200,126 @@ struct SettingsView: View {
         return "Ansehen, teilen und bei Bedarf löschen."
     }
 
+    private var healthStatusTitle: String {
+        let status = controller.healthAuthorization
+        guard status.isAvailable else {
+            return "Nicht verfügbar"
+        }
+
+        if status.isReadEnabled, status.isWriteEnabled {
+            return "Lesen und Schreiben"
+        }
+
+        if status.isReadEnabled {
+            return "Lesen"
+        }
+
+        if status.isWriteEnabled {
+            return "Schreiben"
+        }
+
+        return "Nicht verbunden"
+    }
+
     private var closeButtonPlacement: ToolbarItemPlacement {
         #if targetEnvironment(macCatalyst)
         .topBarTrailing
         #else
         .topBarLeading
         #endif
+    }
+}
+
+private struct AppleHealthSettingsView: View {
+    @Bindable var controller: SettingsController
+
+    var body: some View {
+        List {
+            Section {
+                let status = controller.healthAuthorization
+                LabeledContent("Status", value: status.isAvailable ? "Verfügbar" : "Nicht verfügbar")
+                LabeledContent("Lesen", value: status.isReadEnabled ? "Aktiviert" : "Deaktiviert")
+                LabeledContent("Schreiben", value: status.isWriteEnabled ? "Aktiviert" : "Deaktiviert")
+
+                if let message = status.lastErrorMessage {
+                    Text(message)
+                        .foregroundStyle(.secondary)
+                }
+            } header: {
+                Text("Verbindung")
+            } footer: {
+                Text("iOS verwaltet Health-Berechtigungen pro Datentyp. Verweigerte Leserechte erscheinen in der App wie fehlende Daten.")
+            }
+
+            HealthDataTypeSection(
+                title: "Lesen aus Apple Health",
+                direction: .read,
+                definitions: controller.healthReadDefinitions,
+                enabledTypes: controller.healthAuthorization.enabledReadTypes,
+                onToggle: controller.setHealthDataTypeEnabled
+            )
+
+            Section {
+                Button {
+                    Task {
+                        await controller.requestHealthReadAuthorization()
+                    }
+                } label: {
+                    Label("Leserechte anfragen", systemImage: "eye")
+                }
+                .disabled(!controller.healthAuthorization.isAvailable)
+            }
+
+            HealthDataTypeSection(
+                title: "Schreiben nach Apple Health",
+                direction: .write,
+                definitions: controller.healthWriteDefinitions,
+                enabledTypes: controller.healthAuthorization.enabledWriteTypes,
+                onToggle: controller.setHealthDataTypeEnabled
+            )
+
+            Section {
+                Button {
+                    Task {
+                        await controller.requestHealthWriteAuthorization()
+                    }
+                } label: {
+                    Label("Schreibrechte anfragen", systemImage: "square.and.pencil")
+                }
+                .disabled(!controller.healthAuthorization.isAvailable)
+            } footer: {
+                Text("V1 schreibt nur Kopfschmerz und ausgewählte Begleitsymptome. Medikamente, Zyklusdaten und Konfliktlogik sind eigene Folge-Issues.")
+            }
+        }
+        .navigationTitle("Apple Health")
+        .brandGroupedScreen()
+    }
+}
+
+private struct HealthDataTypeSection: View {
+    let title: String
+    let direction: HealthDataDirection
+    let definitions: [HealthDataTypeDefinition]
+    let enabledTypes: Set<HealthDataTypeID>
+    let onToggle: (Bool, HealthDataTypeID, HealthDataDirection) -> Void
+
+    var body: some View {
+        Section(title) {
+            ForEach(definitions) { definition in
+                Toggle(isOn: Binding(
+                    get: { enabledTypes.contains(definition.id) },
+                    set: { onToggle($0, definition.id, direction) }
+                )) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(definition.displayName)
+                        Text(definition.rationale)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .tint(AppTheme.ocean)
+            }
+        }
     }
 }
 

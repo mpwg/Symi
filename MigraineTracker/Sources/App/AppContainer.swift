@@ -8,6 +8,8 @@ final class AppContainer {
     let appLogStore: AppLogStore
     let weatherService: WeatherService
     let locationService: LocationService
+    let healthService: HealthService
+    let healthContextStore: HealthContextStore
     let weatherBackfillService: WeatherBackfillService
 
     let episodeRepository: EpisodeRepository
@@ -26,6 +28,8 @@ final class AppContainer {
         appLogStore: AppLogStore,
         weatherService: any WeatherService = AppleWeatherKitWeatherService(),
         locationService: any LocationService = SystemLocationService(),
+        healthService: any HealthService = AppleHealthKitService(),
+        healthContextStore: HealthContextStore = HealthContextStore(),
         notificationService: any NotificationService = UserNotificationService()
     ) {
         self.modelContainer = modelContainer
@@ -33,14 +37,16 @@ final class AppContainer {
         self.appLogStore = appLogStore
         self.weatherService = weatherService
         self.locationService = locationService
+        self.healthService = healthService
+        self.healthContextStore = healthContextStore
         self.weatherBackfillService = WeatherBackfillService(
             modelContainer: modelContainer,
             weatherService: weatherService,
             locationService: locationService
         )
-        self.episodeRepository = SwiftDataEpisodeRepository(modelContainer: modelContainer)
+        self.episodeRepository = SwiftDataEpisodeRepository(modelContainer: modelContainer, healthContextStore: healthContextStore)
         self.medicationCatalogRepository = SwiftDataMedicationCatalogRepository(modelContainer: modelContainer)
-        self.exportRepository = SwiftDataExportRepository(modelContainer: modelContainer)
+        self.exportRepository = SwiftDataExportRepository(modelContainer: modelContainer, healthContextStore: healthContextStore)
         self.doctorRepository = SwiftDataDoctorRepository(modelContainer: modelContainer)
         self.doctorDirectoryRepository = SwiftDataDoctorDirectoryRepository(modelContainer: modelContainer)
         self.appointmentRepository = SwiftDataAppointmentRepository(modelContainer: modelContainer)
@@ -56,7 +62,8 @@ final class AppContainer {
             episodeRepository: episodeRepository,
             medicationRepository: medicationCatalogRepository,
             weatherService: weatherService,
-            locationService: locationService
+            locationService: locationService,
+            healthService: healthService
         )
     }
 
@@ -69,7 +76,8 @@ final class AppContainer {
             episodeRepository: episodeRepository,
             medicationRepository: medicationCatalogRepository,
             syncService: syncService,
-            appLogService: appLogService
+            appLogService: appLogService,
+            healthService: healthService
         )
     }
 

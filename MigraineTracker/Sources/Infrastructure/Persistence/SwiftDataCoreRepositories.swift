@@ -4,16 +4,18 @@ import SwiftData
 @MainActor
 final class SwiftDataEpisodeRepository: EpisodeRepository {
     private let modelContainer: ModelContainer
+    private let healthContextStore: HealthContextStore
 
-    init(modelContainer: ModelContainer) {
+    init(modelContainer: ModelContainer, healthContextStore: HealthContextStore) {
         self.modelContainer = modelContainer
+        self.healthContextStore = healthContextStore
     }
 
     func fetchRecent() throws -> [EpisodeRecord] {
         let descriptor = FetchDescriptor<Episode>(sortBy: [SortDescriptor(\Episode.startedAt, order: .reverse)])
         return try context.fetch(descriptor)
             .filter { !$0.isDeleted }
-            .map(EpisodeRecord.init)
+            .map { EpisodeRecord(episode: $0, healthContextStore: healthContextStore) }
     }
 
     func fetchByDay(_ day: Date) throws -> [EpisodeRecord] {
@@ -28,7 +30,7 @@ final class SwiftDataEpisodeRepository: EpisodeRepository {
         )
         return try context.fetch(descriptor)
             .filter { !$0.isDeleted }
-            .map(EpisodeRecord.init)
+            .map { EpisodeRecord(episode: $0, healthContextStore: healthContextStore) }
     }
 
     func fetchByMonth(_ month: Date) throws -> [EpisodeRecord] {
@@ -43,18 +45,18 @@ final class SwiftDataEpisodeRepository: EpisodeRepository {
         )
         return try context.fetch(descriptor)
             .filter { !$0.isDeleted }
-            .map(EpisodeRecord.init)
+            .map { EpisodeRecord(episode: $0, healthContextStore: healthContextStore) }
     }
 
     func load(id: UUID) throws -> EpisodeRecord? {
         let descriptor = FetchDescriptor<Episode>(
             predicate: #Predicate<Episode> { $0.id == id }
         )
-        return try context.fetch(descriptor).first.map(EpisodeRecord.init)
+        return try context.fetch(descriptor).first.map { EpisodeRecord(episode: $0, healthContextStore: healthContextStore) }
     }
 
     @discardableResult
-    func save(draft: EpisodeDraft, weatherSnapshot: WeatherSnapshotData?) throws -> UUID {
+    func save(draft: EpisodeDraft, weatherSnapshot: WeatherSnapshotData?, healthContext: HealthContextSnapshotData?) throws -> UUID {
         let target: Episode
 
         if
@@ -108,6 +110,7 @@ final class SwiftDataEpisodeRepository: EpisodeRepository {
         }
 
         try context.save()
+        healthContextStore.save(healthContext, for: target.id)
         return target.id
     }
 
@@ -133,7 +136,7 @@ final class SwiftDataEpisodeRepository: EpisodeRepository {
         let descriptor = FetchDescriptor<Episode>(sortBy: [SortDescriptor(\Episode.startedAt, order: .reverse)])
         return try context.fetch(descriptor)
             .filter(\.isDeleted)
-            .map(EpisodeRecord.init)
+            .map { EpisodeRecord(episode: $0, healthContextStore: healthContextStore) }
     }
 
     private var context: ModelContext {
@@ -237,9 +240,11 @@ final class SwiftDataMedicationCatalogRepository: MedicationCatalogRepository {
 @MainActor
 final class SwiftDataExportRepository: ExportRepository {
     private let modelContainer: ModelContainer
+    private let healthContextStore: HealthContextStore
 
-    init(modelContainer: ModelContainer) {
+    init(modelContainer: ModelContainer, healthContextStore: HealthContextStore) {
         self.modelContainer = modelContainer
+        self.healthContextStore = healthContextStore
     }
 
     func buildSummary(startDate: Date, endDate: Date) throws -> ExportPeriodSummary {
@@ -249,7 +254,7 @@ final class SwiftDataExportRepository: ExportRepository {
         let endOfDay = Calendar.current.date(bySettingHour: 23, minute: 59, second: 59, of: endDate) ?? endDate
         let filtered = episodes
             .filter { $0.startedAt >= startDate && $0.startedAt <= endOfDay }
-            .map(EpisodeExportRecord.init)
+            .map { EpisodeExportRecord(episode: $0, healthContext: healthContextStore.load(for: $0.id)) }
 
         return ExportPeriodSummary(startDate: startDate, endDate: endDate, records: filtered)
     }
@@ -262,7 +267,11 @@ final class SwiftDataExportRepository: ExportRepository {
         let episodes = try context.fetch(FetchDescriptor<Episode>(sortBy: [SortDescriptor(\Episode.startedAt, order: .reverse)]))
         let definitions = try context.fetch(FetchDescriptor<MedicationDefinition>(sortBy: [SortDescriptor(\MedicationDefinition.sortOrder)]))
             .filter(\.isCustom)
-        let snapshot = DataTransferSnapshot(episodes: episodes, customMedicationDefinitions: definitions)
+        let snapshot = DataTransferSnapshot(
+            episodes: episodes,
+            customMedicationDefinitions: definitions,
+            healthContextStore: healthContextStore
+        )
         return try snapshot.writeToTemporaryFile()
     }
 
@@ -504,7 +513,7 @@ final class SwiftDataAppointmentRepository: AppointmentRepository {
 }
 
 private extension EpisodeRecord {
-    init(episode: Episode) {
+    init(episode: Episode, healthContextStore: HealthContextStore) {
         self.init(
             id: episode.id,
             startedAt: episode.startedAt,
@@ -521,7 +530,8 @@ private extension EpisodeRecord {
             functionalImpact: episode.functionalImpact,
             menstruationStatus: episode.menstruationStatus,
             medications: episode.medications.map(MedicationRecord.init),
-            weather: episode.weatherSnapshot.map(WeatherRecord.init)
+            weather: episode.weatherSnapshot.map(WeatherRecord.init),
+            healthContext: healthContextStore.load(for: episode.id)
         )
     }
 }

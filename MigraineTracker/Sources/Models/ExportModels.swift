@@ -12,8 +12,9 @@ struct EpisodeExportRecord: Identifiable {
     let functionalImpact: String
     let medications: [MedicationLine]
     let weather: WeatherLine?
+    let healthContext: HealthLine?
 
-    init(episode: Episode) {
+    init(episode: Episode, healthContext: HealthContextRecord?) {
         self.id = episode.id
         self.startedAt = episode.startedAt
         self.endedAt = episode.endedAt
@@ -43,6 +44,7 @@ struct EpisodeExportRecord: Identifiable {
                 source: $0.source
             )
         }
+        self.healthContext = healthContext.map(HealthLine.init)
     }
 
     struct MedicationLine: Identifiable {
@@ -62,6 +64,30 @@ struct EpisodeExportRecord: Identifiable {
         let precipitation: Double?
         let weatherCode: Int?
         let source: String
+    }
+
+    struct HealthLine {
+        let recordedAt: Date
+        let source: String
+        let sleepMinutes: Double?
+        let stepCount: Int?
+        let averageHeartRate: Double?
+        let restingHeartRate: Double?
+        let heartRateVariability: Double?
+        let menstrualFlow: String?
+        let symptoms: [String]
+
+        init(record: HealthContextRecord) {
+            self.recordedAt = record.recordedAt
+            self.source = record.source
+            self.sleepMinutes = record.sleepMinutes
+            self.stepCount = record.stepCount
+            self.averageHeartRate = record.averageHeartRate
+            self.restingHeartRate = record.restingHeartRate
+            self.heartRateVariability = record.heartRateVariability
+            self.menstrualFlow = record.menstrualFlow
+            self.symptoms = record.symptoms.map { "\($0.type.displayName): \($0.severity)" }
+        }
     }
 }
 

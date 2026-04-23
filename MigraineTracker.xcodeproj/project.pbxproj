@@ -216,6 +216,11 @@
 				TargetAttributes = {
 					402B8A5D2F896C00008B4D70 = {
 						CreatedOnToolsVersion = 26.4;
+						SystemCapabilities = {
+							com.apple.HealthKit = {
+								enabled = 1;
+							};
+						};
 					};
 					402B8A6C2F896C00008B4D70 = {
 						CreatedOnToolsVersion = 26.4;
@@ -484,6 +489,8 @@
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.medical";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Dein ungefährer Standort wird verwendet, um Wetterdaten für den ausgewählten Episodentag über Apple Weather abzurufen. Die App nutzt nur grob gerundete Koordinaten und speichert keine Positionsdaten.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Apple Health wird optional gelesen, um Schmerzepisoden mit Kontext wie Schlaf, Aktivität, Herzfrequenz, Zyklusdaten und Symptomen zu ergänzen.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Apple Health wird optional aktualisiert, um ausdrücklich erfasste Kopfschmerz- und Begleitsymptome ohne Notizen zu speichern.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -555,6 +562,8 @@
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.medical";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Dein ungefährer Standort wird verwendet, um Wetterdaten für den ausgewählten Episodentag über Apple Weather abzurufen. Die App nutzt nur grob gerundete Koordinaten und speichert keine Positionsdaten.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Apple Health wird optional gelesen, um Schmerzepisoden mit Kontext wie Schlaf, Aktivität, Herzfrequenz, Zyklusdaten und Symptomen zu ergänzen.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Apple Health wird optional aktualisiert, um ausdrücklich erfasste Kopfschmerz- und Begleitsymptome ohne Notizen zu speichern.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;

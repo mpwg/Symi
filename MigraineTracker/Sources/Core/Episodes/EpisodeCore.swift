@@ -45,6 +45,7 @@ struct EpisodeRecord: Identifiable, Equatable, Sendable {
     let menstruationStatus: MenstruationStatus
     let medications: [MedicationRecord]
     let weather: WeatherRecord?
+    let healthContext: HealthContextRecord?
 
     var isDeleted: Bool {
         deletedAt != nil
@@ -235,7 +236,7 @@ protocol EpisodeRepository {
     func fetchByMonth(_ month: Date) throws -> [EpisodeRecord]
     func load(id: UUID) throws -> EpisodeRecord?
     @discardableResult
-    func save(draft: EpisodeDraft, weatherSnapshot: WeatherSnapshotData?) throws -> UUID
+    func save(draft: EpisodeDraft, weatherSnapshot: WeatherSnapshotData?, healthContext: HealthContextSnapshotData?) throws -> UUID
     func softDelete(id: UUID) throws
     func restore(id: UUID) throws
     func fetchDeleted() throws -> [EpisodeRecord]
@@ -252,7 +253,7 @@ struct SaveEpisodeUseCase {
     let repository: EpisodeRepository
 
     @discardableResult
-    func execute(_ draft: EpisodeDraft, weatherSnapshot: WeatherSnapshotData?) throws -> UUID {
+    func execute(_ draft: EpisodeDraft, weatherSnapshot: WeatherSnapshotData?, healthContext: HealthContextSnapshotData? = nil) throws -> UUID {
         if draft.endedAtEnabled, draft.endedAt < draft.startedAt {
             throw EpisodeSaveError.invalidDateRange
         }
@@ -261,7 +262,7 @@ struct SaveEpisodeUseCase {
             throw EpisodeSaveError.futureDate
         }
 
-        return try repository.save(draft: draft, weatherSnapshot: weatherSnapshot)
+        return try repository.save(draft: draft, weatherSnapshot: weatherSnapshot, healthContext: healthContext)
     }
 }
 
@@ -332,6 +333,7 @@ final class EpisodeEditorController {
     private let medicationRepository: MedicationCatalogRepository
     private let weatherService: WeatherService
     private let locationService: LocationService
+    private let healthService: HealthService
     private let originalStartedAt: Date?
     private let originalWeatherSnapshot: WeatherSnapshotData?
 
@@ -341,12 +343,14 @@ final class EpisodeEditorController {
         episodeRepository: EpisodeRepository,
         medicationRepository: MedicationCatalogRepository,
         weatherService: WeatherService,
-        locationService: LocationService
+        locationService: LocationService,
+        healthService: HealthService
     ) {
         self.episodeRepository = episodeRepository
         self.medicationRepository = medicationRepository
         self.weatherService = weatherService
         self.locationService = locationService
+        self.healthService = healthService
         self.saveEpisodeUseCase = SaveEpisodeUseCase(repository: episodeRepository)
 
         if
@@ -420,7 +424,9 @@ final class EpisodeEditorController {
 
             do {
                 let weatherSnapshot = try await weatherSnapshotForSave()
-                try saveEpisodeUseCase.execute(draft, weatherSnapshot: weatherSnapshot)
+                let healthContext = await healthContextForSave()
+                let savedID = try saveEpisodeUseCase.execute(draft, weatherSnapshot: weatherSnapshot, healthContext: healthContext)
+                await writeHealthSampleIfNeeded(episodeID: savedID)
                 reloadMedicationDefinitions()
                 validationMessage = nil
 
@@ -668,6 +674,20 @@ final class EpisodeEditorController {
             }
             return nil
         }
+    }
+
+    private func healthContextForSave() async -> HealthContextSnapshotData? {
+        do {
+            return try await healthService.contextSnapshot(for: draft)
+        } catch {
+            return nil
+        }
+    }
+
+    private func writeHealthSampleIfNeeded(episodeID: UUID) async {
+        do {
+            try await healthService.writeEpisode(id: episodeID, draft: draft)
+        } catch {}
     }
 }
 
