@@ -15,44 +15,44 @@ struct ProductInformationView: View {
         List {
             if mode == .onboarding {
                 Section("Bevor du startest") {
-                    Text("\(ProductBranding.displayName) hilft dir, Schmerzereignisse ruhig und nachvollziehbar festzuhalten. Deine Angaben bleiben zuerst auf diesem Gerät und du entscheidest, welche Zusatzdienste du nutzt.")
-                    Text("Die App ist eine Dokumentationshilfe. Sie ersetzt keine medizinische Diagnose, keine Therapieentscheidung und keinen Notfallkontakt.")
+                    Text("\(ProductBranding.displayName) ist dein persönliches Schmerztagebuch. Du hältst fest, was passiert ist, und entscheidest selbst, welche zusätzlichen Daten du einbeziehst.")
+                    Text("Die App unterstützt deine Dokumentation. Sie ersetzt keine medizinische Diagnose, keine Therapieentscheidung und keinen Notfallkontakt.")
                         .foregroundStyle(.secondary)
                 }
             }
 
             Section("Was die App macht") {
                 infoRow(
-                    title: "Schmerzen dokumentieren",
-                    detail: "Du kannst Beginn, Dauer, Intensität, Symptome, Trigger, Medikamente und Notizen zu deinen Einträgen festhalten.",
+                    title: "Schmerzereignisse festhalten",
+                    detail: "Du dokumentierst Zeitpunkt, Dauer, Intensität, Symptome, mögliche Auslöser, Medikamente und persönliche Notizen.",
                     systemImage: "square.and.pencil"
                 )
                 infoRow(
-                    title: "Kontext ergänzen",
-                    detail: "Wetterdaten und optional freigegebene Apple-Health-Daten können helfen, einen Tag später besser einzuordnen.",
+                    title: "Zusammenhänge besser erkennen",
+                    detail: "Wetterdaten und freiwillig freigegebene Apple-Health-Daten ergänzen deine Einträge, damit du später mehr Kontext hast.",
                     systemImage: "cloud.sun"
                 )
                 infoRow(
                     title: "Arztgespräche vorbereiten",
-                    detail: "PDF-Berichte und Backups entstehen nur, wenn du sie bewusst erzeugst. Teilen läuft über die iOS-Teilen-Funktion.",
+                    detail: "PDF-Berichte und Backups helfen dir, Termine vorzubereiten. Sie werden nur erstellt und geteilt, wenn du das aktiv auslöst.",
                     systemImage: "doc.text"
                 )
             }
 
             Section("Deine Daten") {
                 infoRow(
-                    title: "Lokal zuerst",
-                    detail: "Einträge, Medikamente, Notizen, Trigger, Symptome, Wetter-Snapshots und gelesener Apple-Health-Kontext werden auf diesem Gerät gespeichert.",
+                    title: "Deine Daten gehören dir",
+                    detail: "Einträge, Medikamente, Notizen, Trigger, Symptome, Wetter-Snapshots und gelesener Apple-Health-Kontext werden zuerst auf diesem Gerät gespeichert.",
                     systemImage: "lock"
                 )
                 infoRow(
                     title: "iCloud ist freiwillig",
-                    detail: "Die App bleibt ohne iCloud vollständig nutzbar. Wenn du Sync aktivierst, werden App-Daten über deinen iCloud-Account abgeglichen.",
+                    detail: "Die App funktioniert auch ohne iCloud. Wenn du Sync aktivierst, werden deine App-Daten über deinen eigenen iCloud-Account abgeglichen.",
                     systemImage: "icloud"
                 )
                 infoRow(
-                    title: "Export nur auf deinen Befehl",
-                    detail: "PDF-Berichte und Backups werden lokal erstellt und erst geteilt, wenn du das aktiv auswählst.",
+                    title: "Export nur mit deiner Aktion",
+                    detail: "PDF-Berichte und Backups entstehen lokal. Sie verlassen die App erst, wenn du sie über iOS teilst oder speicherst.",
                     systemImage: "square.and.arrow.up"
                 )
                 Link(destination: privacyURL) {
@@ -63,17 +63,17 @@ struct ProductInformationView: View {
             Section("Berechtigungen") {
                 infoRow(
                     title: "Standort für Wetter",
-                    detail: "Beim Wetterabruf fragt die App nach deinem ungefähren Standort. Die Koordinaten werden nicht als eigener Tagebuchwert gespeichert.",
+                    detail: "Für Wetterdaten fragt die App nach deinem ungefähren Standort. Die Koordinaten werden nicht als eigener Tagebucheintrag gespeichert.",
                     systemImage: "location"
                 )
                 infoRow(
                     title: "Apple Health optional",
-                    detail: "Apple Health wird nur genutzt, wenn du einzelne Datentypen freigibst. Nicht verfügbare Health-Daten werden einfach ausgelassen.",
+                    detail: "Apple Health wird nur genutzt, wenn du einzelne Datentypen freigibst. Wenn ein Health-Datentyp auf deinem Gerät nicht verfügbar ist, wird er ausgelassen.",
                     systemImage: "heart.text.square"
                 )
                 infoRow(
                     title: "Erinnerungen bleiben lokal",
-                    detail: "Terminerinnerungen werden als lokale iOS-Mitteilungen geplant. Ein Termin bleibt auch ohne Mitteilungsberechtigung gespeichert.",
+                    detail: "Terminerinnerungen werden als lokale iOS-Mitteilungen geplant. Termine bleiben auch gespeichert, wenn du Mitteilungen nicht erlaubst.",
                     systemImage: "bell"
                 )
             }
@@ -81,17 +81,17 @@ struct ProductInformationView: View {
             Section("Apple Health") {
                 infoRow(
                     title: "Du behältst die Kontrolle",
-                    detail: "Lesen und Schreiben sind getrennt. Du kannst einzelne Health-Datentypen jederzeit in der App oder in iOS wieder deaktivieren.",
+                    detail: "Lesen und Schreiben sind getrennt. Du kannst jeden Health-Datentyp einzeln erlauben und später wieder deaktivieren.",
                     systemImage: "checklist"
                 )
                 infoRow(
                     title: "Was geschrieben wird",
-                    detail: "Version 1 schreibt nur einfache Symptomdaten wie Kopfschmerz und ausgewählte Begleitsymptome. Notizen und Medikamente werden nicht an Apple Health übergeben.",
+                    detail: "Version 2 schreibt nur einfache Symptomdaten wie Kopfschmerz und ausgewählte Begleitsymptome. Notizen und Medikamente bleiben in der App.",
                     systemImage: "pencil.and.list.clipboard"
                 )
                 infoRow(
                     title: "Nicht alles ist überall verfügbar",
-                    detail: "Manche Health-Datentypen gibt es erst ab neueren iOS-Versionen. Die App bleibt trotzdem nutzbar und zeigt nur verfügbare Werte.",
+                    detail: "Manche Health-Datentypen gibt es erst auf neueren iOS-Versionen. Die App bleibt nutzbar und zeigt einfach nur die verfügbaren Werte.",
                     systemImage: "info.circle"
                 )
             }
@@ -99,7 +99,7 @@ struct ProductInformationView: View {
             Section("Wetter") {
                 infoRow(
                     title: "Quelle",
-                    detail: "Wetterdaten kommen von Apple Weather. Die App speichert daraus einen Snapshot passend zum Zeitpunkt deines Eintrags.",
+                    detail: "Wetterdaten kommen von Apple Weather. Beim Speichern eines Eintrags merkt sich die App einen passenden Wetter-Snapshot.",
                     systemImage: "cloud.sun"
                 )
                 infoRow(
@@ -114,17 +114,17 @@ struct ProductInformationView: View {
             Section("Medizinischer Hinweis") {
                 infoRow(
                     title: "Dokumentationshilfe",
-                    detail: "Die App hilft beim Festhalten und Wiederfinden deiner eigenen Beobachtungen.",
+                    detail: "Die App hilft dir, eigene Beobachtungen festzuhalten und später wiederzufinden.",
                     systemImage: "list.clipboard"
                 )
                 infoRow(
                     title: "Keine Diagnose, keine Therapieempfehlung",
-                    detail: "Die App bewertet deine Beschwerden nicht medizinisch und ersetzt keine ärztliche Einschätzung oder Behandlungsempfehlung.",
+                    detail: "Die App stellt keine Diagnose, bewertet deine Beschwerden nicht medizinisch und empfiehlt keine Behandlung.",
                     systemImage: "stethoscope"
                 )
                 infoRow(
                     title: "Bei Warnzeichen Hilfe holen",
-                    detail: "Bei neuen, starken oder ungewohnten Symptomen, Unsicherheit oder Notfällen solltest du medizinische Hilfe kontaktieren.",
+                    detail: "Bei neuen, starken oder ungewohnten Symptomen, bei Unsicherheit oder im Notfall solltest du medizinische Hilfe holen.",
                     systemImage: "exclamationmark.triangle"
                 )
             }
@@ -132,17 +132,17 @@ struct ProductInformationView: View {
             Section("Version und Plattform") {
                 infoRow(
                     title: "Aktueller Umfang",
-                    detail: "Version 1 umfasst Tagebuch, Medikamente, Wetter, optionale Apple-Health-Anbindung, Export, Arztkontakte und lokale Termine.",
+                    detail: "Version 2 umfasst Tagebuch, Medikamente, Wetter, optionale Apple-Health-Anbindung, Export, Arztkontakte und lokale Termine.",
                     systemImage: "app"
                 )
                 infoRow(
                     title: "iPhone und Deutsch",
-                    detail: "Die App ist aktuell für iPhone, Deutsch und iOS 17.6 oder neuer ausgelegt.",
+                    detail: "Die App ist aktuell für iPhone, deutsche Sprache und iOS 17.6 oder neuer ausgelegt.",
                     systemImage: "iphone"
                 )
                 infoRow(
                     title: "Weiterentwicklung",
-                    detail: "Weitere Funktionen können später folgen. Medizinische Auswertungen, zusätzliche Plattformen und komplexere Health-Abgleiche brauchen eigene Konzepte.",
+                    detail: "Weitere Funktionen können folgen. Medizinische Auswertungen, zusätzliche Plattformen und komplexere Health-Abgleiche werden separat konzipiert.",
                     systemImage: "arrow.triangle.branch"
                 )
             }
@@ -155,7 +155,7 @@ struct ProductInformationView: View {
                 )
                 infoRow(
                     title: "Feedback und Ideen",
-                    detail: "Fehler, Ideen und Verbesserungsvorschläge können als GitHub-Issue eingemeldet werden.",
+                    detail: "Fehler, Ideen und Verbesserungsvorschläge kannst du als GitHub-Issue einreichen.",
                     systemImage: "bubble.left.and.text.bubble.right"
                 )
                 infoRow(
