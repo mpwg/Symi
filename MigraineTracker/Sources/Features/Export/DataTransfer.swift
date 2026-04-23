@@ -35,9 +35,9 @@ struct DataTransferSnapshot: Codable {
         self.customMedicationDefinitions = customMedicationDefinitions
     }
 
-    init(episodes: [Episode], customMedicationDefinitions: [MedicationDefinition]) {
+    init(episodes: [Episode], customMedicationDefinitions: [MedicationDefinition], healthContextStore: HealthContextStore? = nil) {
         self.init(
-            episodes: episodes.map(EpisodePayload.init),
+            episodes: episodes.map { EpisodePayload(episode: $0, healthContext: healthContextStore?.load(for: $0.id)) },
             customMedicationDefinitions: customMedicationDefinitions.map(MedicationDefinitionPayload.init)
         )
     }
@@ -133,8 +133,9 @@ struct EpisodePayload: Codable {
     let menstruationStatus: MenstruationStatus
     let medications: [MedicationEntryPayload]
     let weatherSnapshot: WeatherSnapshotPayload?
+    let healthContext: HealthContextSnapshotData?
 
-    init(episode: Episode) {
+    init(episode: Episode, healthContext: HealthContextRecord? = nil) {
         self.id = episode.id
         self.startedAt = episode.startedAt
         self.endedAt = episode.endedAt
@@ -151,6 +152,7 @@ struct EpisodePayload: Codable {
         self.menstruationStatus = episode.menstruationStatus
         self.medications = episode.medications.map(MedicationEntryPayload.init)
         self.weatherSnapshot = episode.weatherSnapshot.map(WeatherSnapshotPayload.init)
+        self.healthContext = healthContext.map(HealthContextSnapshotData.init)
     }
 
     func makeModel() -> Episode {

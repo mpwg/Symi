@@ -43,6 +43,60 @@ struct CoreArchitectureTests {
     }
 
     @Test
+    func saveEpisodeUseCasePassesHealthContextToRepository() throws {
+        let repository = EpisodeRepositoryMock()
+        let useCase = SaveEpisodeUseCase(repository: repository)
+        let draft = EpisodeDraft.makeNew()
+        let context = HealthContextSnapshotData(
+            recordedAt: Date(timeIntervalSince1970: 2_000),
+            source: "Apple Health",
+            sleepMinutes: 420,
+            stepCount: 3_200,
+            averageHeartRate: 78,
+            restingHeartRate: 62,
+            heartRateVariability: 41,
+            menstrualFlow: nil,
+            symptoms: [
+                HealthSymptomSampleData(
+                    type: .headache,
+                    severity: "Mittel",
+                    startDate: draft.startedAt,
+                    endDate: draft.startedAt,
+                    source: "Health"
+                )
+            ]
+        )
+
+        _ = try useCase.execute(draft, weatherSnapshot: nil, healthContext: context)
+
+        #expect(repository.lastHealthContext == context)
+    }
+
+    @Test
+    func healthSeverityMapperUsesPainIntensityBands() {
+        #expect(HealthSeverityMapper.symptomSeverityLabel(forIntensity: 1) == "Leicht")
+        #expect(HealthSeverityMapper.symptomSeverityLabel(forIntensity: 4) == "Mittel")
+        #expect(HealthSeverityMapper.symptomSeverityLabel(forIntensity: 8) == "Stark")
+    }
+
+    @Test
+    func healthTypePreferencesSeparateSelectionFromAuthorizationRequest() {
+        let suiteName = "HealthTypePreferencesTests-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let preferences = HealthTypePreferences(defaults: defaults)
+
+        let enabledTypes = preferences.enabledTypes(for: .read, definitions: HealthDataCatalog.readDefinitions)
+
+        #expect(enabledTypes.contains(.sleep))
+        #expect(preferences.hasRequestedAuthorization(for: .read) == false)
+
+        preferences.markAuthorizationRequested(for: .read)
+
+        #expect(preferences.hasRequestedAuthorization(for: .read) == true)
+    }
+
+    @Test
     func appleWeatherKitServiceSkipsDatesBeforeHourlyHistory() async throws {
         let service = AppleWeatherKitWeatherService()
         let oldDate = Date(timeIntervalSince1970: 1_627_775_999)
@@ -196,15 +250,17 @@ private final class EpisodeRepositoryMock: EpisodeRepository {
     var deletedRecords: [EpisodeRecord] = []
     var lastSavedDraft: EpisodeDraft?
     var lastWeatherSnapshot: WeatherSnapshotData?
+    var lastHealthContext: HealthContextSnapshotData?
     let savedDraftID = UUID()
 
     func fetchRecent() throws -> [EpisodeRecord] { recentRecords }
     func fetchByDay(_ day: Date) throws -> [EpisodeRecord] { dayRecords }
     func fetchByMonth(_ month: Date) throws -> [EpisodeRecord] { monthRecords }
     func load(id: UUID) throws -> EpisodeRecord? { loadedRecord }
-    func save(draft: EpisodeDraft, weatherSnapshot: WeatherSnapshotData?) throws -> UUID {
+    func save(draft: EpisodeDraft, weatherSnapshot: WeatherSnapshotData?, healthContext: HealthContextSnapshotData?) throws -> UUID {
         lastSavedDraft = draft
         lastWeatherSnapshot = weatherSnapshot
+        lastHealthContext = healthContext
         return savedDraftID
     }
     func softDelete(id: UUID) throws {}
@@ -353,7 +409,8 @@ private func makeEpisode(id: UUID, startedAt: Date, intensity: Int, deletedAt: D
         functionalImpact: "",
         menstruationStatus: .unknown,
         medications: [],
-        weather: nil
+        weather: nil,
+        healthContext: nil
     )
 }
 

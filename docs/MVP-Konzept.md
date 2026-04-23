@@ -19,9 +19,12 @@ Diese Entscheidungen gelten für die erste App-Store-Submission als fest:
 - UI-Framework: `SwiftUI`
 - Persistenz: `SwiftData`
 - Plattform: `iPhone only`
+- Mindestversion: `iOS 17.6`
 - Architekturprinzip: `lokal-first`
 - Wetterquelle: `Apple Weather` über `WeatherKit`
 - Export: PDF lokal auf dem Gerät erzeugen
+
+Die Mindestversion wird nicht unter die Swift-, SwiftUI- und SwiftData-Anforderungen gedrückt. HealthKit-Daten dürfen dagegen versionsabhängig fehlen: Wenn ein einzelner Apple-Health-Datentyp erst ab einer neueren iOS-Version verfügbar ist, wird dieser Datentyp ausgeblendet oder nicht gelesen, ohne die gesamte App höher anzusetzen.
 
 Nicht Teil dieser Architekturversion sind:
 

@@ -79,6 +79,7 @@ final class SettingsController {
     private(set) var deletedDefinitions: [MedicationDefinitionRecord] = []
     private(set) var logEntries: [AppLogEntry] = []
     private(set) var logShareURL: URL?
+    private(set) var healthSettingsRevision = 0
     var logFilter: AppLogFilter = .all
 
     private let episodeRepository: EpisodeRepository
@@ -87,17 +88,20 @@ final class SettingsController {
     private let restoreDeletedItemUseCase: RestoreDeletedItemUseCase
     private let syncService: SyncService
     private let appLogService: AppLogService
+    private let healthService: HealthService
 
     init(
         episodeRepository: EpisodeRepository,
         medicationRepository: MedicationCatalogRepository,
         syncService: SyncService,
-        appLogService: AppLogService
+        appLogService: AppLogService,
+        healthService: HealthService
     ) {
         self.episodeRepository = episodeRepository
         self.medicationRepository = medicationRepository
         self.syncService = syncService
         self.appLogService = appLogService
+        self.healthService = healthService
         self.loadSettingsUseCase = LoadSettingsUseCase(
             episodeRepository: episodeRepository,
             medicationRepository: medicationRepository,
@@ -119,6 +123,18 @@ final class SettingsController {
 
     var conflicts: [SyncConflict] {
         syncService.conflicts
+    }
+
+    var healthAuthorization: HealthAuthorizationSnapshot {
+        healthService.authorizationSnapshot()
+    }
+
+    var healthReadDefinitions: [HealthDataTypeDefinition] {
+        healthService.readDefinitions
+    }
+
+    var healthWriteDefinitions: [HealthDataTypeDefinition] {
+        healthService.writeDefinitions
     }
 
     func load() {
@@ -191,5 +207,20 @@ final class SettingsController {
                 self.logShareURL = nil
             }
         }
+    }
+
+    func setHealthDataTypeEnabled(_ enabled: Bool, type: HealthDataTypeID, direction: HealthDataDirection) {
+        healthService.setEnabled(enabled, for: type, direction: direction)
+        healthSettingsRevision += 1
+    }
+
+    func requestHealthReadAuthorization() async {
+        try? await healthService.requestReadAuthorization()
+        healthSettingsRevision += 1
+    }
+
+    func requestHealthWriteAuthorization() async {
+        try? await healthService.requestWriteAuthorization()
+        healthSettingsRevision += 1
     }
 }

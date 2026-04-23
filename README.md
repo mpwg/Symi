@@ -63,7 +63,9 @@ Die App bleibt klar migränefokussiert, ist aber bewusst nicht nur für Migräne
 - lokale Persistenz mit `SwiftData`
 - Architektur `lokal-first`
 - Zielplattform primär `iPhone`
+- Mindestversion `iOS 17.6`
 - Wetterdaten über `Apple Weather` mit `WeatherKit`
+- optionale Apple-Health-Integration mit versionsabhängigen HealthKit-Datentypen
 - PDF-Erzeugung lokal auf dem Gerät
 - optionale iCloud-Synchronisation getrennt von der lokalen Kernnutzung
 
@@ -74,7 +76,11 @@ Interne technische Kennungen wie `MigraineTracker`, Bundle-ID, Scheme und iCloud
 - Gesundheitsdaten bleiben ohne aktivierten Sync lokal auf dem Gerät
 - der PDF-Export entsteht nur auf ausdrücklichen Befehl
 - die App ist eine Dokumentationshilfe, keine Diagnose- oder Therapieempfehlung
-- Apple Health ist aktuell nicht integriert
+- Apple Health ist optional; nicht auf allen iOS-Versionen verfügbare HealthKit-Daten werden nicht erzwungen
+
+## Unterstützte iOS-Version
+
+Die App setzt mindestens `iOS 17.6` voraus. Diese Grenze erhält die aktuellen Swift-, SwiftUI- und SwiftData-Architekturentscheidungen ohne Backport- oder UI-Kompromisse. HealthKit-Datentypen, die erst in neueren iOS-Versionen verfügbar sind, werden separat per Availability behandelt und reduzieren auf älteren unterstützten Systemen nur den verfügbaren Health-Kontext.
 
 ## Build und Release
 

@@ -129,6 +129,34 @@ enum PDFExportWriter {
             }
         }
 
+        if let health = record.healthContext {
+            var parts: [String] = []
+            if let sleepMinutes = health.sleepMinutes {
+                parts.append("Schlaf \(Int(sleepMinutes.rounded())) min")
+            }
+            if let stepCount = health.stepCount {
+                parts.append("Schritte \(stepCount.formatted())")
+            }
+            if let averageHeartRate = health.averageHeartRate {
+                parts.append("Herzfrequenz \(averageHeartRate.formatted(.number.precision(.fractionLength(0)))) bpm")
+            }
+            if let restingHeartRate = health.restingHeartRate {
+                parts.append("Ruhepuls \(restingHeartRate.formatted(.number.precision(.fractionLength(0)))) bpm")
+            }
+            if let heartRateVariability = health.heartRateVariability {
+                parts.append("HRV \(heartRateVariability.formatted(.number.precision(.fractionLength(0)))) ms")
+            }
+            if let menstrualFlow = health.menstrualFlow {
+                parts.append("Menstruation \(menstrualFlow)")
+            }
+            if !health.symptoms.isEmpty {
+                parts.append("Symptome \(health.symptoms.joined(separator: ", "))")
+            }
+            parts.append("Quelle: \(health.source)")
+
+            lines.append("Apple Health: \(parts.joined(separator: ", "))")
+        }
+
         if !record.notes.isEmpty {
             lines.append("Notiz: \(record.notes)")
         }
