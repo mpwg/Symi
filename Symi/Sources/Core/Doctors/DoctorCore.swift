@@ -459,8 +459,10 @@ final class DoctorEditorController {
 
     private let saveDoctorUseCase: SaveDoctorUseCase
     private let directoryRepository: DoctorDirectoryRepository
-    private var searchDebounceTask: Task<Void, Never>?
-    private var searchFetchTask: Task<Void, Never>?
+    @ObservationIgnored private var searchDebounceTask: Task<Void, Never>?
+    @ObservationIgnored private var searchFetchTask: Task<Void, Never>?
+    @ObservationIgnored private var sourceAttributionTask: Task<Void, Never>?
+    @ObservationIgnored private var saveTask: Task<Void, Never>?
 
     init(
         doctor: DoctorRecord?,
@@ -475,7 +477,9 @@ final class DoctorEditorController {
             "https://www.gesundheitskasse.at/cdscontent/?contentid=10007.884365"
         )
         refreshSearch()
-        Task { await refreshSourceAttribution() }
+        sourceAttributionTask = Task { [weak self] in
+            await self?.refreshSourceAttribution()
+        }
     }
 
     func refreshSearch() {
@@ -563,12 +567,19 @@ final class DoctorEditorController {
     }
 
     func save(onSaved: @escaping (UUID) -> Void) {
-        Task {
+        saveTask?.cancel()
+        let draft = draft
+        saveTask = Task { [weak self] in
+            guard let self else { return }
             do {
                 let id = try await saveDoctorUseCase.execute(draft)
+                guard !Task.isCancelled else { return }
                 validationMessage = nil
                 onSaved(id)
+            } catch is CancellationError {
+                return
             } catch {
+                guard !Task.isCancelled else { return }
                 validationMessage = error.localizedDescription
             }
         }
@@ -584,6 +595,7 @@ final class AppointmentEditorController {
 
     private let saveAppointmentUseCase: SaveAppointmentUseCase
     private let appointmentRepository: AppointmentRepository
+    @ObservationIgnored private var saveTask: Task<Void, Never>?
 
     init(
         appointment: AppointmentRecord?,
@@ -613,18 +625,21 @@ final class AppointmentEditorController {
     }
 
     func save(onSaved: @escaping (UUID) -> Void) {
-        Task {
+        saveTask?.cancel()
+        let draft = draft
+        saveTask = Task { [weak self] in
+            guard let self else { return }
             do {
                 let id = try await saveAppointmentUseCase.execute(draft)
-                await MainActor.run {
-                    validationMessage = nil
-                    saveMessageVisible = true
-                    onSaved(id)
-                }
+                guard !Task.isCancelled else { return }
+                validationMessage = nil
+                saveMessageVisible = true
+                onSaved(id)
+            } catch is CancellationError {
+                return
             } catch {
-                await MainActor.run {
-                    validationMessage = error.localizedDescription
-                }
+                guard !Task.isCancelled else { return }
+                validationMessage = error.localizedDescription
             }
         }
     }

@@ -4,8 +4,8 @@ import Observation
 protocol ExportRepository: Sendable {
     nonisolated func buildSummary(startDate: Date, endDate: Date) throws -> ExportPeriodSummary
     nonisolated func createPDF(summary: ExportPeriodSummary, mode: PDFReportMode) throws -> URL
-    func createBackup() throws -> URL
-    func importBackup(from url: URL) throws
+    nonisolated func createBackup() throws -> URL
+    nonisolated func importBackup(from url: URL) throws
 }
 
 enum PDFReportMode: String, CaseIterable, Identifiable, Sendable {
@@ -48,20 +48,26 @@ struct CreatePDFExportUseCase {
 struct CreateBackupUseCase {
     let repository: ExportRepository
 
-    func execute() throws -> URL {
-        try PerformanceInstrumentation.measure("BackupExportCreate") {
-            try repository.createBackup()
-        }
+    func execute() async throws -> URL {
+        let repository = repository
+        return try await Task.detached(priority: .userInitiated) {
+            try PerformanceInstrumentation.measure("BackupExportCreate") {
+                try repository.createBackup()
+            }
+        }.value
     }
 }
 
 struct ImportBackupUseCase {
     let repository: ExportRepository
 
-    func execute(url: URL) throws {
-        try PerformanceInstrumentation.measure("BackupImport") {
-            try repository.importBackup(from: url)
-        }
+    func execute(url: URL) async throws {
+        let repository = repository
+        try await Task.detached(priority: .userInitiated) {
+            try PerformanceInstrumentation.measure("BackupImport") {
+                try repository.importBackup(from: url)
+            }
+        }.value
     }
 }
 
@@ -83,6 +89,8 @@ final class DataExportController {
     @ObservationIgnored private var hasLoadedInitialSummary = false
     @ObservationIgnored private var summaryReloadTask: Task<Void, Never>?
     @ObservationIgnored private var pdfPreparationTask: Task<Void, Never>?
+    @ObservationIgnored private var dataExportTask: Task<Void, Never>?
+    @ObservationIgnored private var dataImportTask: Task<Void, Never>?
     private let loadExportPreviewUseCase: LoadExportPreviewUseCase
     private let createPDFExportUseCase: CreatePDFExportUseCase
     private let createBackupUseCase: CreateBackupUseCase
@@ -237,35 +245,57 @@ final class DataExportController {
     }
 
     func createBackup() {
+        dataExportTask?.cancel()
         dataTransferMessage = nil
         dataExportURL = nil
 
-        Task {
-            PerformanceInstrumentation.measure("DataExportControllerCreateBackup") {
+        dataExportTask = Task { [weak self] in
+            await PerformanceInstrumentation.measure("DataExportControllerCreateBackup") {
+                guard let self else { return }
                 do {
-                    dataExportURL = try createBackupUseCase.execute()
-                    dataTransferMessage = "JSON5-Datei wurde lokal erstellt."
+                    let backupURL = try await self.createBackupUseCase.execute()
+                    guard !Task.isCancelled else { return }
+                    self.dataExportURL = backupURL
+                    self.dataTransferMessage = "JSON5-Datei wurde lokal erstellt."
+                } catch is CancellationError {
+                    return
                 } catch {
-                    dataTransferMessage = "Fehler beim Erstellen der JSON5-Datei."
+                    guard !Task.isCancelled else { return }
+                    self.dataTransferMessage = "Fehler beim Erstellen der JSON5-Datei."
                 }
             }
         }
     }
 
     func importBackup(from result: Result<URL, Error>) {
-        dataTransferMessage = nil
+        let url: URL
+        do {
+            url = try result.get()
+        } catch CocoaError.userCancelled {
+            return
+        } catch {
+            dataTransferMessage = "Fehler beim Import der JSON5-Datei."
+            return
+        }
 
-        Task {
+        dataImportTask?.cancel()
+        dataTransferMessage = nil
+        isImportingData = true
+
+        dataImportTask = Task { [weak self] in
             await PerformanceInstrumentation.measure("DataExportControllerImportBackup") {
+                guard let self else { return }
+                defer { self.isImportingData = false }
                 do {
-                    let url = try result.get()
-                    try importBackupUseCase.execute(url: url)
-                    dataTransferMessage = "JSON5-Daten wurden importiert."
-                    await reloadSummary()
-                } catch CocoaError.userCancelled {
+                    try await self.importBackupUseCase.execute(url: url)
+                    guard !Task.isCancelled else { return }
+                    self.dataTransferMessage = "JSON5-Daten wurden importiert."
+                    await self.reloadSummary()
+                } catch is CancellationError {
                     return
                 } catch {
-                    dataTransferMessage = "Fehler beim Import der JSON5-Datei."
+                    guard !Task.isCancelled else { return }
+                    self.dataTransferMessage = "Fehler beim Import der JSON5-Datei."
                 }
             }
         }

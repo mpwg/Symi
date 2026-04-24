@@ -281,7 +281,7 @@ final class SwiftDataExportRepository: ExportRepository, @unchecked Sendable {
         try PDFExportWriter.write(summary: summary, mode: mode)
     }
 
-    func createBackup() throws -> URL {
+    nonisolated func createBackup() throws -> URL {
         let readContext = readContext()
         let episodes = try readContext.fetch(FetchDescriptor<Episode>(sortBy: [SortDescriptor(\Episode.startedAt, order: .reverse)]))
         let definitions = try readContext.fetch(
@@ -298,7 +298,7 @@ final class SwiftDataExportRepository: ExportRepository, @unchecked Sendable {
         return try snapshot.writeToTemporaryFile()
     }
 
-    func importBackup(from url: URL) throws {
+    nonisolated func importBackup(from url: URL) throws {
         let snapshot = try DataTransferSnapshot.load(from: url)
         let context = writeContext()
         try snapshot.merge(into: context)
