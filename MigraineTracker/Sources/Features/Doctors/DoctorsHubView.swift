@@ -610,11 +610,19 @@ private struct DoctorDirectoryPickerView: View {
 
             if controller.groupedSearchResults.isEmpty {
                 Section {
-                    ContentUnavailableView(
-                        "Keine passenden Ärztinnen oder Ärzte",
-                        systemImage: "magnifyingglass",
-                        description: Text("Passe den Suchbegriff an oder nutze die manuelle Anlage.")
-                    )
+                    if controller.hasDirectorySearchQuery {
+                        ContentUnavailableView(
+                            "Keine passenden Ärztinnen oder Ärzte",
+                            systemImage: "magnifyingglass",
+                            description: Text("Passe den Suchbegriff an oder nutze die manuelle Anlage.")
+                        )
+                    } else {
+                        ContentUnavailableView(
+                            "Suche starten",
+                            systemImage: "magnifyingglass",
+                            description: Text("Gib Name, Fachgebiet oder Ort ein, um passende Ärztinnen und Ärzte zu laden.")
+                        )
+                    }
                 }
             } else {
                 ForEach(controller.groupedSearchResults) { section in
