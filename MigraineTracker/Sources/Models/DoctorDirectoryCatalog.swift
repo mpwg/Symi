@@ -1,8 +1,8 @@
 import Foundation
 import SwiftData
 
-struct DoctorDirectoryCatalogPayload: Decodable {
-    struct Metadata: Decodable {
+nonisolated struct DoctorDirectoryCatalogPayload: Decodable, Sendable {
+    nonisolated struct Metadata: Decodable, Sendable {
         let title: String
         let sourceURL: String
         let sourcePDF: String
@@ -13,7 +13,7 @@ struct DoctorDirectoryCatalogPayload: Decodable {
     let entries: [DoctorDirectorySeedEntry]
 }
 
-struct DoctorDirectorySeedEntry: Identifiable, Codable {
+nonisolated struct DoctorDirectorySeedEntry: Identifiable, Codable, Sendable {
     let id: String
     let name: String
     let specialty: String
@@ -26,11 +26,15 @@ struct DoctorDirectorySeedEntry: Identifiable, Codable {
 }
 
 enum DoctorDirectoryCatalog {
-    private static let resourceName = "oegk-doctor-directory.at"
-    private static let resourceExtension = "json"
+    nonisolated private static let resourceName = "oegk-doctor-directory.at"
+    nonisolated private static let resourceExtension = "json"
 
-    static func importSeedDataIfNeeded(into container: ModelContainer) {
+    nonisolated static func importSeedDataIfNeeded(into container: ModelContainer) {
         let context = ModelContext(container)
+        guard !hasImportedEntries(in: context) else {
+            return
+        }
+
         let payload = loadCatalogPayload()
         let existingEntries = (try? context.fetch(FetchDescriptor<DoctorDirectoryEntry>())) ?? []
         let existingByID = Dictionary(uniqueKeysWithValues: existingEntries.map { ($0.id, $0) })
@@ -69,7 +73,13 @@ enum DoctorDirectoryCatalog {
         }
     }
 
-    private static func loadCatalogPayload(bundle: Bundle = .main) -> DoctorDirectoryCatalogPayload {
+    private nonisolated static func hasImportedEntries(in context: ModelContext) -> Bool {
+        var descriptor = FetchDescriptor<DoctorDirectoryEntry>()
+        descriptor.fetchLimit = 1
+        return ((try? context.fetch(descriptor)) ?? []).isEmpty == false
+    }
+
+    private nonisolated static func loadCatalogPayload(bundle: Bundle = .main) -> DoctorDirectoryCatalogPayload {
         let bundles = [bundle, Bundle(for: DoctorDirectoryBundleLocator.self)]
         let url = bundles.lazy.compactMap { candidate in
             candidate.url(
@@ -102,7 +112,7 @@ enum DoctorDirectoryCatalog {
         }
     }
 
-    private static func sourceTreeFallbackURL() -> URL? {
+    private nonisolated static func sourceTreeFallbackURL() -> URL? {
         URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
             .deletingLastPathComponent()
