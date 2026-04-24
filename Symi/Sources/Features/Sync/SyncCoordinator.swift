@@ -37,19 +37,21 @@ final class SyncCoordinator {
     }
 
     func loadPersistedState() async {
-        isEnabled = await stateStore.syncEnabled()
-        conflicts = await stateStore.conflicts()
-        await log(level: .info, operation: "coordinator.loadPersistedState", message: "Persistierter Sync-Status geladen.", metadata: [
-            "enabled": "\(isEnabled)",
-            "conflicts": "\(conflicts.count)"
-        ])
-        status = await buildStatusSnapshot(
-            baseState: isEnabled ? .ready : .disabled,
-            isSyncing: false
-        )
+        await PerformanceInstrumentation.measure("SyncLoadPersistedState") {
+            isEnabled = await stateStore.syncEnabled()
+            conflicts = await stateStore.conflicts()
+            await log(level: .info, operation: "coordinator.loadPersistedState", message: "Persistierter Sync-Status geladen.", metadata: [
+                "enabled": "\(isEnabled)",
+                "conflicts": "\(conflicts.count)"
+            ])
+            status = await buildStatusSnapshot(
+                baseState: isEnabled ? .ready : .disabled,
+                isSyncing: false
+            )
 
-        if isEnabled {
-            await ensureStarted()
+            if isEnabled {
+                await ensureStarted()
+            }
         }
     }
 
@@ -77,40 +79,46 @@ final class SyncCoordinator {
     }
 
     func syncNow() async {
-        guard isEnabled else {
-            await log(level: .warning, operation: "coordinator.syncNow.skip", message: "Sync wurde angefordert, ist aber deaktiviert.")
-            status = await buildStatusSnapshot(baseState: .disabled, isSyncing: false)
-            return
+        await PerformanceInstrumentation.measure("SyncManualRun") {
+            guard isEnabled else {
+                await log(level: .warning, operation: "coordinator.syncNow.skip", message: "Sync wurde angefordert, ist aber deaktiviert.")
+                status = await buildStatusSnapshot(baseState: .disabled, isSyncing: false)
+                return
+            }
+
+            await ensureStarted()
+
+            guard let provider else {
+                await log(level: .error, operation: "coordinator.syncNow.missingProvider", message: "Sync konnte nicht starten, da kein Provider verfügbar ist.")
+                status = await buildStatusSnapshot(baseState: .needsAttention, isSyncing: false)
+                return
+            }
+
+            await log(level: .info, operation: "coordinator.syncNow.start", message: "Manueller Sync-Lauf gestartet.")
+            status = await buildStatusSnapshot(baseState: .syncing, isSyncing: true)
+
+            do {
+                try await PerformanceInstrumentation.measure("SyncProviderFetch") {
+                    try await provider.fetch()
+                }
+                try await queueUnsyncedDocuments()
+                try await PerformanceInstrumentation.measure("SyncProviderSend") {
+                    try await provider.send()
+                }
+                await stateStore.clearLastError()
+                await log(level: .info, operation: "coordinator.syncNow.finish", message: "Sync-Lauf erfolgreich abgeschlossen.", metadata: [
+                    "conflicts": "\(await stateStore.conflicts().count)"
+                ])
+            } catch {
+                await stateStore.setLastError(error.localizedDescription)
+                await log(level: .error, operation: "coordinator.syncNow.error", message: "Sync-Lauf fehlgeschlagen.", metadata: [
+                    "error": error.localizedDescription
+                ])
+            }
+
+            conflicts = await stateStore.conflicts()
+            status = await buildStatusSnapshot(baseState: currentBaseState(), isSyncing: false)
         }
-
-        await ensureStarted()
-
-        guard let provider else {
-            await log(level: .error, operation: "coordinator.syncNow.missingProvider", message: "Sync konnte nicht starten, da kein Provider verfügbar ist.")
-            status = await buildStatusSnapshot(baseState: .needsAttention, isSyncing: false)
-            return
-        }
-
-        await log(level: .info, operation: "coordinator.syncNow.start", message: "Manueller Sync-Lauf gestartet.")
-        status = await buildStatusSnapshot(baseState: .syncing, isSyncing: true)
-
-        do {
-            try await provider.fetch()
-            try await queueUnsyncedDocuments()
-            try await provider.send()
-            await stateStore.clearLastError()
-            await log(level: .info, operation: "coordinator.syncNow.finish", message: "Sync-Lauf erfolgreich abgeschlossen.", metadata: [
-                "conflicts": "\(await stateStore.conflicts().count)"
-            ])
-        } catch {
-            await stateStore.setLastError(error.localizedDescription)
-            await log(level: .error, operation: "coordinator.syncNow.error", message: "Sync-Lauf fehlgeschlagen.", metadata: [
-                "error": error.localizedDescription
-            ])
-        }
-
-        conflicts = await stateStore.conflicts()
-        status = await buildStatusSnapshot(baseState: currentBaseState(), isSyncing: false)
     }
 
     func retryLastError() async {
@@ -156,32 +164,36 @@ final class SyncCoordinator {
     }
 
     private func ensureStarted() async {
-        guard provider == nil else {
-            return
-        }
-
-        let cloudProvider = CloudKitSyncProvider(
-            stateStore: stateStore,
-            zoneID: zoneID,
-            appLogStore: appLogStore,
-            recordProvider: { [weak self] recordID in
-                await self?.recordForUpload(recordID: recordID)
-            },
-            eventHandler: { [weak self] event in
-                await self?.handleProviderEvent(event)
+        await PerformanceInstrumentation.measure("SyncEnsureStarted") {
+            guard provider == nil else {
+                return
             }
-        )
 
-        provider = cloudProvider
+            let cloudProvider = CloudKitSyncProvider(
+                stateStore: stateStore,
+                zoneID: zoneID,
+                appLogStore: appLogStore,
+                recordProvider: { [weak self] recordID in
+                    await self?.recordForUpload(recordID: recordID)
+                },
+                eventHandler: { [weak self] event in
+                    await self?.handleProviderEvent(event)
+                }
+            )
 
-        do {
-            try await cloudProvider.start()
-            await log(level: .info, operation: "coordinator.ensureStarted", message: "Sync-Provider wurde initialisiert.")
-        } catch {
-            await stateStore.setLastError(error.localizedDescription)
-            await log(level: .error, operation: "coordinator.ensureStarted.error", message: "Sync-Provider konnte nicht gestartet werden.", metadata: [
-                "error": error.localizedDescription
-            ])
+            provider = cloudProvider
+
+            do {
+                try await PerformanceInstrumentation.measure("SyncProviderStart") {
+                    try await cloudProvider.start()
+                }
+                await log(level: .info, operation: "coordinator.ensureStarted", message: "Sync-Provider wurde initialisiert.")
+            } catch {
+                await stateStore.setLastError(error.localizedDescription)
+                await log(level: .error, operation: "coordinator.ensureStarted.error", message: "Sync-Provider konnte nicht gestartet werden.", metadata: [
+                    "error": error.localizedDescription
+                ])
+            }
         }
     }
 
@@ -390,28 +402,32 @@ final class SyncCoordinator {
     }
 
     private func queueUnsyncedDocuments() async throws {
-        guard let provider else {
-            await log(level: .warning, operation: "coordinator.queueUnsyncedDocuments.skip", message: "Keine Upload-Queue aufgebaut, da kein Provider aktiv ist.")
-            return
+        try await PerformanceInstrumentation.measure("SyncQueueUnsyncedDocuments") {
+            guard let provider else {
+                await log(level: .warning, operation: "coordinator.queueUnsyncedDocuments.skip", message: "Keine Upload-Queue aufgebaut, da kein Provider aktiv ist.")
+                return
+            }
+
+            let shadows = await stateStore.shadows()
+            let conflicts = Set(await stateStore.conflicts().map(\.documentID))
+            let envelopes = try PerformanceInstrumentation.measure("SyncRepositoryAllEnvelopes") {
+                try repository.allEnvelopes(deviceID: deviceID)
+            }
+
+            let pendingRecordNames = envelopes
+                .filter { !conflicts.contains($0.documentID) }
+                .filter { shadows[$0.documentID]?.envelope != $0 }
+                .map(\.documentID)
+
+            await log(level: .info, operation: "coordinator.queueUnsyncedDocuments", message: "Lokale Änderungen wurden für den Upload ausgewählt.", metadata: [
+                "localEnvelopes": "\(envelopes.count)",
+                "shadows": "\(shadows.count)",
+                "conflicts": "\(conflicts.count)",
+                "pendingRecords": "\(pendingRecordNames.count)",
+                "recordNames": pendingRecordNames.sorted().joined(separator: ",")
+            ])
+            await provider.queue(recordNames: pendingRecordNames)
         }
-
-        let shadows = await stateStore.shadows()
-        let conflicts = Set(await stateStore.conflicts().map(\.documentID))
-        let envelopes = try repository.allEnvelopes(deviceID: deviceID)
-
-        let pendingRecordNames = envelopes
-            .filter { !conflicts.contains($0.documentID) }
-            .filter { shadows[$0.documentID]?.envelope != $0 }
-            .map(\.documentID)
-
-        await log(level: .info, operation: "coordinator.queueUnsyncedDocuments", message: "Lokale Änderungen wurden für den Upload ausgewählt.", metadata: [
-            "localEnvelopes": "\(envelopes.count)",
-            "shadows": "\(shadows.count)",
-            "conflicts": "\(conflicts.count)",
-            "pendingRecords": "\(pendingRecordNames.count)",
-            "recordNames": pendingRecordNames.sorted().joined(separator: ",")
-        ])
-        await provider.queue(recordNames: pendingRecordNames)
     }
 
     private func currentBaseState() -> SyncServiceState {
