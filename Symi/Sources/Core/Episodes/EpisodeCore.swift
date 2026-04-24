@@ -254,18 +254,22 @@ struct SaveEpisodeUseCase {
 
     @discardableResult
     func execute(_ draft: EpisodeDraft, weatherSnapshot: WeatherSnapshotData?, healthContext: HealthContextSnapshotData? = nil) async throws -> UUID {
-        if draft.endedAtEnabled, draft.endedAt < draft.startedAt {
-            throw EpisodeSaveError.invalidDateRange
-        }
+        try await PerformanceInstrumentation.measure("EpisodeSaveUseCase") {
+            if draft.endedAtEnabled, draft.endedAt < draft.startedAt {
+                throw EpisodeSaveError.invalidDateRange
+            }
 
-        if draft.startedAt > .now {
-            throw EpisodeSaveError.futureDate
-        }
+            if draft.startedAt > .now {
+                throw EpisodeSaveError.futureDate
+            }
 
-        let repository = repository
-        return try await Task.detached(priority: .userInitiated) {
-            try repository.save(draft: draft, weatherSnapshot: weatherSnapshot, healthContext: healthContext)
-        }.value
+            let repository = repository
+            return try await Task.detached(priority: .userInitiated) {
+                try PerformanceInstrumentation.measure("EpisodeRepositorySave") {
+                    try repository.save(draft: draft, weatherSnapshot: weatherSnapshot, healthContext: healthContext)
+                }
+            }.value
+        }
     }
 }
 
@@ -278,14 +282,18 @@ struct LoadHomeOverviewUseCase {
     let repository: EpisodeRepository
 
     func execute() async throws -> HomeOverviewData {
-        let repository = repository
-        let episodes = try await Task.detached(priority: .userInitiated) {
-            try repository.fetchRecent()
-        }.value
-        return HomeOverviewData(
-            latestEpisode: episodes.first,
-            episodeCount: episodes.count
-        )
+        try await PerformanceInstrumentation.measure("HomeOverviewReload") {
+            let repository = repository
+            let episodes = try await Task.detached(priority: .userInitiated) {
+                try PerformanceInstrumentation.measure("EpisodeRepositoryFetchRecent") {
+                    try repository.fetchRecent()
+                }
+            }.value
+            return HomeOverviewData(
+                latestEpisode: episodes.first,
+                episodeCount: episodes.count
+            )
+        }
     }
 }
 
@@ -416,19 +424,27 @@ final class EpisodeEditorController {
     func reloadMedicationDefinitions() {
         let repository = medicationRepository
         Task {
-            let definitions = await Task.detached(priority: .userInitiated) {
-                (try? repository.fetchDefinitions(searchText: nil)) ?? []
-            }.value
+            let definitions = await PerformanceInstrumentation.measure("MedicationDefinitionsReload") {
+                await Task.detached(priority: .userInitiated) {
+                    PerformanceInstrumentation.measure("MedicationRepositoryFetchDefinitions") {
+                        (try? repository.fetchDefinitions(searchText: nil)) ?? []
+                    }
+                }.value
+            }
             medicationDefinitions = definitions
             rebuildMedicationCaches()
         }
     }
 
     private func loadEpisode(id: UUID) async {
-        let repository = episodeRepository
-        let record = await Task.detached(priority: .userInitiated) {
-            try? repository.load(id: id)
-        }.value
+        let record = await PerformanceInstrumentation.measure("EpisodeEditorLoad") {
+            let repository = episodeRepository
+            return await Task.detached(priority: .userInitiated) {
+                PerformanceInstrumentation.measure("EpisodeRepositoryLoad") {
+                    try? repository.load(id: id)
+                }
+            }.value
+        }
 
         guard let record else {
             return
@@ -450,65 +466,69 @@ final class EpisodeEditorController {
         isSaving = true
 
         Task {
-            defer { isSaving = false }
+            await PerformanceInstrumentation.measure("EpisodeEditorSave") {
+                defer { isSaving = false }
 
-            do {
-                let weatherSnapshot = try await weatherSnapshotForSave()
-                let healthContext = await healthContextForSave()
-                let savedID = try await saveEpisodeUseCase.execute(draft, weatherSnapshot: weatherSnapshot, healthContext: healthContext)
-                await writeHealthSampleIfNeeded(episodeID: savedID)
-                reloadMedicationDefinitions()
-                validationMessage = nil
+                do {
+                    let weatherSnapshot = try await weatherSnapshotForSave()
+                    let healthContext = await healthContextForSave()
+                    let savedID = try await saveEpisodeUseCase.execute(draft, weatherSnapshot: weatherSnapshot, healthContext: healthContext)
+                    await writeHealthSampleIfNeeded(episodeID: savedID)
+                    reloadMedicationDefinitions()
+                    validationMessage = nil
 
-                if mode == .create, onSaved == nil {
-                    draft = EpisodeDraft.makeNew()
-                    medicationSearchText = ""
-                    customMedicationEditor = nil
-                    pendingMedicationDeletion = nil
-                    weatherLoadState = .idle
-                    rebuildMedicationCaches()
-                    saveMessageVisible = true
-                } else {
-                    onSaved?()
-                    onDismiss()
+                    if mode == .create, onSaved == nil {
+                        draft = EpisodeDraft.makeNew()
+                        medicationSearchText = ""
+                        customMedicationEditor = nil
+                        pendingMedicationDeletion = nil
+                        weatherLoadState = .idle
+                        rebuildMedicationCaches()
+                        saveMessageVisible = true
+                    } else {
+                        onSaved?()
+                        onDismiss()
+                    }
+                } catch {
+                    validationMessage = error.localizedDescription
                 }
-            } catch {
-                validationMessage = error.localizedDescription
             }
         }
     }
 
     func refreshWeather() async {
-        if AppStoreScreenshotMode.isEnabled {
-            weatherLoadState = .loaded(AppStoreScreenshotMode.sampleWeatherSnapshot(for: draft.startedAt))
-            return
-        }
-
-        if draft.startedAt > .now {
-            weatherLoadState = .unavailable("Für zukünftige Zeitpunkte wird kein Wetter geladen.")
-            return
-        }
-
-        if isStartedAtUnchanged, let originalWeatherSnapshot {
-            weatherLoadState = .loaded(originalWeatherSnapshot)
-            return
-        }
-
-        weatherLoadState = .loading
-
-        do {
-            let location = try await locationService.requestApproximateLocation()
-            guard let snapshot = try await weatherService.fetchWeather(for: draft.startedAt, location: location) else {
-                weatherLoadState = .unavailable("Für diesen Zeitpunkt konnten keine Wetterdaten geladen werden.")
+        await PerformanceInstrumentation.measure("EpisodeWeatherRefresh") {
+            if AppStoreScreenshotMode.isEnabled {
+                weatherLoadState = .loaded(AppStoreScreenshotMode.sampleWeatherSnapshot(for: draft.startedAt))
                 return
             }
-            weatherLoadState = .loaded(snapshot)
-        } catch let error as EpisodeSaveError {
-            weatherLoadState = .unavailable(error.localizedDescription)
-        } catch let error as any LocalizedError {
-            weatherLoadState = .unavailable(error.errorDescription ?? "Wetterdaten konnten nicht geladen werden.")
-        } catch {
-            weatherLoadState = .unavailable("Wetterdaten konnten nicht geladen werden.")
+
+            if draft.startedAt > .now {
+                weatherLoadState = .unavailable("Für zukünftige Zeitpunkte wird kein Wetter geladen.")
+                return
+            }
+
+            if isStartedAtUnchanged, let originalWeatherSnapshot {
+                weatherLoadState = .loaded(originalWeatherSnapshot)
+                return
+            }
+
+            weatherLoadState = .loading
+
+            do {
+                let location = try await locationService.requestApproximateLocation()
+                guard let snapshot = try await weatherService.fetchWeather(for: draft.startedAt, location: location) else {
+                    weatherLoadState = .unavailable("Für diesen Zeitpunkt konnten keine Wetterdaten geladen werden.")
+                    return
+                }
+                weatherLoadState = .loaded(snapshot)
+            } catch let error as EpisodeSaveError {
+                weatherLoadState = .unavailable(error.localizedDescription)
+            } catch let error as any LocalizedError {
+                weatherLoadState = .unavailable(error.errorDescription ?? "Wetterdaten konnten nicht geladen werden.")
+            } catch {
+                weatherLoadState = .unavailable("Wetterdaten konnten nicht geladen werden.")
+            }
         }
     }
 

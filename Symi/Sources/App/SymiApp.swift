@@ -24,25 +24,18 @@ struct SymiApp: App {
             SentrySDK.start { options in
                 options.dsn = sentryDSN
 
-                // Adds IP for users.
-                // For more information, visit: https://docs.sentry.io/platforms/apple/data-management/data-collected/
-                options.sendDefaultPii = true
+                options.sendDefaultPii = false
+                options.tracesSampleRate = 0.2
 
-                // Set tracesSampleRate to 1.0 to capture 100% of transactions for performance monitoring.
-                // We recommend adjusting this value in production.
-                options.tracesSampleRate = 1.0
-
-                // Configure profiling. Visit https://docs.sentry.io/platforms/apple/profiling/ to learn more.
                 options.configureProfiling = {
-                    $0.sessionSampleRate = 1.0 // We recommend adjusting this value in production.
+                    $0.sessionSampleRate = 0.05
                     $0.lifecycle = .trace
                 }
 
-                // Uncomment the following lines to add more data to your events
-                options.attachScreenshot = true // This adds a screenshot to the error events
-                options.attachViewHierarchy = true // This adds the view hierarchy to the error events
-                options.debug = true
-                options.enableLogs = true
+                options.attachScreenshot = false
+                options.attachViewHierarchy = false
+                options.debug = false
+                options.enableLogs = false
             }
         } else {
             Self.logger.notice("Sentry ist deaktiviert, weil keine gültige DSN in der App-Konfiguration gefunden wurde.")

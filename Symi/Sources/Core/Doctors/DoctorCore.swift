@@ -266,14 +266,18 @@ struct SaveDoctorUseCase {
 
     @discardableResult
     func execute(_ draft: DoctorDraft) async throws -> UUID {
-        if draft.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            throw DoctorSaveError.missingName
-        }
+        try await PerformanceInstrumentation.measure("DoctorSaveUseCase") {
+            if draft.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                throw DoctorSaveError.missingName
+            }
 
-        let repository = repository
-        return try await Task.detached(priority: .userInitiated) {
-            try repository.save(draft: draft)
-        }.value
+            let repository = repository
+            return try await Task.detached(priority: .userInitiated) {
+                try PerformanceInstrumentation.measure("DoctorRepositorySave") {
+                    try repository.save(draft: draft)
+                }
+            }.value
+        }
     }
 }
 
@@ -284,48 +288,54 @@ struct SaveAppointmentUseCase {
 
     @discardableResult
     func execute(_ draft: AppointmentDraft) async throws -> UUID {
-        let doctorRepository = doctorRepository
-        let appointmentRepository = appointmentRepository
-        let doctor = try await Task.detached(priority: .userInitiated) {
-            try doctorRepository.load(id: draft.doctorID)
-        }.value
-        guard let doctor else {
-            throw AppointmentSaveError.missingDoctor
-        }
+        try await PerformanceInstrumentation.measure("AppointmentSaveUseCase") {
+            let doctorRepository = doctorRepository
+            let appointmentRepository = appointmentRepository
+            let doctor = try await Task.detached(priority: .userInitiated) {
+                try PerformanceInstrumentation.measure("DoctorRepositoryLoadForAppointment") {
+                    try doctorRepository.load(id: draft.doctorID)
+                }
+            }.value
+            guard let doctor else {
+                throw AppointmentSaveError.missingDoctor
+            }
 
-        if draft.endsAtEnabled, draft.endsAt < draft.scheduledAt {
-            throw AppointmentSaveError.invalidDateRange
-        }
+            if draft.endsAtEnabled, draft.endsAt < draft.scheduledAt {
+                throw AppointmentSaveError.invalidDateRange
+            }
 
-        let existingRecord = try await Task.detached(priority: .userInitiated) {
-            try draft.id.flatMap { try appointmentRepository.load(id: $0) }
-        }.value
-        if let requestID = existingRecord?.notificationRequestID {
-            await notificationService.removePendingNotification(requestID: requestID)
-        }
+            let existingRecord = try await Task.detached(priority: .userInitiated) {
+                try draft.id.flatMap { try appointmentRepository.load(id: $0) }
+            }.value
+            if let requestID = existingRecord?.notificationRequestID {
+                await notificationService.removePendingNotification(requestID: requestID)
+            }
 
-        let id = try await Task.detached(priority: .userInitiated) {
-            try appointmentRepository.save(draft: draft)
-        }.value
-        let savedRecord = try await Task.detached(priority: .userInitiated) {
-            try appointmentRepository.load(id: id)
-        }.value
-        guard let savedRecord else {
+            let id = try await Task.detached(priority: .userInitiated) {
+                try PerformanceInstrumentation.measure("AppointmentRepositorySave") {
+                    try appointmentRepository.save(draft: draft)
+                }
+            }.value
+            let savedRecord = try await Task.detached(priority: .userInitiated) {
+                try appointmentRepository.load(id: id)
+            }.value
+            guard let savedRecord else {
+                return id
+            }
+
+            if savedRecord.reminderEnabled {
+                let result = await notificationService.scheduleAppointmentReminder(for: savedRecord, doctor: doctor)
+                try await Task.detached(priority: .userInitiated) {
+                    try appointmentRepository.updateReminder(id: id, status: result.status, requestID: result.requestID)
+                }.value
+            } else {
+                try await Task.detached(priority: .userInitiated) {
+                    try appointmentRepository.updateReminder(id: id, status: .notRequested, requestID: nil)
+                }.value
+            }
+
             return id
         }
-
-        if savedRecord.reminderEnabled {
-            let result = await notificationService.scheduleAppointmentReminder(for: savedRecord, doctor: doctor)
-            try await Task.detached(priority: .userInitiated) {
-                try appointmentRepository.updateReminder(id: id, status: result.status, requestID: result.requestID)
-            }.value
-        } else {
-            try await Task.detached(priority: .userInitiated) {
-                try appointmentRepository.updateReminder(id: id, status: .notRequested, requestID: nil)
-            }.value
-        }
-
-        return id
     }
 }
 
@@ -367,30 +377,40 @@ final class DoctorHubController {
     }
 
     func reloadAll() async {
-        do {
-            try await reloadDoctors()
-            try await reloadAppointments()
-            errorMessage = nil
-        } catch {
-            errorMessage = "Ärzte und Termine konnten nicht geladen werden."
+        await PerformanceInstrumentation.measure("DoctorHubReloadAll") {
+            do {
+                try await reloadDoctors()
+                try await reloadAppointments()
+                errorMessage = nil
+            } catch {
+                errorMessage = "Ärzte und Termine konnten nicht geladen werden."
+            }
         }
     }
 
     func reloadDoctors() async throws {
-        let repository = doctorRepository
-        doctors = try await Task.detached(priority: .userInitiated) {
-            try repository.fetchAll()
-        }.value
-        doctorsByID = Dictionary(uniqueKeysWithValues: doctors.map { ($0.id, $0) })
-        rebuildUpcomingAppointmentItems()
+        try await PerformanceInstrumentation.measure("DoctorHubReloadDoctors") {
+            let repository = doctorRepository
+            doctors = try await Task.detached(priority: .userInitiated) {
+                try PerformanceInstrumentation.measure("DoctorRepositoryFetchAll") {
+                    try repository.fetchAll()
+                }
+            }.value
+            doctorsByID = Dictionary(uniqueKeysWithValues: doctors.map { ($0.id, $0) })
+            rebuildUpcomingAppointmentItems()
+        }
     }
 
     func reloadAppointments(limit: Int = 20) async throws {
-        let repository = appointmentRepository
-        upcomingAppointments = try await Task.detached(priority: .userInitiated) {
-            try repository.fetchUpcoming(limit: limit)
-        }.value
-        rebuildUpcomingAppointmentItems()
+        try await PerformanceInstrumentation.measure("DoctorHubReloadAppointments") {
+            let repository = appointmentRepository
+            upcomingAppointments = try await Task.detached(priority: .userInitiated) {
+                try PerformanceInstrumentation.measure("AppointmentRepositoryFetchUpcoming") {
+                    try repository.fetchUpcoming(limit: limit)
+                }
+            }.value
+            rebuildUpcomingAppointmentItems()
+        }
     }
 
     private func rebuildUpcomingAppointmentItems() {
@@ -470,9 +490,13 @@ final class DoctorEditorController {
         }
 
         searchFetchTask = Task { @MainActor [weak self] in
-            let results = await Task.detached(priority: .userInitiated) {
-                (try? repository.fetchEntries(searchText: searchText)) ?? []
-            }.value
+            let results = await PerformanceInstrumentation.measure("DoctorDirectorySearch") {
+                await Task.detached(priority: .userInitiated) {
+                    PerformanceInstrumentation.measure("DoctorDirectoryRepositoryFetchEntries") {
+                        (try? repository.fetchEntries(searchText: searchText)) ?? []
+                    }
+                }.value
+            }
             guard let self, !Task.isCancelled else {
                 return
             }

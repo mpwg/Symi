@@ -748,6 +748,9 @@
         }
       }
     },
+    "Berichtsdaten werden vorbereitet." : {
+
+    },
     "Bevor du startest" : {
       "localizations" : {
         "en" : {
@@ -2709,6 +2712,12 @@
           }
         }
       }
+    },
+    "PDF vorbereiten" : {
+
+    },
+    "PDF wird vorbereitet." : {
+
     },
     "PDF-Berichte helfen dir, Termine vorzubereiten. Sie werden nur erstellt und geteilt, wenn du das aktiv auslöst." : {
       "localizations" : {

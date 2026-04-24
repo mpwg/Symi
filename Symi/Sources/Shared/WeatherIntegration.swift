@@ -211,44 +211,46 @@ struct AppleWeatherKitWeatherService: WeatherService {
     private let earliestHourlyDate = Date(timeIntervalSince1970: 1_627_776_000)
 
     func fetchWeather(for date: Date, location: CLLocation) async throws -> WeatherSnapshotData? {
-        if date > .now {
-            throw EpisodeSaveError.futureDate
-        }
-
-        guard date >= earliestHourlyDate else {
-            return nil
-        }
-
-        let interval = hourlyInterval(containing: date)
-        let hourlyForecast: Forecast<HourWeather>
-        do {
-            hourlyForecast = try await service.weather(
-                for: location,
-                including: .hourly(startDate: interval.start, endDate: interval.end)
-            )
-        } catch {
-            if isWeatherKitAuthenticationError(error) {
-                throw WeatherServiceError.weatherKitAuthentication
+        try await PerformanceInstrumentation.measure("WeatherKitFetch") {
+            if date > .now {
+                throw EpisodeSaveError.futureDate
             }
-            throw error
-        }
 
-        guard let matchedHour = hourlyForecast.forecast.min(by: {
-            abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date))
-        }) else {
-            throw WeatherServiceError.noMatchingHour
-        }
+            guard date >= earliestHourlyDate else {
+                return nil
+            }
 
-        return WeatherSnapshotData(
-            recordedAt: matchedHour.date,
-            condition: WeatherConditionMapper.description(for: matchedHour.condition),
-            temperature: matchedHour.temperature.converted(to: .celsius).value,
-            humidity: matchedHour.humidity * 100,
-            pressure: matchedHour.pressure.converted(to: .hectopascals).value,
-            precipitation: matchedHour.precipitationAmount.converted(to: .millimeters).value,
-            weatherCode: nil,
-            source: WeatherAttribution.providerName
-        )
+            let interval = hourlyInterval(containing: date)
+            let hourlyForecast: Forecast<HourWeather>
+            do {
+                hourlyForecast = try await service.weather(
+                    for: location,
+                    including: .hourly(startDate: interval.start, endDate: interval.end)
+                )
+            } catch {
+                if isWeatherKitAuthenticationError(error) {
+                    throw WeatherServiceError.weatherKitAuthentication
+                }
+                throw error
+            }
+
+            guard let matchedHour = hourlyForecast.forecast.min(by: {
+                abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date))
+            }) else {
+                throw WeatherServiceError.noMatchingHour
+            }
+
+            return WeatherSnapshotData(
+                recordedAt: matchedHour.date,
+                condition: WeatherConditionMapper.description(for: matchedHour.condition),
+                temperature: matchedHour.temperature.converted(to: .celsius).value,
+                humidity: matchedHour.humidity * 100,
+                pressure: matchedHour.pressure.converted(to: .hectopascals).value,
+                precipitation: matchedHour.precipitationAmount.converted(to: .millimeters).value,
+                weatherCode: nil,
+                source: WeatherAttribution.providerName
+            )
+        }
     }
 
     private func hourlyInterval(containing date: Date) -> DateInterval {
@@ -391,139 +393,147 @@ final class WeatherBackfillService {
     }
 
     func runIfNeeded(limit: Int = 10, pageSize: Int = 5, maxScannedEpisodes: Int = 50) async {
-        guard !hasAttemptedBackfill else {
-            return
-        }
-
-        hasAttemptedBackfill = true
-
-        let context = modelContainer.mainContext
-        let pageSize = max(1, pageSize)
-        let limit = max(0, limit)
-        let maxScannedEpisodes = max(pageSize, maxScannedEpisodes)
-
-        guard limit > 0, hasBackfillCandidates(in: context, pageSize: pageSize, maxScannedEpisodes: maxScannedEpisodes) else {
-            return
-        }
-
-        let location: CLLocation
-        do {
-            location = try await locationService.requestApproximateLocation()
-        } catch {
-            return
-        }
-
-        var scannedEpisodes = 0
-        var fetchOffset = 0
-        var attemptedBackfills = 0
-
-        while attemptedBackfills < limit, scannedEpisodes < maxScannedEpisodes {
-            guard !Task.isCancelled else {
+        await PerformanceInstrumentation.measure("WeatherBackfillRun") {
+            guard !hasAttemptedBackfill else {
                 return
             }
 
-            let page = candidatePage(
-                in: context,
-                pageSize: min(pageSize, maxScannedEpisodes - scannedEpisodes),
-                fetchOffset: fetchOffset
-            )
+            hasAttemptedBackfill = true
 
-            guard page.scannedCount > 0 else {
-                break
+            let context = modelContainer.mainContext
+            let pageSize = max(1, pageSize)
+            let limit = max(0, limit)
+            let maxScannedEpisodes = max(pageSize, maxScannedEpisodes)
+
+            guard limit > 0, hasBackfillCandidates(in: context, pageSize: pageSize, maxScannedEpisodes: maxScannedEpisodes) else {
+                return
             }
 
-            scannedEpisodes += page.scannedCount
-            fetchOffset += page.scannedCount
+            let location: CLLocation
+            do {
+                location = try await locationService.requestApproximateLocation()
+            } catch {
+                return
+            }
 
-            for candidate in page.candidates {
-                guard attemptedBackfills < limit, !Task.isCancelled else {
+            var scannedEpisodes = 0
+            var fetchOffset = 0
+            var attemptedBackfills = 0
+
+            while attemptedBackfills < limit, scannedEpisodes < maxScannedEpisodes {
+                guard !Task.isCancelled else {
                     return
                 }
 
-                attemptedBackfills += 1
+                let page = candidatePage(
+                    in: context,
+                    pageSize: min(pageSize, maxScannedEpisodes - scannedEpisodes),
+                    fetchOffset: fetchOffset
+                )
 
-                do {
-                    guard let snapshot = try await weatherService.fetchWeather(for: candidate.startedAt, location: location) else {
-                        continue
-                    }
-
-                    guard
-                        let episode = context.model(for: candidate.modelID) as? Episode,
-                        episode.weatherSnapshot?.source.localizedCaseInsensitiveContains("legacy") == true
-                    else {
-                        continue
-                    }
-
-                    if let existing = episode.weatherSnapshot {
-                        existing.recordedAt = snapshot.recordedAt
-                        existing.temperature = snapshot.temperature
-                        existing.condition = snapshot.condition
-                        existing.humidity = snapshot.humidity
-                        existing.pressure = snapshot.pressure
-                        existing.precipitation = snapshot.precipitation
-                        existing.weatherCode = snapshot.weatherCode
-                        existing.source = snapshot.source
-                    } else {
-                        episode.weatherSnapshot = WeatherSnapshot(snapshot: snapshot, episode: episode)
-                    }
-
-                    episode.markUpdated()
-                } catch {
-                    continue
+                guard page.scannedCount > 0 else {
+                    break
                 }
-            }
 
-            if context.hasChanges {
-                try? context.save()
-            }
+                scannedEpisodes += page.scannedCount
+                fetchOffset += page.scannedCount
 
-            await Task.yield()
+                for candidate in page.candidates {
+                    guard attemptedBackfills < limit, !Task.isCancelled else {
+                        return
+                    }
+
+                    attemptedBackfills += 1
+
+                    do {
+                        guard let snapshot = try await weatherService.fetchWeather(for: candidate.startedAt, location: location) else {
+                            continue
+                        }
+
+                        guard
+                            let episode = context.model(for: candidate.modelID) as? Episode,
+                            episode.weatherSnapshot?.source.localizedCaseInsensitiveContains("legacy") == true
+                        else {
+                            continue
+                        }
+
+                        if let existing = episode.weatherSnapshot {
+                            existing.recordedAt = snapshot.recordedAt
+                            existing.temperature = snapshot.temperature
+                            existing.condition = snapshot.condition
+                            existing.humidity = snapshot.humidity
+                            existing.pressure = snapshot.pressure
+                            existing.precipitation = snapshot.precipitation
+                            existing.weatherCode = snapshot.weatherCode
+                            existing.source = snapshot.source
+                        } else {
+                            episode.weatherSnapshot = WeatherSnapshot(snapshot: snapshot, episode: episode)
+                        }
+
+                        episode.markUpdated()
+                    } catch {
+                        continue
+                    }
+                }
+
+                if context.hasChanges {
+                    try? PerformanceInstrumentation.measure("WeatherBackfillSave") {
+                        try context.save()
+                    }
+                }
+
+                await Task.yield()
+            }
         }
     }
 
     private func hasBackfillCandidates(in context: ModelContext, pageSize: Int, maxScannedEpisodes: Int) -> Bool {
-        var scannedEpisodes = 0
-        var fetchOffset = 0
+        PerformanceInstrumentation.measure("WeatherBackfillScanCandidates") {
+            var scannedEpisodes = 0
+            var fetchOffset = 0
 
-        while scannedEpisodes < maxScannedEpisodes {
-            let page = candidatePage(
-                in: context,
-                pageSize: min(pageSize, maxScannedEpisodes - scannedEpisodes),
-                fetchOffset: fetchOffset
-            )
+            while scannedEpisodes < maxScannedEpisodes {
+                let page = candidatePage(
+                    in: context,
+                    pageSize: min(pageSize, maxScannedEpisodes - scannedEpisodes),
+                    fetchOffset: fetchOffset
+                )
 
-            guard page.scannedCount > 0 else {
-                return false
+                guard page.scannedCount > 0 else {
+                    return false
+                }
+
+                if !page.candidates.isEmpty {
+                    return true
+                }
+
+                scannedEpisodes += page.scannedCount
+                fetchOffset += page.scannedCount
             }
 
-            if !page.candidates.isEmpty {
-                return true
-            }
-
-            scannedEpisodes += page.scannedCount
-            fetchOffset += page.scannedCount
+            return false
         }
-
-        return false
     }
 
     private func candidatePage(in context: ModelContext, pageSize: Int, fetchOffset: Int) -> CandidatePage {
-        var descriptor = FetchDescriptor<Episode>(sortBy: [SortDescriptor(\Episode.startedAt, order: .reverse)])
-        descriptor.fetchLimit = pageSize
-        descriptor.fetchOffset = fetchOffset
+        PerformanceInstrumentation.measure("WeatherBackfillCandidatePage") {
+            var descriptor = FetchDescriptor<Episode>(sortBy: [SortDescriptor(\Episode.startedAt, order: .reverse)])
+            descriptor.fetchLimit = pageSize
+            descriptor.fetchOffset = fetchOffset
 
-        guard let episodes = try? context.fetch(descriptor) else {
-            return CandidatePage(scannedCount: 0, candidates: [])
-        }
-
-        let candidates = episodes.compactMap { episode -> BackfillCandidate? in
-            guard episode.weatherSnapshot?.source.localizedCaseInsensitiveContains("legacy") == true else {
-                return nil
+            guard let episodes = try? context.fetch(descriptor) else {
+                return CandidatePage(scannedCount: 0, candidates: [])
             }
 
-            return BackfillCandidate(modelID: episode.persistentModelID, startedAt: episode.startedAt)
-        }
+            let candidates = episodes.compactMap { episode -> BackfillCandidate? in
+                guard episode.weatherSnapshot?.source.localizedCaseInsensitiveContains("legacy") == true else {
+                    return nil
+                }
 
-        return CandidatePage(scannedCount: episodes.count, candidates: candidates)
+                return BackfillCandidate(modelID: episode.persistentModelID, startedAt: episode.startedAt)
+            }
+
+            return CandidatePage(scannedCount: episodes.count, candidates: candidates)
+        }
     }
 }
