@@ -30,6 +30,8 @@ jobs:
       actions: read
       contents: read
       security-events: write
+    env:
+      CODEQL_DESTINATION: platform=macOS,arch=arm64,variant=Mac Catalyst
 
     strategy:
       fail-fast: false
@@ -52,17 +54,6 @@ jobs:
           languages: ${{ matrix.language }}
           build-mode: manual
 
-      - name: Simulator-Ziel wählen
-        run: |
-          DEVICE_NAME="$(xcrun simctl list devices available | grep -E 'iPhone (17|Air)' | head -n 1 | sed -E 's/^[[:space:]]*([^()]+) \(.*/\1/' | xargs)"
-          if [ -z "${DEVICE_NAME}" ]; then
-            echo "Kein passender iPhone-Simulator gefunden."
-            xcrun simctl list devices available
-            exit 1
-          fi
-          echo "IOS_DESTINATION=platform=iOS Simulator,name=${DEVICE_NAME}" >> "$GITHUB_ENV"
-          echo "Verwende Simulator: ${DEVICE_NAME}"
-
       - name: Swift Packages auflösen
         run: xcodebuild -resolvePackageDependencies -project Symi.xcodeproj -scheme Symi
 
@@ -71,7 +62,7 @@ jobs:
           xcodebuild build \
             -project Symi.xcodeproj \
             -scheme Symi \
-            -destination "${IOS_DESTINATION}" \
+            -destination "${CODEQL_DESTINATION}" \
             -derivedDataPath "${RUNNER_TEMP}/DerivedData" \
             CODE_SIGNING_ALLOWED=NO
 
