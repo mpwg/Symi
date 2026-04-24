@@ -69,7 +69,7 @@ Die App bleibt klar migränefokussiert, fühlt sich aber bewusst nicht wie ein m
 - PDF-Erzeugung lokal auf dem Gerät
 - optionale iCloud-Synchronisation getrennt von der lokalen Kernnutzung
 
-Interne technische Kennungen wie `MigraineTracker`, Bundle-ID, Scheme und iCloud-Container bestehen derzeit aus Migrations- und Release-Gründen weiter, obwohl die sichtbare Produktmarke auf `Symi` umgestellt ist.
+Interne technische Kennungen wie `Symi`, Bundle-ID, Scheme und iCloud-Container bestehen derzeit aus Migrations- und Release-Gründen weiter, obwohl die sichtbare Produktmarke auf `Symi` umgestellt ist.
 
 ## Datenschutz und medizinische Einordnung
 
@@ -89,7 +89,7 @@ Dieses Projekt verwendet `GitHub Actions` und `fastlane` für CI/CD.
 CI:
 
 - Workflow `iOS CI` bei `pull_request` und `push` auf `main`
-- Build und Tests für das Shared Scheme `MigraineTracker`
+- Build und Tests für das Shared Scheme `Symi`
 - Upload des `xcresult` als Artifact
 - keine automatische Screenshot-Erstellung bei Pull Requests
 
@@ -100,30 +100,30 @@ CD:
 - App-Store-Screenshots werden erst im App-Store-Release erzeugt und hochgeladen
 - `fastlane match`, `build_app`, `pilot` und `deliver` für Signing und Distribution; die App-Store-Einreichung bleibt manuell in App Store Connect
 
-Die projektspezifische Release-Einrichtung ist in [docs/Xcode-Cloud.md](/Users/mat/code/MigraineTracker/docs/Xcode-Cloud.md) dokumentiert.
+Die projektspezifische Release-Einrichtung ist in [docs/Xcode-Cloud.md](/Users/mat/code/Symi/docs/Xcode-Cloud.md) dokumentiert.
 
 ## Lokale Entwicklung
 
 Voraussetzungen:
 
 - Xcode mit iPhone-Simulator
-- lokales Secrets-File auf Basis von [LocalSecrets.example.xcconfig](/Users/mat/code/MigraineTracker/MigraineTracker/Configs/LocalSecrets.example.xcconfig)
+- lokales Secrets-File auf Basis von [LocalSecrets.example.xcconfig](/Users/mat/code/Symi/Symi/Configs/LocalSecrets.example.xcconfig)
 
 Einrichtung:
 
-1. `MigraineTracker/Configs/LocalSecrets.example.xcconfig` nach `MigraineTracker/Configs/LocalSecrets.xcconfig` kopieren.
+1. `Symi/Configs/LocalSecrets.example.xcconfig` nach `Symi/Configs/LocalSecrets.xcconfig` kopieren.
 2. Mindestens `APPLE_DEVELOPER_TEAM_ID` setzen.
 3. Optional `SENTRY_DSN` und weitere Release-Secrets ergänzen.
 
 Typische lokale Prüfung:
 
 ```bash
-xcodebuild test -scheme MigraineTracker -destination 'platform=iOS Simulator,name=iPhone 16'
+xcodebuild test -scheme Symi -destination 'platform=iOS Simulator,name=iPhone 16'
 ```
 
 ## Weiterführende Dokumente
 
-- [docs/MVP-Konzept.md](/Users/mat/code/MigraineTracker/docs/MVP-Konzept.md)
-- [docs/App-Store-Metadaten.md](/Users/mat/code/MigraineTracker/docs/App-Store-Metadaten.md)
-- [docs/Teststrategie-und-Release-Checkliste.md](/Users/mat/code/MigraineTracker/docs/Teststrategie-und-Release-Checkliste.md)
+- [docs/MVP-Konzept.md](/Users/mat/code/Symi/docs/MVP-Konzept.md)
+- [docs/App-Store-Metadaten.md](/Users/mat/code/Symi/docs/App-Store-Metadaten.md)
+- [docs/Teststrategie-und-Release-Checkliste.md](/Users/mat/code/Symi/docs/Teststrategie-und-Release-Checkliste.md)
 - [Symi Support](https://symiapp.com)
