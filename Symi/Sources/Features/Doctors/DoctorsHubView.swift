@@ -58,7 +58,7 @@ struct DoctorsHubView: View {
         .refreshable {
             await reloadAll()
         }
-        .sheet(item: $doctorAddMode) { mode in
+        .fullScreenCover(item: $doctorAddMode) { mode in
             NavigationStack {
                 DoctorAddFlowView(appContainer: appContainer, startMode: mode) { doctorID in
                     doctorAddMode = nil
@@ -660,9 +660,11 @@ private struct DoctorDirectoryPickerView: View {
         .navigationTitle("Arzt hinzufügen")
         .brandGroupedScreen()
         .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button("Abbrechen") {
+            ToolbarItem(placement: .cancellationAction) {
+                Button {
                     dismiss()
+                } label: {
+                    Label("Abbrechen", systemImage: "xmark")
                 }
             }
         }
