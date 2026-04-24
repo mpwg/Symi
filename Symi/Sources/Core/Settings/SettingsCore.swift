@@ -99,6 +99,10 @@ final class SettingsController {
     private let syncService: SyncService
     private let appLogService: AppLogService
     private let healthService: HealthService
+    @ObservationIgnored private var loadTask: Task<Void, Never>?
+    @ObservationIgnored private var restoreTask: Task<Void, Never>?
+    @ObservationIgnored private var logRefreshTask: Task<Void, Never>?
+    @ObservationIgnored private var logClearTask: Task<Void, Never>?
 
     init(
         episodeRepository: EpisodeRepository,
@@ -148,22 +152,29 @@ final class SettingsController {
     }
 
     func load() {
+        loadTask?.cancel()
         syncService.refreshStatus()
 
         let episodeRepository = episodeRepository
         let medicationRepository = medicationRepository
-        Task {
+        loadTask = Task { [weak self] in
+            guard let self else { return }
             do {
-                summary = try await loadSettingsUseCase.execute()
+                let loadedSummary = try await loadSettingsUseCase.execute()
                 let deleted = try await Task.detached(priority: .userInitiated) {
                     (
                         try episodeRepository.fetchDeleted(),
                         try medicationRepository.fetchDeletedDefinitions()
                     )
                 }.value
+                guard !Task.isCancelled else { return }
+                summary = loadedSummary
                 deletedEpisodes = deleted.0
                 deletedDefinitions = deleted.1
+            } catch is CancellationError {
+                return
             } catch {
+                guard !Task.isCancelled else { return }
                 summary = SettingsSummaryData(
                     activeEpisodeCount: 0,
                     trashCount: deletedEpisodes.count + deletedDefinitions.count,
@@ -199,37 +210,58 @@ final class SettingsController {
     }
 
     func restoreEpisode(id: UUID) {
-        Task {
-            try? await restoreDeletedItemUseCase.restoreEpisode(id: id)
+        restoreTask?.cancel()
+        restoreTask = Task { [weak self] in
+            guard let self else { return }
+            do {
+                try await restoreDeletedItemUseCase.restoreEpisode(id: id)
+            } catch is CancellationError {
+                return
+            } catch {
+                return
+            }
+            guard !Task.isCancelled else { return }
             load()
         }
     }
 
     func restoreMedicationDefinition(_ definition: MedicationDefinitionRecord) {
-        Task {
-            try? await restoreDeletedItemUseCase.restoreMedicationDefinition(definition)
+        restoreTask?.cancel()
+        restoreTask = Task { [weak self] in
+            guard let self else { return }
+            do {
+                try await restoreDeletedItemUseCase.restoreMedicationDefinition(definition)
+            } catch is CancellationError {
+                return
+            } catch {
+                return
+            }
+            guard !Task.isCancelled else { return }
             load()
         }
     }
 
     func refreshLog(limit: Int = 200) {
-        Task {
+        logRefreshTask?.cancel()
+        logRefreshTask = Task { [weak self] in
+            guard let self else { return }
             let entries = await appLogService.recentEntries(filter: logFilter, limit: limit)
             let shareURL = await appLogService.exportLogFileURL(filter: logFilter)
-            await MainActor.run {
-                self.logEntries = entries
-                self.logShareURL = shareURL
-            }
+            guard !Task.isCancelled else { return }
+            logEntries = entries
+            logShareURL = shareURL
         }
     }
 
     func clearLog() {
-        Task {
+        logClearTask?.cancel()
+        logRefreshTask?.cancel()
+        logClearTask = Task { [weak self] in
+            guard let self else { return }
             await appLogService.clear()
-            await MainActor.run {
-                self.logEntries = []
-                self.logShareURL = nil
-            }
+            guard !Task.isCancelled else { return }
+            logEntries = []
+            logShareURL = nil
         }
     }
 

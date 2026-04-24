@@ -17,13 +17,13 @@ enum DataTransferError: LocalizedError {
     }
 }
 
-struct DataTransferSnapshot:  Codable {
+struct DataTransferSnapshot: @preconcurrency Codable, Sendable {
     let formatVersion: Int
     let exportedAt: Date
     let episodes: [EpisodePayload]
     let customMedicationDefinitions: [MedicationDefinitionPayload]
 
-    init(
+    nonisolated init(
         formatVersion: Int = 1,
         exportedAt: Date = .now,
         episodes: [EpisodePayload],
@@ -35,19 +35,19 @@ struct DataTransferSnapshot:  Codable {
         self.customMedicationDefinitions = customMedicationDefinitions
     }
 
-    init(episodes: [Episode], customMedicationDefinitions: [MedicationDefinition], healthContextStore: HealthContextStore? = nil) {
+    nonisolated init(episodes: [Episode], customMedicationDefinitions: [MedicationDefinition], healthContextStore: HealthContextStore? = nil) {
         self.init(
             episodes: episodes.map { EpisodePayload(episode: $0, healthContext: healthContextStore?.load(for: $0.id)) },
             customMedicationDefinitions: customMedicationDefinitions.map(MedicationDefinitionPayload.init)
         )
     }
 
-    func writeToTemporaryFile() throws -> URL {
+    nonisolated func writeToTemporaryFile() throws -> URL {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         encoder.dateEncodingStrategy = .iso8601
 
-        let fileName = "schmerztagebuch-export-\(Self.fileDateFormatter.string(from: exportedAt)).json5"
+        let fileName = "schmerztagebuch-export-\(Self.fileDateString(from: exportedAt)).json5"
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
         let data = try encoder.encode(self)
 
@@ -55,7 +55,7 @@ struct DataTransferSnapshot:  Codable {
         return url
     }
 
-    static func load(from url: URL) throws -> DataTransferSnapshot {
+    nonisolated static func load(from url: URL) throws -> DataTransferSnapshot {
         let shouldStopAccess = url.startAccessingSecurityScopedResource()
         defer {
             if shouldStopAccess {
@@ -76,7 +76,7 @@ struct DataTransferSnapshot:  Codable {
         return snapshot
     }
 
-    func merge(into context: ModelContext) throws {
+    nonisolated func merge(into context: ModelContext) throws {
         let existingEpisodes = try context.fetch(FetchDescriptor<Episode>())
         let episodesByID = Dictionary(uniqueKeysWithValues: existingEpisodes.map { ($0.id, $0) })
 
@@ -106,17 +106,17 @@ struct DataTransferSnapshot:  Codable {
         try context.save()
     }
 
-    private static let fileDateFormatter: DateFormatter = {
+    private nonisolated static func fileDateString(from date: Date) -> String {
         let formatter = DateFormatter()
         formatter.calendar = Calendar(identifier: .gregorian)
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.timeZone = .current
         formatter.dateFormat = "yyyy-MM-dd-HHmmss"
-        return formatter
-    }()
+        return formatter.string(from: date)
+    }
 }
 
-struct EpisodePayload: Codable {
+struct EpisodePayload: @preconcurrency Codable, Sendable {
     let id: UUID
     let startedAt: Date
     let endedAt: Date?
@@ -135,7 +135,7 @@ struct EpisodePayload: Codable {
     let weatherSnapshot: WeatherSnapshotPayload?
     let healthContext: HealthContextSnapshotData?
 
-    init(episode: Episode, healthContext: HealthContextRecord? = nil) {
+    nonisolated init(episode: Episode, healthContext: HealthContextRecord? = nil) {
         self.id = episode.id
         self.startedAt = episode.startedAt
         self.endedAt = episode.endedAt
@@ -155,7 +155,7 @@ struct EpisodePayload: Codable {
         self.healthContext = healthContext.map(HealthContextSnapshotData.init)
     }
 
-    func makeModel() -> Episode {
+    nonisolated func makeModel() -> Episode {
         let episode = Episode(
             id: id,
             startedAt: startedAt,
@@ -178,7 +178,7 @@ struct EpisodePayload: Codable {
         return episode
     }
 
-    func apply(to episode: Episode, in context: ModelContext) {
+    nonisolated func apply(to episode: Episode, in context: ModelContext) {
         episode.startedAt = startedAt
         episode.endedAt = endedAt
         episode.updatedAt = updatedAt
@@ -222,7 +222,7 @@ struct EpisodePayload: Codable {
     }
 }
 
-struct MedicationEntryPayload: Codable {
+struct MedicationEntryPayload: @preconcurrency Codable, Sendable {
     let id: UUID
     let name: String
     let category: MedicationCategory
@@ -233,7 +233,7 @@ struct MedicationEntryPayload: Codable {
     let reliefStartedAt: Date?
     let isRepeatDose: Bool
 
-    init(entry: MedicationEntry) {
+    nonisolated init(entry: MedicationEntry) {
         self.id = entry.id
         self.name = entry.name
         self.category = entry.category
@@ -245,7 +245,7 @@ struct MedicationEntryPayload: Codable {
         self.isRepeatDose = entry.isRepeatDose
     }
 
-    func makeModel(for episode: Episode) -> MedicationEntry {
+    nonisolated func makeModel(for episode: Episode) -> MedicationEntry {
         MedicationEntry(
             id: id,
             name: name,
@@ -260,7 +260,7 @@ struct MedicationEntryPayload: Codable {
         )
     }
 
-    func apply(to entry: MedicationEntry, for episode: Episode) {
+    nonisolated func apply(to entry: MedicationEntry, for episode: Episode) {
         entry.name = name
         entry.category = category
         entry.dosage = dosage
@@ -273,7 +273,7 @@ struct MedicationEntryPayload: Codable {
     }
 }
 
-struct WeatherSnapshotPayload: Codable {
+struct WeatherSnapshotPayload: @preconcurrency Codable, Sendable {
     let id: UUID
     let recordedAt: Date
     let temperature: Double?
@@ -284,7 +284,7 @@ struct WeatherSnapshotPayload: Codable {
     let weatherCode: Int?
     let source: String
 
-    init(snapshot: WeatherSnapshot) {
+    nonisolated init(snapshot: WeatherSnapshot) {
         self.id = snapshot.id
         self.recordedAt = snapshot.recordedAt
         self.temperature = snapshot.temperature
@@ -296,7 +296,7 @@ struct WeatherSnapshotPayload: Codable {
         self.source = snapshot.source
     }
 
-    func makeModel(for episode: Episode) -> WeatherSnapshot {
+    nonisolated func makeModel(for episode: Episode) -> WeatherSnapshot {
         WeatherSnapshot(
             id: id,
             recordedAt: recordedAt,
@@ -311,7 +311,7 @@ struct WeatherSnapshotPayload: Codable {
         )
     }
 
-    func apply(to snapshot: WeatherSnapshot, for episode: Episode) {
+    nonisolated func apply(to snapshot: WeatherSnapshot, for episode: Episode) {
         snapshot.recordedAt = recordedAt
         snapshot.temperature = temperature
         snapshot.condition = condition
@@ -324,7 +324,7 @@ struct WeatherSnapshotPayload: Codable {
     }
 }
 
-struct MedicationDefinitionPayload: Codable {
+struct MedicationDefinitionPayload: @preconcurrency Codable, Sendable {
     let catalogKey: String
     let groupID: String
     let groupTitle: String
@@ -338,7 +338,7 @@ struct MedicationDefinitionPayload: Codable {
     let updatedAt: Date
     let deletedAt: Date?
 
-    init(definition: MedicationDefinition) {
+    nonisolated init(definition: MedicationDefinition) {
         self.catalogKey = definition.catalogKey
         self.groupID = definition.groupID
         self.groupTitle = definition.groupTitle
@@ -353,7 +353,7 @@ struct MedicationDefinitionPayload: Codable {
         self.deletedAt = definition.deletedAt
     }
 
-    func makeModel() -> MedicationDefinition {
+    nonisolated func makeModel() -> MedicationDefinition {
         MedicationDefinition(
             catalogKey: catalogKey,
             groupID: groupID,
@@ -370,7 +370,7 @@ struct MedicationDefinitionPayload: Codable {
         )
     }
 
-    func apply(to definition: MedicationDefinition) {
+    nonisolated func apply(to definition: MedicationDefinition) {
         definition.groupID = groupID
         definition.groupTitle = groupTitle
         definition.groupFooter = groupFooter

@@ -169,7 +169,7 @@ protocol HealthService: AnyObject {
 }
 
 extension HealthContextSnapshotData {
-    init(record: HealthContextRecord) {
+    nonisolated init(record: HealthContextRecord) {
         self.init(
             recordedAt: record.recordedAt,
             source: record.source,
