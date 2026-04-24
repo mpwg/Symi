@@ -69,10 +69,6 @@ struct MigraineTrackerApp: App {
                 )
 
                 let container = try Self.makeContainer(schema: schema, configuration: configuration)
-                if !launchConfiguration.isRunningTests {
-                    MedicationCatalog.importSeedDataIfNeeded(into: container)
-                    DoctorDirectoryCatalog.importSeedDataIfNeeded(into: container)
-                }
                 self.modelContainer = container
                 let appLogStore = AppLogStore()
                 self.appLogStore = appLogStore

@@ -11,6 +11,7 @@ final class AppContainer {
     let healthService: HealthService
     let healthContextStore: HealthContextStore
     let weatherBackfillService: WeatherBackfillService
+    let startupMaintenanceService: StartupMaintenanceService
 
     let episodeRepository: EpisodeRepository
     let medicationCatalogRepository: MedicationCatalogRepository
@@ -44,6 +45,10 @@ final class AppContainer {
             weatherService: weatherService,
             locationService: locationService
         )
+        self.startupMaintenanceService = StartupMaintenanceService(
+            modelContainer: modelContainer,
+            weatherBackfillService: weatherBackfillService
+        )
         self.episodeRepository = SwiftDataEpisodeRepository(modelContainer: modelContainer, healthContextStore: healthContextStore)
         self.medicationCatalogRepository = SwiftDataMedicationCatalogRepository(modelContainer: modelContainer)
         self.exportRepository = SwiftDataExportRepository(modelContainer: modelContainer, healthContextStore: healthContextStore)
@@ -53,6 +58,10 @@ final class AppContainer {
         self.syncService = SyncServiceAdapter(coordinator: syncCoordinator)
         self.appLogService = appLogStore
         self.notificationService = notificationService
+    }
+
+    func startDeferredMaintenanceIfNeeded() {
+        startupMaintenanceService.startIfNeeded()
     }
 
     func makeEpisodeEditorController(episodeID: UUID? = nil, initialStartedAt: Date? = nil) -> EpisodeEditorController {

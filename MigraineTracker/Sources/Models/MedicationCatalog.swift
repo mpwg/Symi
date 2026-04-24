@@ -1,7 +1,7 @@
 import Foundation
 import SwiftData
 
-struct MedicationCatalogEntry: Identifiable, Hashable, Codable {
+nonisolated struct MedicationCatalogEntry: Identifiable, Hashable, Codable {
     let id: String
     let name: String
     let category: MedicationCategory
@@ -9,7 +9,7 @@ struct MedicationCatalogEntry: Identifiable, Hashable, Codable {
     let note: String
 }
 
-struct MedicationCatalogGroup: Identifiable, Codable {
+nonisolated struct MedicationCatalogGroup: Identifiable, Codable {
     let id: String
     let title: String
     let footer: String?
@@ -17,11 +17,15 @@ struct MedicationCatalogGroup: Identifiable, Codable {
 }
 
 enum MedicationCatalog {
-    private static let resourceName = "medication-catalog.at"
-    private static let resourceExtension = "json5"
+    nonisolated private static let resourceName = "medication-catalog.at"
+    nonisolated private static let resourceExtension = "json5"
 
-    static func importSeedDataIfNeeded(into container: ModelContainer) {
+    nonisolated static func importSeedDataIfNeeded(into container: ModelContainer) {
         let context = ModelContext(container)
+        guard !hasImportedSeedDefinitions(in: context) else {
+            return
+        }
+
         let groups = loadAustrianCommonGroups()
         let existingDefinitions = (try? context.fetch(FetchDescriptor<MedicationDefinition>())) ?? []
         let definitionsByKey = Dictionary(uniqueKeysWithValues: existingDefinitions.map { ($0.catalogKey, $0) })
@@ -67,7 +71,17 @@ enum MedicationCatalog {
         }
     }
 
-    private static func loadAustrianCommonGroups(bundle: Bundle = .main) -> [MedicationCatalogGroup] {
+    private nonisolated static func hasImportedSeedDefinitions(in context: ModelContext) -> Bool {
+        var descriptor = FetchDescriptor<MedicationDefinition>(
+            predicate: #Predicate { definition in
+                definition.isCustom == false
+            }
+        )
+        descriptor.fetchLimit = 1
+        return ((try? context.fetch(descriptor)) ?? []).isEmpty == false
+    }
+
+    private nonisolated static func loadAustrianCommonGroups(bundle: Bundle = .main) -> [MedicationCatalogGroup] {
         let bundles = [bundle, Bundle(for: ResourceBundleLocator.self)]
         let url = bundles.lazy.compactMap { candidate in
             candidate.url(
