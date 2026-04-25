@@ -108,6 +108,33 @@ struct CoreArchitectureTests {
     }
 
     @Test
+    func weatherContextServiceReusesOriginalSnapshotWithoutLocationRefresh() async {
+        let startedAt = Date(timeIntervalSince1970: 1_700_000_000)
+        let snapshot = WeatherSnapshotData(
+            recordedAt: startedAt,
+            condition: "Regen",
+            temperature: 18.5,
+            humidity: 72,
+            pressure: 1004,
+            precipitation: 1.4,
+            weatherCode: 63,
+            source: "Apple Weather"
+        )
+        let service = EpisodeWeatherContextService(
+            weatherService: FailingWeatherService(),
+            locationService: FailingLocationService()
+        )
+
+        let state = await service.loadWeather(
+            for: startedAt,
+            originalStartedAt: startedAt,
+            originalSnapshot: snapshot
+        )
+
+        #expect(state == .loaded(snapshot))
+    }
+
+    @Test
     func weatherConditionMapperUsesGermanDescriptions() {
         #expect(WeatherConditionMapper.description(for: .clear) == "Klar")
         #expect(WeatherConditionMapper.description(for: .heavyRain) == "Starker Regen")
@@ -124,6 +151,57 @@ struct CoreArchitectureTests {
         await #expect(throws: EpisodeSaveError.futureDate) {
             try await useCase.execute(draft, weatherSnapshot: nil)
         }
+    }
+
+    @Test
+    func medicationSelectionControllerSavesCustomDefinitionWithoutEpisodeSave() async {
+        let repository = MedicationCatalogRepositoryMock()
+        let controller = EpisodeMedicationSelectionController(
+            medicationRepository: repository,
+            autoload: false
+        )
+        let draft = CustomMedicationDefinitionDraft(
+            id: "custom:sumatriptan",
+            originalSelectionKey: nil,
+            name: "Sumatriptan",
+            category: .triptan,
+            dosage: "50 mg"
+        )
+
+        await controller.saveCustomMedication(from: draft)
+
+        #expect(repository.savedDrafts == [draft])
+        #expect(controller.selectedMedications.count == 1)
+        #expect(controller.selectedMedications.first?.name == "Sumatriptan")
+        #expect(controller.validationMessage == nil)
+    }
+
+    @Test
+    func medicationSelectionControllerDeletesCustomDefinitionWithoutEpisodeSave() async {
+        let repository = MedicationCatalogRepositoryMock()
+        let definition = MedicationDefinitionRecord(
+            catalogKey: "custom:sumatriptan",
+            groupID: "custom-medications",
+            groupTitle: "Eigene Medikamente",
+            groupFooter: nil,
+            name: "Sumatriptan",
+            category: .triptan,
+            suggestedDosage: "50 mg",
+            sortOrder: 1,
+            isCustom: true,
+            isDeleted: false
+        )
+        let controller = EpisodeMedicationSelectionController(
+            medicationRepository: repository,
+            initialMedications: [MedicationSelectionDraft(definition: definition)],
+            autoload: false
+        )
+
+        await controller.deleteCustomMedication(definition)
+
+        #expect(repository.deletedCatalogKeys == ["custom:sumatriptan"])
+        #expect(controller.selectedMedications.isEmpty)
+        #expect(controller.validationMessage == nil)
     }
 
     @Test
@@ -224,10 +302,13 @@ private final class EpisodeRepositoryMock: EpisodeRepository, @unchecked Sendabl
 private final class MedicationCatalogRepositoryMock: MedicationCatalogRepository, @unchecked Sendable {
     var definitions: [MedicationDefinitionRecord] = []
     var deletedDefinitions: [MedicationDefinitionRecord] = []
+    var savedDrafts: [CustomMedicationDefinitionDraft] = []
+    var deletedCatalogKeys: [String] = []
 
     func fetchDefinitions(searchText: String?) throws -> [MedicationDefinitionRecord] { definitions }
     func saveCustomDefinition(_ draft: CustomMedicationDefinitionDraft) throws -> MedicationDefinitionRecord {
-        MedicationDefinitionRecord(
+        savedDrafts.append(draft)
+        let record = MedicationDefinitionRecord(
             catalogKey: draft.id,
             groupID: "custom-medications",
             groupTitle: "Eigene Medikamente",
@@ -239,9 +320,30 @@ private final class MedicationCatalogRepositoryMock: MedicationCatalogRepository
             isCustom: true,
             isDeleted: false
         )
+        definitions.append(record)
+        return record
     }
-    func softDeleteCustomDefinition(catalogKey: String) throws {}
+    func softDeleteCustomDefinition(catalogKey: String) throws {
+        deletedCatalogKeys.append(catalogKey)
+    }
     func fetchDeletedDefinitions() throws -> [MedicationDefinitionRecord] { deletedDefinitions }
+}
+
+private enum UnexpectedServiceCallError: Error {
+    case called
+}
+
+private struct FailingWeatherService: Symi.WeatherService {
+    func fetchWeather(for date: Date, location: CLLocation) async throws -> WeatherSnapshotData? {
+        throw UnexpectedServiceCallError.called
+    }
+}
+
+@MainActor
+private final class FailingLocationService: LocationService {
+    func requestApproximateLocation() async throws -> CLLocation {
+        throw UnexpectedServiceCallError.called
+    }
 }
 
 @MainActor

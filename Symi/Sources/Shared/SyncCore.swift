@@ -347,6 +347,21 @@ public struct SyncConflict: Codable, Equatable, Identifiable, Sendable {
     }
 }
 
+public enum SyncUploadPlanner {
+    public nonisolated static func pendingRecordNames(
+        envelopes: [SyncDocumentEnvelope],
+        shadows: [String: SyncShadow],
+        conflicts: [SyncConflict]
+    ) -> [String] {
+        let conflictedDocumentIDs = Set(conflicts.map(\.documentID))
+
+        return envelopes
+            .filter { !conflictedDocumentIDs.contains($0.documentID) }
+            .filter { shadows[$0.documentID]?.envelope != $0 }
+            .map(\.documentID)
+    }
+}
+
 public struct SyncMergeResult: Equatable, Sendable {
     public nonisolated var merged: SyncDocumentEnvelope
     public nonisolated var conflicts: [String]

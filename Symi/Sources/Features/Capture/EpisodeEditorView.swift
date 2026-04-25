@@ -24,185 +24,22 @@ struct EpisodeEditorView: View {
 
     var body: some View {
         @Bindable var controller = controller
+        @Bindable var medicationController = controller.medicationController
 
         Form {
             if let validationMessage = controller.validationMessage {
-                Section {
-                    Label(validationMessage, systemImage: "exclamationmark.triangle.fill")
-                        .font(.subheadline)
-                        .foregroundStyle(AppTheme.symiCoral)
-                        .accessibilityLabel("Hinweis: \(validationMessage)")
-                        .formAlignedRow()
-                }
+                EpisodeValidationMessageSection(message: validationMessage)
             }
 
-            Section {
-                Picker("Typ", selection: $controller.draft.type) {
-                    ForEach(EpisodeType.allCases) { episodeType in
-                        Text(episodeType.rawValue).tag(episodeType)
-                    }
-                }
-                .pickerStyle(.segmented)
-
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack {
-                        Text("Intensität")
-                        Spacer()
-                        Text("\(controller.draft.intensity)/10")
-                            .font(.headline)
-                            .monospacedDigit()
-                    }
-
-                    IntensityPicker(value: Binding(
-                        get: { Double(controller.draft.intensity) },
-                        set: { controller.draft.intensity = Int($0) }
-                    ))
-                }
-                .formAlignedRow()
-
-                DatePicker(
-                    "Beginn",
-                    selection: $controller.draft.startedAt,
-                    in: ...Date.now,
-                    displayedComponents: [.date, .hourAndMinute]
-                )
-            } header: {
-                Text("In Sekunden eintragen")
-            } footer: {
-                Text("Wenige Angaben reichen. Alles Weitere bleibt optional.")
-            }
-
-            tagSection(title: "Was spürst du?", options: controller.symptomOptions, selection: $controller.draft.selectedSymptoms)
-            tagSection(title: "Was könnte mitspielen?", options: controller.triggerOptions, selection: $controller.draft.selectedTriggers)
-
-            Section("Notiz") {
-                TextField("Kurz notieren, was auffällt", text: $controller.draft.notes, axis: .vertical)
-                    .lineLimit(2 ... 5)
-                    .formAlignedRow()
-            }
-
-            Section("Optionale Details") {
-                DisclosureGroup("Weitere Angaben") {
-                    TextField("Schmerzlokalisation", text: $controller.draft.painLocation)
-                    TextField("Schmerzcharakter", text: $controller.draft.painCharacter)
-                    TextField("Funktionelle Einschränkung", text: $controller.draft.functionalImpact)
-
-                    Picker("Menstruationsstatus", selection: $controller.draft.menstruationStatus) {
-                        ForEach(MenstruationStatus.allCases) { status in
-                            Text(status.rawValue).tag(status)
-                        }
-                    }
-
-                    Toggle("Ende angeben", isOn: $controller.draft.endedAtEnabled.animation())
-                    if controller.draft.endedAtEnabled {
-                        DatePicker(
-                            "Ende",
-                            selection: $controller.draft.endedAt,
-                            in: controller.draft.startedAt...,
-                            displayedComponents: [.date, .hourAndMinute]
-                        )
-                    }
-                }
-            }
-
-            Section {
-                WeatherStatusContent(state: controller.weatherLoadState)
-                    .formAlignedRow()
-            } header: {
-                Text("Wetter")
-            } footer: {
-                Text("Das Wetter wird mit deinem ungefähren Standort über Apple Weather geladen. Der Eintrag wird auch ohne Wetter gespeichert, wenn keine Freigabe vorliegt.")
-            }
-
-            Section("Medikamente") {
-                TextField("Medikament nach Namen filtern", text: $controller.medicationSearchText)
-                    .textInputAutocapitalization(.words)
-                    .autocorrectionDisabled()
-
-                if controller.filteredMedicationGroups.isEmpty {
-                    ContentUnavailableView(
-                        "Kein Medikament gefunden",
-                        systemImage: "magnifyingglass",
-                        description: Text("Passe den Suchbegriff an oder füge ein eigenes Medikament hinzu.")
-                    )
-                } else {
-                    VStack(alignment: .leading, spacing: 16) {
-                        ForEach(controller.filteredMedicationGroups) { group in
-                            VStack(alignment: .leading, spacing: 10) {
-                                Text(group.title)
-                                    .font(.headline)
-
-                                LazyVGrid(
-                                    columns: [GridItem(.adaptive(minimum: 220), spacing: 12, alignment: .top)],
-                                    alignment: .leading,
-                                    spacing: 12
-                                ) {
-                                    ForEach(group.items) { definition in
-                                        MedicationDefinitionRow(
-                                            definition: definition,
-                                            isSelected: controller.isMedicationSelected(definition),
-                                            quantity: controller.quantity(for: definition),
-                                            onToggle: { controller.toggleMedicationSelection(for: definition) },
-                                            onDecrease: { controller.decrementMedicationQuantity(for: definition) },
-                                            onIncrease: { controller.incrementMedicationQuantity(for: definition) },
-                                            onEdit: definition.isCustom ? { controller.presentEditor(for: definition) } : nil,
-                                            onDelete: definition.isCustom ? { controller.pendingMedicationDeletion = definition } : nil
-                                        )
-                                    }
-                                }
-                                .padding(12)
-                                .brandCard()
-
-                                if let footer = group.footer {
-                                    Text(footer)
-                                        .font(.footnote)
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                        }
-                    }
-                    .padding(.vertical, 4)
-                    .formAlignedRow()
-                }
-
-                if controller.selectedMedications.isEmpty {
-                    Text("Nur ergänzen, wenn du heute etwas genommen hast.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .formAlignedRow()
-                } else {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Ausgewählt")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(.secondary)
-
-                        ForEach(controller.selectedMedications) { medication in
-                            SelectedMedicationSummaryRow(draft: medication) {
-                                controller.removeMedicationSelection(id: medication.id)
-                            }
-                        }
-                    }
-                    .formAlignedRow()
-                }
-
-                Button {
-                    controller.presentEditor(for: nil)
-                } label: {
-                    Label("Eigenes Medikament hinzufügen", systemImage: "plus")
-                }
-                .formAlignedRow()
-            }
-
-            Section {
-                Button(controller.mode == .create ? "Eintrag speichern" : "Änderungen speichern") {
-                    controller.save(onSaved: onSaved) {
-                        dismiss()
-                    }
-                }
-                .disabled(controller.isSaving)
-                .buttonStyle(SymiPrimaryButtonStyle())
-                .formAlignedRow()
-            }
+            EpisodeScaleSection(draft: $controller.draft)
+            EpisodeTimingSection(draft: $controller.draft)
+            EpisodeTagSection(title: "Was spürst du?", options: controller.symptomOptions, selection: $controller.draft.selectedSymptoms)
+            EpisodeTagSection(title: "Was könnte mitspielen?", options: controller.triggerOptions, selection: $controller.draft.selectedTriggers)
+            EpisodeNotesSection(draft: $controller.draft)
+            EpisodeOptionalDetailsSection(draft: $controller.draft)
+            EpisodeWeatherSection(state: controller.weatherLoadState)
+            EpisodeMedicationSection(controller: controller.medicationController)
+            EpisodeSaveSection(mode: controller.mode, isSaving: controller.isSaving, onSave: save)
         }
         .navigationTitle(controller.mode == .create ? "Eintragen" : "Eintrag bearbeiten")
         .brandGroupedScreen()
@@ -221,13 +58,15 @@ struct EpisodeEditorView: View {
         } message: {
             Text("Dein Eintrag wurde lokal gespeichert.")
         }
-        .sheet(item: $controller.customMedicationEditor) { editorState in
+        .sheet(item: $medicationController.customMedicationEditor) { editorState in
             NavigationStack {
                 CustomMedicationEditorSheet(
                     state: editorState,
-                    onCancel: { controller.customMedicationEditor = nil },
+                    onCancel: { medicationController.customMedicationEditor = nil },
                     onSave: { draft in
-                        controller.saveCustomMedication(from: draft)
+                        Task {
+                            await medicationController.saveCustomMedication(from: draft)
+                        }
                     }
                 )
             }
@@ -236,20 +75,22 @@ struct EpisodeEditorView: View {
         .alert(
             "Eigenes Medikament löschen?",
             isPresented: Binding(
-                get: { controller.pendingMedicationDeletion != nil },
+                get: { medicationController.pendingMedicationDeletion != nil },
                 set: { isPresented in
                     if !isPresented {
-                        controller.pendingMedicationDeletion = nil
+                        medicationController.pendingMedicationDeletion = nil
                     }
                 }
             ),
-            presenting: controller.pendingMedicationDeletion
+            presenting: medicationController.pendingMedicationDeletion
         ) { definition in
             Button("Löschen", role: .destructive) {
-                controller.deleteCustomMedication(definition)
+                Task {
+                    await medicationController.deleteCustomMedication(definition)
+                }
             }
             Button("Abbrechen", role: .cancel) {
-                controller.pendingMedicationDeletion = nil
+                medicationController.pendingMedicationDeletion = nil
             }
         } message: { definition in
             Text("\(definition.name) wird aus SwiftData entfernt.")
@@ -259,19 +100,115 @@ struct EpisodeEditorView: View {
         }
     }
 
-    @ViewBuilder
-    private func tagSection(title: String, options: [String], selection: Binding<Set<String>>) -> some View {
+    private func save() {
+        controller.save(onSaved: onSaved) {
+            dismiss()
+        }
+    }
+
+    private var showsDismissButton: Bool {
+        onSaved != nil || controller.mode == .edit
+    }
+
+    private var dismissButtonPlacement: ToolbarItemPlacement {
+        #if targetEnvironment(macCatalyst)
+        .topBarTrailing
+        #else
+        .topBarLeading
+        #endif
+    }
+}
+
+private struct FormAlignedRowModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        content.brandGroupedRow()
+    }
+}
+
+private extension View {
+    func formAlignedRow() -> some View {
+        modifier(FormAlignedRowModifier())
+    }
+}
+
+private struct EpisodeValidationMessageSection: View {
+    let message: String
+
+    var body: some View {
+        Section {
+            Label(message, systemImage: "exclamationmark.triangle.fill")
+                .font(.subheadline)
+                .foregroundStyle(AppTheme.symiCoral)
+                .accessibilityLabel("Hinweis: \(message)")
+                .formAlignedRow()
+        }
+    }
+}
+
+private struct EpisodeScaleSection: View {
+    @Binding var draft: EpisodeDraft
+
+    var body: some View {
+        Section {
+            Picker("Typ", selection: $draft.type) {
+                ForEach(EpisodeType.allCases) { episodeType in
+                    Text(episodeType.rawValue).tag(episodeType)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text("Intensität")
+                    Spacer()
+                    Text("\(draft.intensity)/10")
+                        .font(.headline)
+                        .monospacedDigit()
+                }
+
+                IntensityPicker(value: Binding(
+                    get: { Double(draft.intensity) },
+                    set: { draft.intensity = Int($0) }
+                ))
+            }
+            .formAlignedRow()
+        } header: {
+            Text("Skala")
+        } footer: {
+            Text("Wenige Angaben reichen. Alles Weitere bleibt optional.")
+        }
+    }
+}
+
+private struct EpisodeTimingSection: View {
+    @Binding var draft: EpisodeDraft
+
+    var body: some View {
+        Section("Tagesbereich") {
+            DatePicker(
+                "Beginn",
+                selection: $draft.startedAt,
+                in: ...Date.now,
+                displayedComponents: [.date, .hourAndMinute]
+            )
+            .formAlignedRow()
+        }
+    }
+}
+
+private struct EpisodeTagSection: View {
+    let title: String
+    let options: [String]
+    @Binding var selection: Set<String>
+
+    var body: some View {
         Section(title) {
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 10)], spacing: 10) {
                 ForEach(options, id: \.self) { option in
-                    let isSelected = selection.wrappedValue.contains(option)
+                    let isSelected = selection.contains(option)
 
                     Button {
-                        if isSelected {
-                            selection.wrappedValue.remove(option)
-                        } else {
-                            selection.wrappedValue.insert(option)
-                        }
+                        toggle(option)
                     } label: {
                         HStack(spacing: 8) {
                             Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
@@ -302,28 +239,195 @@ struct EpisodeEditorView: View {
         }
     }
 
-    private var showsDismissButton: Bool {
-        onSaved != nil || controller.mode == .edit
-    }
-
-    private var dismissButtonPlacement: ToolbarItemPlacement {
-        #if targetEnvironment(macCatalyst)
-        .topBarTrailing
-        #else
-        .topBarLeading
-        #endif
+    private func toggle(_ option: String) {
+        if selection.contains(option) {
+            selection.remove(option)
+        } else {
+            selection.insert(option)
+        }
     }
 }
 
-private struct FormAlignedRowModifier: ViewModifier {
-    func body(content: Content) -> some View {
-        content.brandGroupedRow()
+private struct EpisodeNotesSection: View {
+    @Binding var draft: EpisodeDraft
+
+    var body: some View {
+        Section("Notiz") {
+            TextField("Kurz notieren, was auffällt", text: $draft.notes, axis: .vertical)
+                .lineLimit(2 ... 5)
+                .formAlignedRow()
+        }
     }
 }
 
-private extension View {
-    func formAlignedRow() -> some View {
-        modifier(FormAlignedRowModifier())
+private struct EpisodeOptionalDetailsSection: View {
+    @Binding var draft: EpisodeDraft
+
+    var body: some View {
+        Section("Optionale Details") {
+            DisclosureGroup("Weitere Angaben") {
+                TextField("Schmerzlokalisation", text: $draft.painLocation)
+                TextField("Schmerzcharakter", text: $draft.painCharacter)
+                TextField("Funktionelle Einschränkung", text: $draft.functionalImpact)
+
+                Picker("Menstruationsstatus", selection: $draft.menstruationStatus) {
+                    ForEach(MenstruationStatus.allCases) { status in
+                        Text(status.rawValue).tag(status)
+                    }
+                }
+
+                Toggle("Ende angeben", isOn: $draft.endedAtEnabled.animation())
+                if draft.endedAtEnabled {
+                    DatePicker(
+                        "Ende",
+                        selection: $draft.endedAt,
+                        in: draft.startedAt...,
+                        displayedComponents: [.date, .hourAndMinute]
+                    )
+                }
+            }
+        }
+    }
+}
+
+private struct EpisodeWeatherSection: View {
+    let state: WeatherLoadState
+
+    var body: some View {
+        Section {
+            WeatherStatusContent(state: state)
+                .formAlignedRow()
+        } header: {
+            Text("Wetter")
+        } footer: {
+            Text("Das Wetter wird mit deinem ungefähren Standort über Apple Weather geladen. Der Eintrag wird auch ohne Wetter gespeichert, wenn keine Freigabe vorliegt.")
+        }
+    }
+}
+
+private struct EpisodeMedicationSection: View {
+    let controller: EpisodeMedicationSelectionController
+
+    var body: some View {
+        @Bindable var controller = controller
+
+        Section("Medikamente") {
+            TextField("Medikament nach Namen filtern", text: $controller.searchText)
+                .textInputAutocapitalization(.words)
+                .autocorrectionDisabled()
+
+            MedicationDefinitionGroupList(controller: controller)
+            SelectedMedicationsSection(controller: controller)
+
+            Button {
+                controller.presentEditor(for: nil)
+            } label: {
+                Label("Eigenes Medikament hinzufügen", systemImage: "plus")
+            }
+            .formAlignedRow()
+        }
+    }
+}
+
+private struct MedicationDefinitionGroupList: View {
+    let controller: EpisodeMedicationSelectionController
+
+    var body: some View {
+        if controller.filteredMedicationGroups.isEmpty {
+            ContentUnavailableView(
+                "Kein Medikament gefunden",
+                systemImage: "magnifyingglass",
+                description: Text("Passe den Suchbegriff an oder füge ein eigenes Medikament hinzu.")
+            )
+        } else {
+            VStack(alignment: .leading, spacing: 16) {
+                ForEach(controller.filteredMedicationGroups) { group in
+                    MedicationDefinitionGroupView(group: group, controller: controller)
+                }
+            }
+            .padding(.vertical, 4)
+            .formAlignedRow()
+        }
+    }
+}
+
+private struct MedicationDefinitionGroupView: View {
+    let group: EpisodeEditorMedicationGroup
+    let controller: EpisodeMedicationSelectionController
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(group.title)
+                .font(.headline)
+
+            LazyVGrid(
+                columns: [GridItem(.adaptive(minimum: 220), spacing: 12, alignment: .top)],
+                alignment: .leading,
+                spacing: 12
+            ) {
+                ForEach(group.items) { definition in
+                    MedicationDefinitionRow(
+                        definition: definition,
+                        isSelected: controller.isMedicationSelected(definition),
+                        quantity: controller.quantity(for: definition),
+                        onToggle: { controller.toggleMedicationSelection(for: definition) },
+                        onDecrease: { controller.decrementMedicationQuantity(for: definition) },
+                        onIncrease: { controller.incrementMedicationQuantity(for: definition) },
+                        onEdit: definition.isCustom ? { controller.presentEditor(for: definition) } : nil,
+                        onDelete: definition.isCustom ? { controller.pendingMedicationDeletion = definition } : nil
+                    )
+                }
+            }
+            .padding(12)
+            .brandCard()
+
+            if let footer = group.footer {
+                Text(footer)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+}
+
+private struct SelectedMedicationsSection: View {
+    let controller: EpisodeMedicationSelectionController
+
+    var body: some View {
+        if controller.selectedMedications.isEmpty {
+            Text("Nur ergänzen, wenn du heute etwas genommen hast.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .formAlignedRow()
+        } else {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Ausgewählt")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.secondary)
+
+                ForEach(controller.selectedMedications) { medication in
+                    SelectedMedicationSummaryRow(draft: medication) {
+                        controller.removeMedicationSelection(id: medication.id)
+                    }
+                }
+            }
+            .formAlignedRow()
+        }
+    }
+}
+
+private struct EpisodeSaveSection: View {
+    let mode: EpisodeEditorMode
+    let isSaving: Bool
+    let onSave: () -> Void
+
+    var body: some View {
+        Section {
+            Button(mode == .create ? "Eintrag speichern" : "Änderungen speichern", action: onSave)
+                .disabled(isSaving)
+                .buttonStyle(SymiPrimaryButtonStyle())
+                .formAlignedRow()
+        }
     }
 }
 

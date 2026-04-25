@@ -10,6 +10,7 @@ final class AppContainer {
     let locationService: LocationService
     let healthService: HealthService
     let healthContextStore: HealthContextStore
+    let episodeWeatherContextService: EpisodeWeatherContextProviding
     let weatherBackfillService: WeatherBackfillService
     let startupMaintenanceService: StartupMaintenanceService
 
@@ -35,6 +36,10 @@ final class AppContainer {
         self.locationService = locationService
         self.healthService = healthService
         self.healthContextStore = healthContextStore
+        self.episodeWeatherContextService = EpisodeWeatherContextService(
+            weatherService: weatherService,
+            locationService: locationService
+        )
         self.weatherBackfillService = WeatherBackfillService(
             modelContainer: modelContainer,
             weatherService: weatherService,
@@ -61,8 +66,7 @@ final class AppContainer {
             initialStartedAt: initialStartedAt,
             episodeRepository: episodeRepository,
             medicationRepository: medicationCatalogRepository,
-            weatherService: weatherService,
-            locationService: locationService,
+            weatherContextService: episodeWeatherContextService,
             healthService: healthService
         )
     }
