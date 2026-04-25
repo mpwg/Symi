@@ -202,6 +202,39 @@ struct SyncMergeEngineTests {
         #expect(result.conflicts.isEmpty)
         #expect(result.merged.deletedAt == remoteDeletionDate)
     }
+
+    @Test
+    func uploadPlannerSkipsCurrentShadowsAndConflictedDocuments() {
+        var current = definitionEnvelope(name: "Sumatriptan", deletedAt: nil)
+        var changed = definitionEnvelope(name: "Ibuprofen", deletedAt: nil)
+        var changedBase = definitionEnvelope(name: "Ibuprofen alt", deletedAt: nil)
+        var conflicted = definitionEnvelope(name: "Zolmitriptan", deletedAt: nil)
+        current.documentID = "definition-current"
+        changed.documentID = "definition-changed"
+        changedBase.documentID = changed.documentID
+        conflicted.documentID = "definition-conflicted"
+        let currentShadow = SyncShadow(envelope: current)
+        let changedShadow = SyncShadow(envelope: changedBase)
+        let conflict = SyncConflict(
+            documentID: conflicted.documentID,
+            entityType: conflicted.entityType,
+            base: nil,
+            local: conflicted,
+            remote: conflicted,
+            conflictingFields: ["name"]
+        )
+
+        let pending = SyncUploadPlanner.pendingRecordNames(
+            envelopes: [current, changed, conflicted],
+            shadows: [
+                current.documentID: currentShadow,
+                changed.documentID: changedShadow
+            ],
+            conflicts: [conflict]
+        )
+
+        #expect(pending == [changed.documentID])
+    }
 }
 
 private func episodeEnvelope(
