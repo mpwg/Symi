@@ -71,6 +71,14 @@ final class AppContainer {
         )
     }
 
+    func makeEntryFlowCoordinator(initialStartedAt: Date? = nil) -> EntryFlowCoordinator {
+        EntryFlowCoordinator(
+            initialStartedAt: initialStartedAt,
+            episodeRepository: episodeRepository,
+            medicationRepository: medicationCatalogRepository
+        )
+    }
+
     func makeHistoryController() -> HistoryController {
         HistoryController(repository: episodeRepository)
     }

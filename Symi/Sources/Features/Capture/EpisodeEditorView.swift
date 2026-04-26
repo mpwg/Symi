@@ -305,7 +305,7 @@ private struct EpisodeMedicationSection: View {
     }
 }
 
-private struct MedicationDefinitionGroupList: View {
+struct MedicationDefinitionGroupList: View {
     let controller: EpisodeMedicationSelectionController
 
     var body: some View {
@@ -366,7 +366,7 @@ private struct MedicationDefinitionGroupView: View {
     }
 }
 
-private struct SelectedMedicationsSection: View {
+struct SelectedMedicationsSection: View {
     let controller: EpisodeMedicationSelectionController
 
     var body: some View {
@@ -489,7 +489,7 @@ private enum AppSettingsURL {
     static let url = URL(string: "app-settings:")!
 }
 
-private struct IntensityPicker: View {
+struct IntensityPicker: View {
     @Binding var value: Double
 
     var body: some View {
@@ -609,7 +609,7 @@ private struct MedicationDefinitionRow: View {
     }
 }
 
-private struct CustomMedicationEditorSheet: View {
+struct CustomMedicationEditorSheet: View {
     let state: CustomMedicationEditorSheetState
     let onCancel: () -> Void
     let onSave: (CustomMedicationDefinitionDraft) -> Void

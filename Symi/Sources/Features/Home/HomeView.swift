@@ -38,11 +38,9 @@ struct HomeView: View {
             await reloadAll()
         }
         .fullScreenCover(isPresented: $isPresentingEpisodeEditor) {
-            NavigationStack {
-                EpisodeEditorView(appContainer: appContainer) {
-                    isPresentingEpisodeEditor = false
-                    Task { await reloadOverview() }
-                }
+            EntryFlowCoordinatorView(appContainer: appContainer) {
+                isPresentingEpisodeEditor = false
+                Task { await reloadOverview() }
             }
         }
     }
