@@ -118,6 +118,8 @@ struct EntryFlowCoordinatorView: View {
 private struct EntryHeadacheStepView: View {
     let coordinator: EntryFlowCoordinator
 
+    @State private var selectedStartedAtPreset: EntryStartedAtPreset = .now
+
     var body: some View {
         @Bindable var coordinator = coordinator
 
@@ -125,40 +127,42 @@ private struct EntryHeadacheStepView: View {
             EntryStepHeader(step: .headache, currentIndex: coordinator.currentStepIndex)
 
             Section {
-                Picker("Typ", selection: $coordinator.draft.type) {
-                    ForEach(EpisodeType.allCases) { episodeType in
-                        Text(episodeType.rawValue).tag(episodeType)
-                    }
-                }
-                .pickerStyle(.segmented)
-
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack {
-                        Text("Intensität")
-                        Spacer()
-                        Text("\(coordinator.draft.intensity)/10")
-                            .font(.headline)
-                            .monospacedDigit()
-                    }
-
-                    IntensityPicker(value: Binding(
-                        get: { Double(coordinator.draft.intensity) },
-                        set: { coordinator.draft.intensity = Int($0) }
-                    ))
-                }
+                HeadacheIntensityCard(intensity: $coordinator.draft.intensity)
             } header: {
-                Text("Skala")
+                Text("Intensität")
             } footer: {
                 Text("Du kannst nach diesem Schritt direkt speichern oder weitere Details ergänzen.")
             }
 
+            Section("Schmerzort") {
+                MultiSelectGrid(
+                    options: coordinator.painLocationOptions,
+                    selection: $coordinator.draft.selectedPainLocations,
+                    colorToken: NewEntryStepCatalog.metadata(for: .headache).colorToken,
+                    accessibilityPrefix: "Schmerzort"
+                )
+            }
+
             Section("Zeitpunkt") {
+                Picker("Zeitpunkt", selection: $selectedStartedAtPreset) {
+                    ForEach(EntryStartedAtPreset.allCases) { preset in
+                        Text(preset.title).tag(preset)
+                    }
+                }
+                .pickerStyle(.inline)
+                .onChange(of: selectedStartedAtPreset) { _, preset in
+                    if preset != .custom {
+                        coordinator.selectStartedAtPreset(preset)
+                    }
+                }
+
                 DatePicker(
                     "Beginn",
                     selection: $coordinator.draft.startedAt,
                     in: ...Date.now,
                     displayedComponents: [.date, .hourAndMinute]
                 )
+                .disabled(selectedStartedAtPreset != .custom)
             }
 
             EntryStepActions(
@@ -173,6 +177,65 @@ private struct EntryHeadacheStepView: View {
         }
         .navigationTitle("Kopfschmerz")
         .brandGroupedScreen()
+        .onAppear {
+            coordinator.draft.type = .headache
+            coordinator.draft.intensity = coordinator.draft.normalizedIntensity
+        }
+    }
+}
+
+private struct HeadacheIntensityCard: View {
+    @Binding var intensity: Int
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Wie stark ist es gerade?")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Text(summary)
+                        .font(.title2.weight(.bold))
+                        .monospacedDigit()
+                }
+
+                Spacer()
+
+                Text("\(normalizedIntensity)")
+                    .font(.system(size: 44, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundStyle(AppTheme.symiCoral)
+            }
+
+            IntensityPicker(value: Binding(
+                get: { Double(normalizedIntensity) },
+                set: { intensity = Int($0) }
+            ))
+        }
+        .padding(.vertical, 8)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Intensität \(normalizedIntensity) von 10, \(intensityLabel)")
+    }
+
+    private var normalizedIntensity: Int {
+        min(max(intensity, 1), 10)
+    }
+
+    private var summary: String {
+        "\(normalizedIntensity)/10 · \(intensityLabel)"
+    }
+
+    private var intensityLabel: String {
+        switch normalizedIntensity {
+        case 1 ... 3:
+            "Leicht"
+        case 4 ... 6:
+            "Mittel"
+        case 7 ... 8:
+            "Stark"
+        default:
+            "Sehr stark"
+        }
     }
 }
 

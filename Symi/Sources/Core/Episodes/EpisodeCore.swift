@@ -49,6 +49,47 @@ struct EpisodeRecord: Identifiable, Equatable, Sendable {
     nonisolated var isDeleted: Bool {
         deletedAt != nil
     }
+
+    nonisolated var dayPart: EpisodeDayPart {
+        EpisodeDayPart(date: startedAt)
+    }
+}
+
+enum EpisodeDayPart: String, CaseIterable, Codable, Identifiable, Sendable {
+    case morgens
+    case mittags
+    case abends
+    case nacht
+
+    nonisolated var id: String { rawValue }
+
+    nonisolated init(date: Date, calendar: Calendar = .current) {
+        let hour = calendar.component(.hour, from: date)
+
+        switch hour {
+        case 5 ..< 11:
+            self = .morgens
+        case 11 ..< 17:
+            self = .mittags
+        case 17 ..< 22:
+            self = .abends
+        default:
+            self = .nacht
+        }
+    }
+
+    nonisolated var label: String {
+        switch self {
+        case .morgens:
+            "Morgens"
+        case .mittags:
+            "Mittags"
+        case .abends:
+            "Abends"
+        case .nacht:
+            "Nacht"
+        }
+    }
 }
 
 struct MedicationDefinitionRecord: Identifiable, Equatable, Sendable {
@@ -166,6 +207,7 @@ struct EpisodeDraft: Equatable, Sendable {
     nonisolated var endedAtEnabled: Bool
     nonisolated var endedAt: Date
     nonisolated var painLocation: String
+    nonisolated var selectedPainLocations: Set<String> = []
     nonisolated var painCharacter: String
     nonisolated var notes: String
     nonisolated var functionalImpact: String
@@ -184,6 +226,7 @@ struct EpisodeDraft: Equatable, Sendable {
             endedAtEnabled: false,
             endedAt: startedAt,
             painLocation: "",
+            selectedPainLocations: [],
             painCharacter: "",
             notes: "",
             functionalImpact: "",
@@ -203,6 +246,7 @@ struct EpisodeDraft: Equatable, Sendable {
             endedAtEnabled: record.endedAt != nil,
             endedAt: record.endedAt ?? record.startedAt,
             painLocation: record.painLocation,
+            selectedPainLocations: Self.decodePainLocations(record.painLocation),
             painCharacter: record.painCharacter,
             notes: record.notes,
             functionalImpact: record.functionalImpact,
@@ -211,6 +255,33 @@ struct EpisodeDraft: Equatable, Sendable {
             selectedTriggers: Set(record.triggers),
             medications: record.medications.map(MedicationSelectionDraft.init(record:))
         )
+    }
+
+    nonisolated var resolvedPainLocation: String {
+        let selectedSummary = selectedPainLocations.sorted().joined(separator: ", ")
+        guard !selectedSummary.isEmpty else {
+            return painLocation.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+
+        return selectedSummary
+    }
+
+    nonisolated var normalizedIntensity: Int {
+        min(max(intensity, 1), 10)
+    }
+
+    nonisolated private static func decodePainLocations(_ value: String) -> Set<String> {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            return []
+        }
+
+        let parts = trimmed
+            .split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+
+        return Set(parts.isEmpty ? [trimmed] : parts)
     }
 }
 
