@@ -252,9 +252,7 @@ struct ScreenshotRootView: View {
             }
 
         case .newEntry:
-            NavigationStack {
-                EpisodeEditorView(appContainer: appContainer, initialStartedAt: seed.newEntryDate)
-            }
+            EntryFlowCoordinatorView(appContainer: appContainer, initialStartedAt: seed.newEntryDate)
 
         case .history:
             NavigationStack {

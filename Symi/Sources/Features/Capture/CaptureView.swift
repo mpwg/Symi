@@ -4,7 +4,7 @@ struct CaptureView: View {
     let appContainer: AppContainer
 
     var body: some View {
-        EpisodeEditorView(appContainer: appContainer)
+        EntryFlowCoordinatorView(appContainer: appContainer)
     }
 }
 
