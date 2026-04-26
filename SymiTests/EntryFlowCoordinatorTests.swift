@@ -51,15 +51,43 @@ struct EntryFlowCoordinatorTests {
     func headacheStepCanSaveDirectlyThroughRepository() async throws {
         let repository = EntryFlowEpisodeRepositoryMock()
         let coordinator = makeCoordinator(repository: repository)
-        coordinator.draft.type = .headache
+        coordinator.draft.type = .unclear
         coordinator.draft.intensity = 4
+        coordinator.draft.selectedPainLocations = ["Schläfen", "Stirn"]
 
         coordinator.saveHeadacheOnly()
         try await waitForSaveResult(on: coordinator)
 
         #expect(repository.lastSavedDraft?.type == .headache)
         #expect(repository.lastSavedDraft?.intensity == 4)
+        #expect(repository.lastSavedDraft?.resolvedPainLocation == "Schläfen, Stirn")
         #expect(coordinator.saveResult == .saved(repository.savedID))
+    }
+
+    @Test
+    func headacheStepNormalizesNewIntensityRange() async throws {
+        let repository = EntryFlowEpisodeRepositoryMock()
+        let coordinator = makeCoordinator(repository: repository)
+        coordinator.draft.intensity = 0
+
+        coordinator.saveHeadacheOnly()
+        try await waitForSaveResult(on: coordinator)
+
+        #expect(repository.lastSavedDraft?.intensity == 1)
+    }
+
+    @Test
+    func startedAtPresetsUpdateDraftTime() {
+        let calendar = Calendar(identifier: .gregorian)
+        let coordinator = makeCoordinator()
+        let referenceDate = calendar.date(from: DateComponents(year: 2026, month: 4, day: 26, hour: 15, minute: 30))!
+
+        coordinator.selectStartedAtPreset(.todayMorning, calendar: calendar)
+        let morningHour = calendar.component(.hour, from: coordinator.draft.startedAt)
+
+        #expect(EntryStartedAtPreset.todayMorning.dayPart == .morgens)
+        #expect(morningHour == 8)
+        #expect(EntryStartedAtPreset.oneHourAgo.date(relativeTo: referenceDate, calendar: calendar) == referenceDate.addingTimeInterval(-3_600))
     }
 
     @Test

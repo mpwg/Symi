@@ -65,7 +65,7 @@ final class SwiftDataEpisodeRepository: EpisodeRepository, @unchecked Sendable {
         {
             target = existing
         } else {
-            target = Episode(startedAt: draft.startedAt, intensity: draft.intensity)
+            target = Episode(startedAt: draft.startedAt, intensity: draft.normalizedIntensity)
             context.insert(target)
         }
 
@@ -73,8 +73,8 @@ final class SwiftDataEpisodeRepository: EpisodeRepository, @unchecked Sendable {
         target.type = draft.type
         target.startedAt = draft.startedAt
         target.endedAt = draft.endedAtEnabled ? draft.endedAt : nil
-        target.intensity = draft.intensity
-        target.painLocation = draft.painLocation.trimmingCharacters(in: .whitespacesAndNewlines)
+        target.intensity = draft.normalizedIntensity
+        target.painLocation = draft.resolvedPainLocation
         target.painCharacter = draft.painCharacter.trimmingCharacters(in: .whitespacesAndNewlines)
         target.notes = draft.notes.trimmingCharacters(in: .whitespacesAndNewlines)
         target.functionalImpact = draft.functionalImpact.trimmingCharacters(in: .whitespacesAndNewlines)

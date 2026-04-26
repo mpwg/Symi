@@ -170,13 +170,13 @@ private struct EpisodeScaleSection: View {
                 HStack {
                     Text("Intensität")
                     Spacer()
-                    Text("\(draft.intensity)/10")
+                    Text("\(draft.normalizedIntensity)/10")
                         .font(.headline)
                         .monospacedDigit()
                 }
 
                 IntensityPicker(value: Binding(
-                    get: { Double(draft.intensity) },
+                    get: { Double(draft.normalizedIntensity) },
                     set: { draft.intensity = Int($0) }
                 ))
             }
@@ -494,7 +494,7 @@ struct IntensityPicker: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Slider(value: $value, in: 0 ... 10, step: 1)
+            Slider(value: $value, in: 1 ... 10, step: 1)
                 .tint(AppTheme.symiCoral)
                 .accessibilityLabel("Intensität")
                 .accessibilityValue("\(Int(value)) von 10")

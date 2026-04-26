@@ -16,6 +16,50 @@ enum EntryFlowSaveResult: Equatable, Sendable {
     case failed(String)
 }
 
+enum EntryStartedAtPreset: String, CaseIterable, Identifiable, Sendable {
+    case now
+    case oneHourAgo
+    case todayMorning
+    case custom
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .now:
+            "Jetzt"
+        case .oneHourAgo:
+            "Vor 1 Std."
+        case .todayMorning:
+            "Heute Morgen"
+        case .custom:
+            "Anderer Zeitpunkt"
+        }
+    }
+
+    var dayPart: EpisodeDayPart? {
+        switch self {
+        case .todayMorning:
+            .morgens
+        case .now, .oneHourAgo, .custom:
+            nil
+        }
+    }
+
+    func date(relativeTo referenceDate: Date, calendar: Calendar = .current) -> Date {
+        switch self {
+        case .now:
+            referenceDate
+        case .oneHourAgo:
+            referenceDate.addingTimeInterval(-3_600)
+        case .todayMorning:
+            calendar.date(bySettingHour: 8, minute: 0, second: 0, of: referenceDate) ?? referenceDate
+        case .custom:
+            referenceDate
+        }
+    }
+}
+
 @MainActor
 @Observable
 final class EntryFlowCoordinator {
@@ -30,6 +74,7 @@ final class EntryFlowCoordinator {
         "Pochen, Pulsieren"
     ]
     let triggerOptions = ["Stress", "Schlafmangel", "Alkohol", "Menstruation", "Bildschirmzeit"]
+    let painLocationOptions = ["Stirn", "Schläfen", "Nacken", "Einseitig", "Überall"]
     let medicationController: EpisodeMedicationSelectionController
 
     var draft: EpisodeDraft
@@ -128,6 +173,10 @@ final class EntryFlowCoordinator {
         save(resetAfterSave: false)
     }
 
+    func selectStartedAtPreset(_ preset: EntryStartedAtPreset, calendar: Calendar = .current) {
+        draft.startedAt = preset.date(relativeTo: .now, calendar: calendar)
+    }
+
     private var nextStep: EntryFlowStep? {
         guard let currentIndex = Self.steps.firstIndex(of: currentStep) else {
             return nil
@@ -142,6 +191,12 @@ final class EntryFlowCoordinator {
     }
 
     private func applyStepSideEffects() {
+        if currentStep == .headache {
+            draft.type = .headache
+            draft.intensity = draft.normalizedIntensity
+            draft.painLocation = draft.resolvedPainLocation
+        }
+
         if currentStep == .medication {
             draft.medications = medicationController.medications
         }

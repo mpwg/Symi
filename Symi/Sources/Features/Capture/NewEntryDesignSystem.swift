@@ -289,6 +289,7 @@ struct MultiSelectGrid: View {
                     toggle(option)
                 }
                 .accessibilityLabel("\(accessibilityPrefix): \(option)")
+                .accessibilityValue(isSelected ? "Ausgewählt" : "Nicht ausgewählt")
                 .accessibilityHint(isSelected ? "Entfernt die Auswahl." : "Wählt diese Option aus.")
             }
         }
