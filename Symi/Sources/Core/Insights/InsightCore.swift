@@ -853,9 +853,9 @@ enum InsightFormatter {
     private static func description(for candidate: InsightCandidate, totalCount: Int) -> String {
         switch candidate.payload {
         case .weekday(let weekday, let count, _):
-            "\(entryCountText(count)) von \(entryCountText(totalCount)) liegen auf \(weekdayName(for: weekday)). Das ist in deinen Einträgen auffällig, aber keine Vorhersage."
+            "\(count) von \(totalCount) Einträgen liegen auf \(weekdayName(for: weekday)). Das ist in deinen Einträgen auffällig, aber keine Vorhersage."
         case .trigger(let name, let count, _):
-            "\(name) wurde bei \(entryCountText(count)) von \(entryCountText(totalCount)) notiert. Symi beschreibt nur, was häufiger zusammen mit dokumentierten Einträgen vorkommt."
+            "\(name) wurde bei \(count) von \(totalCount) Einträgen notiert. Symi beschreibt nur, was häufiger zusammen mit dokumentierten Einträgen vorkommt."
         case .averageIntensity(let value, _):
             "In deinen Einträgen auffällig: Die dokumentierte Intensität liegt im Durchschnitt bei \(formattedIntensity(value)) von 10."
         case .trend(_, let olderAverage, let newerAverage, _):

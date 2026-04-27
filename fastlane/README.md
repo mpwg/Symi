@@ -21,7 +21,7 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 [bundle exec] fastlane ios sync_screenshots
 ```
 
-Erzeugt App-Store-Screenshots für iPhone, iPad und Mac Catalyst
+Erzeugt App-Store-Screenshots für iPhone
 
 ### ios upload_screenshots
 
@@ -29,7 +29,7 @@ Erzeugt App-Store-Screenshots für iPhone, iPad und Mac Catalyst
 [bundle exec] fastlane ios upload_screenshots
 ```
 
-Erzeugt und lädt Screenshots für iOS und Mac Catalyst nach App Store Connect hoch
+Erzeugt und lädt iPhone-Screenshots nach App Store Connect hoch
 
 ### ios release_testflight
 

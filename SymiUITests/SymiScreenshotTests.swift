@@ -32,20 +32,10 @@ final class SymiScreenshotTests: XCTestCase {
     func testCaptureMainStoreScreens() throws {
         let screens: [Screen] = [
             .init(route: "home", germanSnapshotName: "01-mehr-gute-tage", englishSnapshotName: "01-more-good-days"),
-            .init(
-                route: "home",
-                germanSnapshotName: "01a-home-dunkel-grosse-schrift",
-                englishSnapshotName: "01a-home-dark-large-type",
-                extraArguments: [
-                    "-AppleInterfaceStyle", "Dark",
-                    "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityL"
-                ]
-            ),
             .init(route: "new-entry", germanSnapshotName: "02-in-sekunden-eintragen", englishSnapshotName: "02-log-in-seconds"),
-            .init(route: "history", germanSnapshotName: "03-erkenne-deine-muster", englishSnapshotName: "03-recognize-patterns"),
-            .init(route: "episode-detail", germanSnapshotName: "04-alles-im-blick", englishSnapshotName: "04-everything-in-view"),
-            .init(route: "privacy-info", germanSnapshotName: "05-deine-daten-gehoeren-dir", englishSnapshotName: "05-your-data-belongs-to-you"),
-            .init(route: "export", germanSnapshotName: "06-export", englishSnapshotName: "06-export")
+            .init(route: "insights", germanSnapshotName: "03-erkenne-deine-muster", englishSnapshotName: "03-recognize-patterns"),
+            .init(route: "history", germanSnapshotName: "04-alles-im-blick", englishSnapshotName: "04-everything-in-view"),
+            .init(route: "privacy-info", germanSnapshotName: "05-deine-daten-gehoeren-dir", englishSnapshotName: "05-your-data-belongs-to-you")
         ]
 
         for screen in screens {

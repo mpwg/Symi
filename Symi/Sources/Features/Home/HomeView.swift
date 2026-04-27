@@ -7,6 +7,7 @@ struct HomeView: View {
     @State private var displayedMonth = Calendar.current.startOfMonth(for: .now)
     @State private var calendarMonthData = HistoryMonthData(month: Calendar.current.startOfMonth(for: .now), episodesByDay: [:])
     @State private var patternPreviewData = HomePatternPreviewData(totalPainEpisodeCount: 0, cards: [])
+    @State private var quickEntryIntensity = 5
     @State private var isPresentingEpisodeEditor = false
 
     init(appContainer: AppContainer) {
@@ -44,6 +45,14 @@ struct HomeView: View {
                 HomeHeaderView()
                     .padding(.bottom, SymiSpacing.lg)
 
+                PainGaugeView(value: $quickEntryIntensity)
+                    .padding(.bottom, SymiSpacing.lg)
+
+                PrimaryEntryButton {
+                    isPresentingEpisodeEditor = true
+                }
+                .padding(.bottom, SymiSpacing.lg)
+
                 HomeMonthCalendarView(
                     month: displayedMonth,
                     episodesByDay: calendarMonthData.episodesByDay,
@@ -51,11 +60,6 @@ struct HomeView: View {
                     onNext: showNextMonth
                 )
                     .padding(.bottom, SymiSpacing.lg)
-
-                PrimaryEntryButton {
-                    isPresentingEpisodeEditor = true
-                }
-                .padding(.bottom, SymiSpacing.lg)
 
                 HomePatternPreviewSection(data: patternPreviewData) {
                     InsightsView(appContainer: appContainer)
@@ -74,6 +78,14 @@ struct HomeView: View {
                 HomeHeaderView()
                     .padding(.bottom, SymiSpacing.lg)
 
+                PainGaugeView(value: $quickEntryIntensity)
+                    .padding(.bottom, SymiSpacing.lg)
+
+                PrimaryEntryButton {
+                    isPresentingEpisodeEditor = true
+                }
+                .padding(.bottom, SymiSpacing.lg)
+
                 HomeMonthCalendarView(
                     month: displayedMonth,
                     episodesByDay: calendarMonthData.episodesByDay,
@@ -81,11 +93,6 @@ struct HomeView: View {
                     onNext: showNextMonth
                 )
                     .padding(.bottom, SymiSpacing.lg)
-
-                PrimaryEntryButton {
-                    isPresentingEpisodeEditor = true
-                }
-                .padding(.bottom, SymiSpacing.lg)
 
                 HomePatternPreviewSection(data: patternPreviewData) {
                     InsightsView(appContainer: appContainer)
@@ -541,7 +548,7 @@ private struct HomePatternEmptyState: View {
 struct InsightsView: View {
     let appContainer: AppContainer
     @State private var data = InsightResult(totalQualifiedEpisodeCount: 0, insights: [])
-    @State private var selectedPeriod: InsightPeriod = .sevenDays
+    @State private var selectedPeriod: InsightPeriod = .thirtyDays
 
     var body: some View {
         ScrollView {

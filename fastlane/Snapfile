@@ -10,7 +10,6 @@ override_status_bar(true)
 concurrent_simulators(true)
 launch_arguments(["-mt_screenshot_seed default"])
 devices([
-  "iPhone 17 Pro Max",
-  "iPad Pro 13-inch (M5)"
+  "iPhone 15 Pro Max"
 ])
 headless(false)
