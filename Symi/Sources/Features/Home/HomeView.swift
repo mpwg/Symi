@@ -269,8 +269,15 @@ private struct HomeCalendarDayCell: View {
         .accessibilityIdentifier("home-calendar-day-\(date.formatted(.dateTime.year().month(.twoDigits).day(.twoDigits)))")
     }
 
-    private func dotColor(for _: EpisodeRecord) -> Color {
-        AppTheme.sage(for: colorScheme).opacity(0.6)
+    private func dotColor(for entry: EpisodeRecord) -> Color {
+        switch entry.intensity {
+        case 8 ... 10:
+            AppTheme.coral(for: colorScheme).opacity(0.72)
+        case 5 ... 7:
+            AppTheme.sage(for: colorScheme).opacity(0.72)
+        default:
+            AppTheme.petrol(for: colorScheme).opacity(0.62)
+        }
     }
 
     private var dayTextColor: Color {
@@ -294,7 +301,7 @@ private struct HomeCalendarDayCell: View {
     }
 
     private var calendarDotSize: CGFloat {
-        max(4, SymiSize.calendarDot - 2)
+        max(6, SymiSize.calendarDot - 2)
     }
 
     private var accessibilityLabel: String {
