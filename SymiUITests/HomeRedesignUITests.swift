@@ -10,29 +10,30 @@ final class HomeRedesignUITests: XCTestCase {
         let app = launchHome(
             extraArguments: [
                 "-AppleInterfaceStyle", "Dark",
-                "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityL"
+                "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityL",
             ]
         )
 
-        XCTAssertTrue(app.descendants(matching: .any)["home-calendar"].waitForExistence(timeout: 6))
-        XCTAssertTrue(accessibilityElement(containing: "Monatskalender", in: app).exists)
-        XCTAssertTrue(accessibilityElement(valueContaining: "Ausgewählt", in: app).exists)
-
         let quickEntry = app.descendants(matching: .any)["home-quick-entry"]
-        scrollUntilVisible(quickEntry, in: app)
-        XCTAssertTrue(quickEntry.exists)
+        XCTAssertTrue(quickEntry.waitForExistence(timeout: 6))
 
-        XCTAssertMinimumTouchTarget(app.buttons["home-calendar-previous-month"])
-        XCTAssertMinimumTouchTarget(app.buttons["home-calendar-next-month"])
         XCTAssertMinimumTouchTarget(quickEntry)
 
-        XCTAssertTrue(accessibilityElement(containing: "Neuen Eintrag erstellen", in: app).exists)
-
-        scrollUntilVisible(app.descendants(matching: .any)["home-patterns-section"], in: app)
-        XCTAssertTrue(app.descendants(matching: .any)["home-patterns-section"].exists)
+        XCTAssertTrue(accessibilityElement(containing: "Eintrag erstellen", in: app).exists)
 
         scrollUntilVisible(app.sliders["home-feeling-slider"], in: app)
         XCTAssertTrue(app.sliders["home-feeling-slider"].exists)
+
+        let calendar = app.descendants(matching: .any)["home-calendar"]
+        scrollUntilVisible(calendar, in: app)
+        XCTAssertTrue(calendar.exists)
+        XCTAssertTrue(accessibilityElement(containing: "Monatskalender", in: app).exists)
+        XCTAssertTrue(accessibilityElement(containing: "ausgewählt", in: app).exists)
+        XCTAssertMinimumTouchTarget(app.buttons["home-calendar-previous-month"])
+        XCTAssertMinimumTouchTarget(app.buttons["home-calendar-next-month"])
+
+        scrollUntilVisible(app.descendants(matching: .any)["home-patterns-section"], in: app)
+        XCTAssertTrue(app.descendants(matching: .any)["home-patterns-section"].exists)
 
         attachScreenshot(named: "home-redesign-dark-large-type", app: app)
     }
@@ -44,7 +45,7 @@ final class HomeRedesignUITests: XCTestCase {
             "-mt_screenshot_screen",
             "home",
             "-mt_screenshot_seed",
-            "default"
+            "default",
         ]
         app.launchArguments += extraArguments
         app.launch()
