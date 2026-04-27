@@ -320,7 +320,6 @@ private struct PainLocationSelectionTile: View {
         return SymiColors.subtleSeparator(for: colorScheme).opacity(SymiOpacity.strongSurface)
     }
 }
-
 private struct HeadacheLocationGrid<Content: View>: View {
     let content: Content
 
