@@ -2254,6 +2254,9 @@
         }
       }
     },
+    "Neuen Eintrag erstellen" : {
+
+    },
     "Neuer Eintrag" : {
       "localizations" : {
         "en" : {
@@ -2263,6 +2266,9 @@
           }
         }
       }
+    },
+    "Neuer Flow" : {
+
     },
     "Nicht alles ist überall verfügbar" : {
       "extractionState" : "stale",
@@ -2712,6 +2718,9 @@
         }
       }
     },
+    "Schnelleintrag" : {
+
+    },
     "Schneller Eintrag" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2885,6 +2894,12 @@
       }
     },
     "Startdatum" : {
+
+    },
+    "Startet den Schnelleintrag für %@." : {
+
+    },
+    "Startet mit %@ und führt dich Schritt für Schritt durch den Eintrag." : {
 
     },
     "Status" : {
