@@ -17,7 +17,8 @@ final class HomeRedesignUITests: XCTestCase {
         let calendar = app.descendants(matching: .any)["home-calendar"]
         XCTAssertTrue(calendar.waitForExistence(timeout: 6))
         XCTAssertTrue(accessibilityElement(containing: "Monatskalender", in: app).exists)
-        XCTAssertTrue(accessibilityElement(containing: "ausgewählt", in: app).exists)
+        XCTAssertTrue(accessibilityElement(containing: "heute", in: app).exists)
+        XCTAssertFalse(accessibilityElement(containing: "ausgewählt", in: app).exists)
         XCTAssertMinimumTouchTarget(app.buttons["home-calendar-previous-month"])
         XCTAssertMinimumTouchTarget(app.buttons["home-calendar-next-month"])
 

@@ -5,7 +5,6 @@ struct HomeView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     @State private var displayedMonth = Calendar.current.startOfMonth(for: .now)
-    @State private var selectedDay = Calendar.current.startOfDay(for: .now)
     @State private var calendarMonthData = HistoryMonthData(month: Calendar.current.startOfMonth(for: .now), episodesByDay: [:])
     @State private var patternPreviewData = HomePatternPreviewData(totalPainEpisodeCount: 0, cards: [])
     @State private var isPresentingEpisodeEditor = false
@@ -32,7 +31,7 @@ struct HomeView: View {
             await reloadAll()
         }
         .fullScreenCover(isPresented: $isPresentingEpisodeEditor) {
-            EntryFlowCoordinatorView(appContainer: appContainer, initialStartedAt: defaultStartDateForSelectedDay()) {
+            EntryFlowCoordinatorView(appContainer: appContainer, initialStartedAt: .now) {
                 isPresentingEpisodeEditor = false
                 Task { await reloadAll() }
             }
@@ -47,15 +46,13 @@ struct HomeView: View {
 
                 HomeMonthCalendarView(
                     month: displayedMonth,
-                    selectedDay: selectedDay,
                     episodesByDay: calendarMonthData.episodesByDay,
-                    onSelectDay: selectDay,
                     onPrevious: showPreviousMonth,
                     onNext: showNextMonth
                 )
-                .padding(.bottom, SymiSpacing.xl)
+                .padding(.bottom, SymiSpacing.lg)
 
-                PrimaryEntryButton(selectedDay: selectedDay) {
+                PrimaryEntryButton {
                     isPresentingEpisodeEditor = true
                 }
                 .padding(.bottom, SymiSpacing.xxxl)
@@ -79,15 +76,13 @@ struct HomeView: View {
 
                 HomeMonthCalendarView(
                     month: displayedMonth,
-                    selectedDay: selectedDay,
                     episodesByDay: calendarMonthData.episodesByDay,
-                    onSelectDay: selectDay,
                     onPrevious: showPreviousMonth,
                     onNext: showNextMonth
                 )
-                .padding(.bottom, SymiSpacing.xl)
+                .padding(.bottom, SymiSpacing.lg)
 
-                PrimaryEntryButton(selectedDay: selectedDay) {
+                PrimaryEntryButton {
                     isPresentingEpisodeEditor = true
                 }
                 .padding(.bottom, SymiSpacing.xxxl)
@@ -128,10 +123,6 @@ struct HomeView: View {
         showMonth(offset: 1)
     }
 
-    private func selectDay(_ day: Date) {
-        selectedDay = Calendar.current.startOfDay(for: day)
-    }
-
     private func showMonth(offset: Int) {
         let calendar = Calendar.current
         guard let newMonth = calendar.date(byAdding: .month, value: offset, to: displayedMonth) else {
@@ -139,27 +130,12 @@ struct HomeView: View {
         }
 
         displayedMonth = newMonth
-        selectedDay = calendar.startOfDay(for: newMonth)
-    }
-
-    private func defaultStartDateForSelectedDay() -> Date {
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: .now)
-        let day = calendar.startOfDay(for: selectedDay)
-
-        if day == today {
-            return .now
-        }
-
-        return calendar.date(bySettingHour: 12, minute: 0, second: 0, of: day) ?? day
     }
 }
 
 private struct HomeMonthCalendarView: View {
     let month: Date
-    let selectedDay: Date
     let episodesByDay: [Date: [EpisodeRecord]]
-    let onSelectDay: (Date) -> Void
     let onPrevious: () -> Void
     let onNext: () -> Void
     @Environment(\.colorScheme) private var colorScheme
@@ -198,12 +174,9 @@ private struct HomeMonthCalendarView: View {
                     if let date = cell.date {
                         HomeCalendarDayCell(
                             date: date,
-                            isSelected: calendar.isDate(date, inSameDayAs: selectedDay),
                             isToday: calendar.isDateInToday(date),
                             entries: episodesByDay[calendar.startOfDay(for: date)] ?? []
-                        ) {
-                            onSelectDay(date)
-                        }
+                        )
                     } else {
                         Color.clear
                             .frame(height: SymiSize.calendarWeekdayHeight)
@@ -262,52 +235,37 @@ private struct HomeMonthCalendarView: View {
 
 private struct HomeCalendarDayCell: View {
     let date: Date
-    let isSelected: Bool
     let isToday: Bool
     let entries: [EpisodeRecord]
-    let action: () -> Void
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
-        Button(action: action) {
-            VStack(spacing: SymiSpacing.xxs) {
-                Text(date.formatted(.dateTime.day()))
-                    .font(dayNumberFont)
-                    .foregroundStyle(dayTextColor)
-                    .frame(width: dayNumberSize, height: dayNumberSize)
-                    .background(isSelected ? AppTheme.petrol(for: colorScheme) : Color.clear, in: Circle())
-                    .overlay {
-                        if isToday && !isSelected {
-                            Circle()
-                                .stroke(AppTheme.petrol(for: colorScheme).opacity(SymiOpacity.selectedFill), lineWidth: SymiStroke.hairline)
-                                .frame(width: dayNumberSize, height: dayNumberSize)
-                        }
-                    }
+        VStack(spacing: SymiSpacing.xxs) {
+            Text(date.formatted(.dateTime.day()))
+                .font(dayNumberFont)
+                .foregroundStyle(dayTextColor)
+                .frame(width: dayNumberSize, height: dayNumberSize)
+                .background(isToday ? AppTheme.petrol(for: colorScheme) : Color.clear, in: Circle())
 
-                if entries.isEmpty {
-                    Circle()
-                        .fill(Color.clear)
-                        .frame(width: calendarDotSize, height: calendarDotSize)
-                } else {
-                    HStack(spacing: SymiSpacing.micro) {
-                        ForEach(Array(entries.prefix(3).enumerated()), id: \.element.id) { _, entry in
-                            Circle()
-                                .fill(dotColor(for: entry))
-                                .frame(width: calendarDotSize, height: calendarDotSize)
-                        }
+            if entries.isEmpty {
+                Circle()
+                    .fill(Color.clear)
+                    .frame(width: calendarDotSize, height: calendarDotSize)
+            } else {
+                HStack(spacing: SymiSpacing.micro) {
+                    ForEach(Array(entries.prefix(3).enumerated()), id: \.element.id) { _, entry in
+                        Circle()
+                            .fill(dotColor(for: entry))
+                            .frame(width: calendarDotSize, height: calendarDotSize)
                     }
-                    .frame(height: calendarDotSize)
                 }
+                .frame(height: calendarDotSize)
             }
-            .frame(maxWidth: .infinity, minHeight: calendarDayMinHeight)
-            .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .frame(maxWidth: .infinity, minHeight: calendarDayMinHeight)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityLabel)
-        .accessibilityValue(isSelected ? "Ausgewählt" : "")
-        .accessibilityHint("Wählt diesen Tag für den Schnelleintrag aus.")
         .accessibilityIdentifier("home-calendar-day-\(date.formatted(.dateTime.year().month(.twoDigits).day(.twoDigits)))")
     }
 
@@ -316,19 +274,15 @@ private struct HomeCalendarDayCell: View {
     }
 
     private var dayTextColor: Color {
-        if isSelected {
-            return AppTheme.symiOnAccent
-        }
-
         if isToday {
-            return AppTheme.petrol(for: colorScheme)
+            return AppTheme.symiOnAccent
         }
 
         return AppTheme.textPrimary(for: colorScheme).opacity(0.6)
     }
 
     private var dayNumberFont: Font {
-        dynamicTypeSize.isAccessibilitySize ? .body.weight(isSelected ? .semibold : .regular) : .body.weight(isSelected ? .semibold : .regular)
+        dynamicTypeSize.isAccessibilitySize ? .body.weight(isToday ? .semibold : .regular) : .body.weight(isToday ? .semibold : .regular)
     }
 
     private var dayNumberSize: CGFloat {
@@ -345,22 +299,15 @@ private struct HomeCalendarDayCell: View {
 
     private var accessibilityLabel: String {
         let dateText = date.formatted(date: .complete, time: .omitted)
-        let selectionText: String
-        if isSelected {
-            selectionText = "ausgewählt"
-        } else if isToday {
-            selectionText = "heute"
-        } else {
-            selectionText = "nicht ausgewählt"
-        }
+        let stateText = isToday ? "heute" : "Kalendertag"
 
         guard entries.isEmpty == false else {
-            return "\(dateText), \(selectionText), keine Einträge"
+            return "\(dateText), \(stateText), keine Einträge"
         }
 
         let entryText = "\(entries.count) Eintrag\(entries.count == 1 ? "" : "e")"
         let highestIntensity = entries.map(\.intensity).max() ?? 0
-        return "\(dateText), \(selectionText), \(entryText), höchste Intensität \(highestIntensity) von 10"
+        return "\(dateText), \(stateText), \(entryText), höchste Intensität \(highestIntensity) von 10"
     }
 }
 
@@ -377,7 +324,6 @@ private struct HomeHeaderView: View {
 }
 
 private struct PrimaryEntryButton: View {
-    let selectedDay: Date
     let action: () -> Void
     @Environment(\.colorScheme) private var colorScheme
 
@@ -416,7 +362,7 @@ private struct PrimaryEntryButton: View {
         .accessibilityIdentifier("home-quick-entry")
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Eintrag erstellen")
-        .accessibilityHint("Startet einen neuen Eintrag für \(selectedDay.formatted(date: .complete, time: .omitted)).")
+        .accessibilityHint("Startet einen neuen Eintrag.")
     }
 }
 
@@ -451,7 +397,7 @@ private struct HomePatternPreviewSection<Destination: View>: View {
 
             if data.hasEnoughData, !data.cards.isEmpty {
                 LazyVGrid(columns: columns, alignment: .leading, spacing: SymiSpacing.md) {
-                    ForEach(data.cards) { card in
+                    ForEach(Array(data.cards.prefix(2))) { card in
                         HomePatternCard(card: card)
                             .gridCellColumns(card.isWide ? 2 : 1)
                     }
@@ -672,17 +618,35 @@ private struct HomeSurfaceModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .background(cardBackground, in: RoundedRectangle(cornerRadius: SymiRadius.card, style: .continuous))
+            .background(cardBackground, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
             .shadow(
-                color: AppTheme.shadowColor(for: colorScheme),
-                radius: SymiShadow.cardRadius,
+                color: AppTheme.petrol(for: colorScheme).opacity(colorScheme == .dark ? SymiOpacity.clearAccent : 0.05),
+                radius: 10,
                 x: SymiShadow.cardXOffset,
-                y: SymiShadow.cardYOffset
+                y: 4
             )
     }
 
-    private var cardBackground: Color {
-        colorScheme == .dark ? AppTheme.cardBackground(for: colorScheme) : Color.white
+    private var cardBackground: LinearGradient {
+        if colorScheme == .dark {
+            return LinearGradient(
+                colors: [
+                    AppTheme.cardBackground(for: colorScheme),
+                    AppTheme.sage(for: colorScheme).opacity(SymiOpacity.clearAccent),
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        }
+
+        return LinearGradient(
+            colors: [
+                Color.white,
+                AppTheme.sage(for: colorScheme).opacity(0.03),
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
     }
 }
 
