@@ -311,15 +311,8 @@ private struct HomeCalendarDayCell: View {
         .accessibilityIdentifier("home-calendar-day-\(date.formatted(.dateTime.year().month(.twoDigits).day(.twoDigits)))")
     }
 
-    private func dotColor(for entry: EpisodeRecord) -> Color {
-        switch entry.intensity {
-        case 8 ... 10:
-            AppTheme.coral(for: colorScheme).opacity(SymiOpacity.secondaryActionText)
-        case 5 ... 7:
-            AppTheme.sage(for: colorScheme).opacity(SymiOpacity.secondaryActionText)
-        default:
-            AppTheme.petrol(for: colorScheme).opacity(SymiOpacity.disabledContent)
-        }
+    private func dotColor(for _: EpisodeRecord) -> Color {
+        AppTheme.sage(for: colorScheme).opacity(0.6)
     }
 
     private var dayTextColor: Color {
@@ -485,11 +478,11 @@ private struct HomePatternCard: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
-        VStack(alignment: .leading, spacing: SymiSpacing.sm) {
+        VStack(alignment: .leading, spacing: SymiSpacing.xs) {
             Image(systemName: card.systemImage)
-                .font(.title3.weight(.semibold))
+                .font(.body.weight(.semibold))
                 .foregroundStyle(AppTheme.petrol(for: colorScheme))
-                .frame(width: SymiSize.homePatternIcon, height: SymiSize.homePatternIcon)
+                .frame(width: patternIconSize, height: patternIconSize)
                 .background(AppTheme.secondaryFill(for: colorScheme), in: Circle())
                 .accessibilityHidden(true)
 
@@ -511,7 +504,7 @@ private struct HomePatternCard: View {
                 .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(SymiSpacing.lg)
+        .padding(SymiSpacing.md)
         .frame(maxWidth: .infinity, minHeight: cardMinHeight, alignment: .topLeading)
         .homeSurface()
         .accessibilityElement(children: .ignore)
@@ -521,7 +514,12 @@ private struct HomePatternCard: View {
 
     private var cardMinHeight: CGFloat {
         let baseHeight = card.isWide ? SymiSize.homePatternWideMinHeight : SymiSize.homePatternMinHeight
-        return dynamicTypeSize.isAccessibilitySize ? baseHeight + SymiSize.homePatternAccessibilityHeightGrowth : baseHeight
+        let refinedHeight = baseHeight - SymiSpacing.md
+        return dynamicTypeSize.isAccessibilitySize ? refinedHeight + SymiSize.homePatternAccessibilityHeightGrowth : refinedHeight
+    }
+
+    private var patternIconSize: CGFloat {
+        SymiSize.homePatternIcon - SymiSpacing.xxs
     }
 }
 
@@ -532,9 +530,9 @@ private struct HomePatternEmptyState: View {
     var body: some View {
         HStack(alignment: .top, spacing: SymiSpacing.md) {
             Image(systemName: "sparkles")
-                .font(.title3.weight(.semibold))
+                .font(.body.weight(.semibold))
                 .foregroundStyle(AppTheme.coral(for: colorScheme))
-                .frame(width: SymiSize.homePatternEmptyIcon, height: SymiSize.homePatternEmptyIcon)
+                .frame(width: emptyIconSize, height: emptyIconSize)
                 .background(AppTheme.coral(for: colorScheme).opacity(SymiOpacity.clearAccent), in: Circle())
                 .accessibilityHidden(true)
 
@@ -549,7 +547,7 @@ private struct HomePatternEmptyState: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(SymiSpacing.lg)
+        .padding(SymiSpacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
         .homeSurface()
         .accessibilityElement(children: .combine)
@@ -570,6 +568,10 @@ private struct HomePatternEmptyState: View {
 
     private var title: String {
         recordedCount >= HomePatternPreviewData.minimumEpisodeCount ? "Noch kein ruhiger Hinweis" : "Noch nicht genug Einträge"
+    }
+
+    private var emptyIconSize: CGFloat {
+        SymiSize.homePatternEmptyIcon - SymiSpacing.xxs
     }
 }
 
