@@ -41,8 +41,9 @@ struct HomeView: View {
 
     private var compactDashboard: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: SymiSpacing.xxl) {
+            VStack(alignment: .leading, spacing: SymiSpacing.zero) {
                 HomeHeaderView(month: displayedMonth)
+                    .padding(.bottom, SymiSpacing.lg)
 
                 HomeMonthCalendarView(
                     month: displayedMonth,
@@ -52,14 +53,17 @@ struct HomeView: View {
                     onPrevious: showPreviousMonth,
                     onNext: showNextMonth
                 )
+                .padding(.bottom, SymiSpacing.xl)
 
                 PrimaryEntryButton(selectedDay: selectedDay) {
                     isPresentingEpisodeEditor = true
                 }
+                .padding(.bottom, SymiSpacing.xxxl)
 
                 HomePatternPreviewSection(data: patternPreviewData) {
                     HomeInsightsView(data: patternPreviewData)
                 }
+                .padding(.bottom, SymiSpacing.xxxl)
 
                 HomeTrustSection()
             }
@@ -71,8 +75,9 @@ struct HomeView: View {
 
     private var regularDashboard: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: SymiSpacing.xxl) {
+            VStack(alignment: .leading, spacing: SymiSpacing.zero) {
                 HomeHeaderView(month: displayedMonth)
+                    .padding(.bottom, SymiSpacing.lg)
 
                 HomeMonthCalendarView(
                     month: displayedMonth,
@@ -82,14 +87,17 @@ struct HomeView: View {
                     onPrevious: showPreviousMonth,
                     onNext: showNextMonth
                 )
+                .padding(.bottom, SymiSpacing.xl)
 
                 PrimaryEntryButton(selectedDay: selectedDay) {
                     isPresentingEpisodeEditor = true
                 }
+                .padding(.bottom, SymiSpacing.xxxl)
 
                 HomePatternPreviewSection(data: patternPreviewData) {
                     HomeInsightsView(data: patternPreviewData)
                 }
+                .padding(.bottom, SymiSpacing.xxxl)
 
                 HomeTrustSection()
             }
@@ -160,11 +168,11 @@ private struct HomeMonthCalendarView: View {
     let onNext: () -> Void
     @Environment(\.colorScheme) private var colorScheme
 
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: SymiSpacing.xs), count: 7)
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: SymiSpacing.compact), count: 7)
     private let calendar = Calendar.current
 
     var body: some View {
-        VStack(alignment: .leading, spacing: SymiSpacing.md) {
+        VStack(alignment: .leading, spacing: SymiSpacing.sm) {
             HStack(alignment: .center, spacing: SymiSpacing.md) {
                 Text(month.formatted(.dateTime.month(.wide).year()))
                     .font(.headline.weight(.semibold))
@@ -181,7 +189,7 @@ private struct HomeMonthCalendarView: View {
                 }
             }
 
-            LazyVGrid(columns: columns, spacing: SymiSpacing.compact) {
+            LazyVGrid(columns: columns, spacing: SymiSpacing.xxs) {
                 ForEach(weekdaySymbols, id: \.self) { symbol in
                     Text(symbol)
                         .font(.caption2.weight(.medium))
@@ -208,9 +216,9 @@ private struct HomeMonthCalendarView: View {
                 }
             }
         }
-        .padding(SymiSpacing.lg)
+        .padding(.horizontal, SymiSpacing.xxs)
+        .padding(.vertical, SymiSpacing.xxs)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .homeSurface()
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Monatskalender \(month.formatted(.dateTime.month(.wide).year()))")
         .accessibilityIdentifier("home-calendar")
@@ -222,7 +230,7 @@ private struct HomeMonthCalendarView: View {
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(AppTheme.petrol(for: colorScheme))
                 .frame(width: SymiSize.minInteractiveHeight, height: SymiSize.minInteractiveHeight)
-                .background(AppTheme.secondaryFill(for: colorScheme), in: Circle())
+                .background(AppTheme.sage(for: colorScheme).opacity(SymiOpacity.faintSurface), in: Circle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(label)
@@ -327,11 +335,11 @@ private struct HomeCalendarDayCell: View {
             return AppTheme.petrol(for: colorScheme)
         }
 
-        return AppTheme.textPrimary(for: colorScheme).opacity(SymiOpacity.strongText)
+        return AppTheme.textSecondary(for: colorScheme).opacity(SymiOpacity.heroSecondaryText)
     }
 
     private var dayNumberFont: Font {
-        dynamicTypeSize.isAccessibilitySize ? .body.weight(isSelected ? .semibold : .regular) : .title3.weight(isSelected ? .semibold : .regular)
+        dynamicTypeSize.isAccessibilitySize ? .body.weight(isSelected ? .semibold : .regular) : .body.weight(isSelected ? .semibold : .regular)
     }
 
     private var dayNumberSize: CGFloat {
@@ -339,7 +347,7 @@ private struct HomeCalendarDayCell: View {
     }
 
     private var calendarDayMinHeight: CGFloat {
-        dynamicTypeSize.isAccessibilitySize ? SymiSize.calendarDayMinHeight + SymiSize.homeCalendarDayAccessibilityGrowth : SymiSize.calendarDayMinHeight
+        dynamicTypeSize.isAccessibilitySize ? SymiSize.calendarDayMinHeight + SymiSize.homeCalendarDayAccessibilityGrowth : SymiSize.calendarDayMinHeight - SymiSpacing.xs
     }
 
     private var accessibilityLabel: String {
@@ -391,9 +399,9 @@ private struct PrimaryEntryButton: View {
         Button(action: action) {
             HStack(alignment: .center, spacing: SymiSpacing.md) {
                 Image(systemName: "plus")
-                    .font(.title3.weight(.semibold))
+                    .font(.title2.weight(.semibold))
                     .foregroundStyle(AppTheme.symiOnAccent)
-                    .frame(width: 42, height: 42)
+                    .frame(width: 46, height: 46)
                     .background(AppTheme.coral(for: colorScheme), in: Circle())
                     .accessibilityHidden(true)
 
@@ -414,7 +422,7 @@ private struct PrimaryEntryButton: View {
                 Spacer(minLength: SymiSpacing.xs)
             }
             .padding(.horizontal, SymiSpacing.lg)
-            .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
+            .frame(maxWidth: .infinity, minHeight: 68, alignment: .leading)
         }
         .buttonStyle(HomePrimaryActionButtonStyle(colorScheme: colorScheme))
         .keyboardShortcut("n", modifiers: .command)
@@ -650,15 +658,26 @@ private struct HomePrimaryActionButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .background(AppTheme.petrol(for: colorScheme), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .background(buttonBackground, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
             .scaleEffect(configuration.isPressed ? 0.97 : 1)
             .shadow(
-                color: AppTheme.shadowColor(for: colorScheme),
-                radius: SymiShadow.brandCardRadius,
+                color: AppTheme.petrol(for: colorScheme).opacity(colorScheme == .dark ? SymiOpacity.backgroundAccent : SymiOpacity.softFill),
+                radius: 18,
                 x: SymiShadow.cardXOffset,
-                y: SymiShadow.brandCardYOffset
+                y: 8
             )
             .animation(.spring(response: 0.22, dampingFraction: 0.82), value: configuration.isPressed)
+    }
+
+    private var buttonBackground: LinearGradient {
+        LinearGradient(
+            colors: [
+                AppTheme.petrol(for: colorScheme),
+                AppTheme.petrol(for: colorScheme).opacity(SymiOpacity.heroSecondaryText),
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
     }
 }
 
