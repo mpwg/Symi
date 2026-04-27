@@ -4,7 +4,8 @@ struct HomeView: View {
     let appContainer: AppContainer
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
-    @State private var overview: HomeOverviewData = .init(latestEpisode: nil, episodeCount: 0)
+    @State private var displayedMonth = Calendar.current.startOfMonth(for: .now)
+    @State private var calendarMonthData = HistoryMonthData(month: Calendar.current.startOfMonth(for: .now), episodesByDay: [:])
     @State private var isPresentingEpisodeEditor = false
 
     init(appContainer: AppContainer) {
@@ -31,8 +32,8 @@ struct HomeView: View {
 
             }
         }
-        .task {
-            await reloadAll()
+        .task(id: displayedMonth) {
+            await reloadCalendarMonth()
         }
         .refreshable {
             await reloadAll()
@@ -40,7 +41,7 @@ struct HomeView: View {
         .fullScreenCover(isPresented: $isPresentingEpisodeEditor) {
             EntryFlowCoordinatorView(appContainer: appContainer) {
                 isPresentingEpisodeEditor = false
-                Task { await reloadOverview() }
+                Task { await reloadAll() }
             }
         }
     }
@@ -48,7 +49,12 @@ struct HomeView: View {
     private var compactDashboard: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: SymiSpacing.xl) {
-                DiaryWelcomeCard(overview: overview)
+                HomeMonthCalendarView(
+                    month: displayedMonth,
+                    episodesByDay: calendarMonthData.episodesByDay,
+                    onPrevious: showPreviousMonth,
+                    onNext: showNextMonth
+                )
 
                 Button {
                     isPresentingEpisodeEditor = true
@@ -86,7 +92,12 @@ struct HomeView: View {
                 spacing: AppTheme.dashboardSpacing
             ) {
                 VStack(alignment: .leading, spacing: AppTheme.dashboardSpacing) {
-                    DiaryWelcomeCard(overview: overview)
+                    HomeMonthCalendarView(
+                        month: displayedMonth,
+                        episodesByDay: calendarMonthData.episodesByDay,
+                        onPrevious: showPreviousMonth,
+                        onNext: showNextMonth
+                    )
                     FeelingCheckInCard()
 
                     AdaptiveDashboardCard(title: "Schnellaktionen") {
@@ -126,13 +137,182 @@ struct HomeView: View {
     }
 
     private func reloadAll() async {
-        await reloadOverview()
+        await reloadCalendarMonth()
     }
 
-    private func reloadOverview() async {
-        overview = (try? await LoadHomeOverviewUseCase(repository: appContainer.episodeRepository).execute()) ?? .init(latestEpisode: nil, episodeCount: 0)
+    private func reloadCalendarMonth() async {
+        let month = displayedMonth
+        calendarMonthData = (try? await LoadHistoryMonthUseCase(repository: appContainer.episodeRepository).execute(month: month)) ?? HistoryMonthData(month: month, episodesByDay: [:])
     }
 
+    private func showPreviousMonth() {
+        displayedMonth = Calendar.current.date(byAdding: .month, value: -1, to: displayedMonth) ?? displayedMonth
+    }
+
+    private func showNextMonth() {
+        displayedMonth = Calendar.current.date(byAdding: .month, value: 1, to: displayedMonth) ?? displayedMonth
+    }
+
+}
+
+private struct HomeMonthCalendarView: View {
+    let month: Date
+    let episodesByDay: [Date: [EpisodeRecord]]
+    let onPrevious: () -> Void
+    let onNext: () -> Void
+
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: SymiSpacing.xs), count: 7)
+    private let calendar = Calendar.current
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: SymiSpacing.lg) {
+            HStack(alignment: .center, spacing: SymiSpacing.md) {
+                Text(month.formatted(.dateTime.month(.wide).year()))
+                    .font(.system(.largeTitle, design: .serif).weight(.regular))
+                    .foregroundStyle(AppTheme.symiPetrol)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.82)
+                    .accessibilityAddTraits(.isHeader)
+
+                Spacer(minLength: SymiSpacing.sm)
+
+                HStack(spacing: SymiSpacing.sm) {
+                    calendarNavigationButton(systemImage: "chevron.left", label: "Vorheriger Monat", action: onPrevious)
+                    calendarNavigationButton(systemImage: "chevron.right", label: "Nächster Monat", action: onNext)
+                }
+            }
+
+            LazyVGrid(columns: columns, spacing: SymiSpacing.compact) {
+                ForEach(weekdaySymbols, id: \.self) { symbol in
+                    Text(symbol)
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(AppTheme.symiPetrol.opacity(SymiOpacity.heroSecondaryText))
+                        .frame(maxWidth: .infinity, minHeight: 26)
+                        .accessibilityHidden(true)
+                }
+
+                ForEach(Array(dayCells.enumerated()), id: \.offset) { _, cell in
+                    if let date = cell.date {
+                        HomeCalendarDayCell(
+                            date: date,
+                            isActive: calendar.isDateInToday(date),
+                            entries: episodesByDay[calendar.startOfDay(for: date)] ?? []
+                        )
+                    } else {
+                        Color.clear
+                            .frame(height: 44)
+                            .accessibilityHidden(true)
+                    }
+                }
+            }
+        }
+        .padding(.horizontal, SymiSpacing.xl)
+        .padding(.vertical, SymiSpacing.xxl)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .contain)
+    }
+
+    private func calendarNavigationButton(systemImage: String, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(AppTheme.symiPetrol)
+                .frame(width: 50, height: 50)
+                .background(AppTheme.symiOnAccent, in: Circle())
+                .shadow(color: AppTheme.shadowColor.opacity(SymiOpacity.hairline), radius: 7, y: 3)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
+    }
+
+    private var weekdaySymbols: [String] {
+        ["MO", "DI", "MI", "DO", "FR", "SA", "SO"]
+    }
+
+    private var dayCells: [HomeCalendarDay] {
+        let startOfMonth = calendar.startOfMonth(for: month)
+        let range = calendar.range(of: .day, in: .month, for: startOfMonth) ?? 1 ..< 1
+        let weekday = calendar.component(.weekday, from: startOfMonth)
+        let leadingEmptyDays = (weekday + 5) % 7
+
+        var cells = Array(repeating: HomeCalendarDay(date: nil), count: leadingEmptyDays)
+        cells += range.compactMap { day -> HomeCalendarDay? in
+            guard let date = calendar.date(byAdding: .day, value: day - 1, to: startOfMonth) else {
+                return nil
+            }
+            return HomeCalendarDay(date: date)
+        }
+
+        while cells.count < 42 {
+            cells.append(HomeCalendarDay(date: nil))
+        }
+
+        return cells
+    }
+}
+
+private struct HomeCalendarDayCell: View {
+    let date: Date
+    let isActive: Bool
+    let entries: [EpisodeRecord]
+
+    var body: some View {
+        VStack(spacing: SymiSpacing.xxs) {
+            Text(date.formatted(.dateTime.day()))
+                .font(.title3.weight(isActive ? .semibold : .regular))
+                .foregroundStyle(isActive ? AppTheme.symiOnAccent : AppTheme.symiTextPrimary)
+                .frame(width: 36, height: 36)
+                .background(isActive ? AppTheme.symiPetrol : Color.clear, in: Circle())
+
+            if entries.isEmpty {
+                Circle()
+                    .fill(Color.clear)
+                    .frame(width: SymiSize.calendarDot, height: SymiSize.calendarDot)
+            } else {
+                HStack(spacing: SymiSpacing.micro) {
+                    ForEach(Array(entries.prefix(3).enumerated()), id: \.element.id) { _, entry in
+                        Circle()
+                            .fill(dotColor(for: entry))
+                            .frame(width: SymiSize.calendarDot, height: SymiSize.calendarDot)
+                    }
+                }
+                .frame(height: SymiSize.calendarDot)
+            }
+        }
+        .frame(maxWidth: .infinity, minHeight: 52)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityLabel)
+        .accessibilityValue(isActive ? "Ausgewählt" : "")
+    }
+
+    private func dotColor(for entry: EpisodeRecord) -> Color {
+        switch entry.intensity {
+        case 8...10:
+            AppTheme.symiCoral
+        case 5...7:
+            AppTheme.symiSage
+        default:
+            AppTheme.symiPetrol.opacity(SymiOpacity.heroSecondaryText)
+        }
+    }
+
+    private var accessibilityLabel: String {
+        let dateText = date.formatted(date: .complete, time: .omitted)
+        let selectionText = isActive ? "heute, ausgewählt" : "nicht ausgewählt"
+
+        guard entries.isEmpty == false else {
+            return "\(dateText), \(selectionText), keine Einträge"
+        }
+
+        let entryText = "\(entries.count) Eintrag\(entries.count == 1 ? "" : "e")"
+        let highestIntensity = entries.map(\.intensity).max() ?? 0
+        return "\(dateText), \(selectionText), \(entryText), höchste Intensität \(highestIntensity) von 10"
+    }
+}
+
+private struct HomeCalendarDay: Identifiable {
+    let id = UUID()
+    let date: Date?
 }
 
 struct AdaptiveDashboardCard<Content: View>: View {
@@ -186,118 +366,6 @@ private struct QuickActionTile: View {
     }
 }
 
-private struct DiaryWelcomeCard: View {
-    let overview: HomeOverviewData
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: SymiSpacing.xl) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: SymiSpacing.secondaryButtonVerticalPadding) {
-                    Text(greeting)
-                        .font(.title2.weight(.semibold))
-                        .foregroundStyle(AppTheme.foam)
-
-                    Text(ProductBranding.marketingClaim)
-                        .font(.largeTitle.weight(.bold))
-                        .foregroundStyle(AppTheme.symiOnAccent)
-
-                    Text(summaryDetail)
-                        .font(.subheadline)
-                        .foregroundStyle(AppTheme.foam.opacity(SymiOpacity.heroSecondaryText))
-
-                    if overview.episodeCount > 0 {
-                        statsRow
-                    }
-                }
-
-                Spacer(minLength: SymiSpacing.md)
-
-                VStack(spacing: SymiSpacing.sm) {
-                    Image(systemName: "book.closed.fill")
-                        .font(.title2)
-                        .foregroundStyle(AppTheme.foam)
-                }
-                .frame(width: SymiSize.heroSymbolWidth, height: SymiSize.heroSymbolHeight, alignment: .top)
-                .background(
-                    AppTheme.symiOnAccent.opacity(SymiOpacity.faintSurface),
-                    in: RoundedRectangle(cornerRadius: SymiRadius.button, style: .continuous)
-                )
-            }
-        }
-        .padding(SymiSpacing.xxxl)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppTheme.heroGradient)
-        .overlay(alignment: .bottomLeading) {
-            WaveAccent()
-                .stroke(AppTheme.foam.opacity(SymiOpacity.heroPrimaryWave), lineWidth: SymiStroke.heroWavePrimary)
-                .frame(height: SymiSize.heroWavePrimaryHeight)
-                .offset(x: SymiSpacing.heroWavePrimaryOffsetX, y: SymiSpacing.heroWavePrimaryOffsetY)
-        }
-        .overlay(alignment: .bottomLeading) {
-            WaveAccent()
-                .stroke(AppTheme.seaGlass.opacity(SymiOpacity.heroSecondaryWave), lineWidth: SymiStroke.heroWaveSecondary)
-                .frame(height: SymiSize.heroWaveSecondaryHeight)
-                .offset(x: SymiSpacing.heroWaveSecondaryOffsetX, y: SymiSpacing.heroWaveSecondaryOffsetY)
-        }
-        .overlay(alignment: .bottomLeading) {
-            WaveAccent()
-                .stroke(AppTheme.coral.opacity(SymiOpacity.heroAccentWave), lineWidth: SymiStroke.heroWaveAccent)
-                .frame(width: SymiSize.heroWaveAccentWidth, height: SymiSize.heroWaveAccentHeight)
-                .offset(x: SymiSpacing.heroWaveAccentOffsetX, y: SymiSpacing.heroWaveAccentOffsetY)
-        }
-        .clipShape(RoundedRectangle(cornerRadius: SymiRadius.heroCard, style: .continuous))
-        .shadow(color: AppTheme.shadowColor.opacity(SymiOpacity.elevatedShadow), radius: SymiRadius.heroCard, y: SymiSpacing.md)
-        .accessibilityElement(children: .combine)
-    }
-
-    private var statsRow: some View {
-        HStack(alignment: .firstTextBaseline, spacing: SymiSpacing.md) {
-            Text("Bisher dokumentiert")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(AppTheme.foam.opacity(SymiOpacity.strongSurface))
-
-            Spacer(minLength: 12)
-
-            Text("\(overview.episodeCount) Eintrag\(overview.episodeCount == 1 ? "" : "e")")
-                .font(.title3.weight(.bold))
-                .foregroundStyle(AppTheme.symiOnAccent)
-                .shadow(
-                    color: AppTheme.ink.opacity(SymiOpacity.selectedFill),
-                    radius: SymiShadow.heroTextRadius,
-                    y: SymiShadow.heroTextYOffset
-                )
-        }
-    }
-
-    private var summaryTitle: String {
-        if let latestEpisode = overview.latestEpisode {
-            return "Dein letzter Eintrag: \(latestEpisode.type.rawValue)"
-        }
-
-        return "Schön, dass du dein Tagebuch startest."
-    }
-
-    private var summaryDetail: String {
-        if let latestEpisode = overview.latestEpisode {
-            return "Letzter Eintrag: \(latestEpisode.type.rawValue), Intensität \(latestEpisode.intensity)/10 · \(latestEpisode.startedAt.formatted(date: .abbreviated, time: .shortened))"
-        }
-
-        return "In Sekunden eintragen, später Muster verstehen und den Alltag ruhiger planen."
-    }
-
-    private var greeting: String {
-        let hour = Calendar.current.component(.hour, from: .now)
-        switch hour {
-        case 5 ..< 12:
-            return "Guten Morgen"
-        case 12 ..< 18:
-            return "Guten Tag"
-        default:
-            return "Guten Abend"
-        }
-    }
-}
-
 private struct FeelingCheckInCard: View {
     @State private var currentState = 4.0
 
@@ -336,19 +404,6 @@ private struct FeelingCheckInCard: View {
         default:
             return "stark"
         }
-    }
-}
-
-private struct WaveAccent: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        path.move(to: CGPoint(x: rect.minX, y: rect.midY))
-        path.addCurve(
-            to: CGPoint(x: rect.maxX, y: rect.midY * 0.62),
-            control1: CGPoint(x: rect.width * 0.24, y: rect.maxY),
-            control2: CGPoint(x: rect.width * 0.66, y: rect.minY)
-        )
-        return path
     }
 }
 

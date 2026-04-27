@@ -666,6 +666,7 @@
       }
     },
     "Bisher dokumentiert" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
