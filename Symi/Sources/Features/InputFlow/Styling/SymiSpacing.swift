@@ -110,6 +110,11 @@ nonisolated enum SymiSize {
     static let calendarPlaceholderHeight: CGFloat = 16
     static let calendarDayMinHeight: CGFloat = 52
     static let calendarWeekdayHeight: CGFloat = 44
+    static let homeCalendarWeekdayHeight: CGFloat = 26
+    static let homeCalendarNavigationButton: CGFloat = 50
+    static let homeCalendarDayNumber: CGFloat = 36
+    static let quickEntryIcon: CGFloat = 58
+    static let quickEntryMinHeight: CGFloat = 108
     static let trendChartHeight: CGFloat = 88
     static let reviewStepIcon: CGFloat = 44
     static let reviewSummaryIcon: CGFloat = 42
