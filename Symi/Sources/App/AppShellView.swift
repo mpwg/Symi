@@ -45,7 +45,7 @@ struct AppShellView: View {
             }
         }
         .tint(AppTheme.symiPetrol)
-        .toolbarBackground(AppTheme.symiPetrol.opacity(0.96), for: .navigationBar)
+        .toolbarBackground(AppTheme.symiPetrol.opacity(SymiOpacity.strongSurface), for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .task {
             appContainer.startDeferredMaintenanceIfNeeded()
@@ -132,7 +132,7 @@ private struct RegularDetailSurface<Content: View>: View {
     }
 
     var body: some View {
-        HStack(spacing: 0) {
+        HStack(spacing: SymiSpacing.zero) {
             Divider()
 
             content

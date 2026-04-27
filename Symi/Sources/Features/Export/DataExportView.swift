@@ -49,7 +49,7 @@ struct DataExportView: View {
             }
 
             Section("Zeitraum") {
-                HStack(spacing: 16) {
+                HStack(spacing: SymiSpacing.lg) {
                     dateField(title: "Von", selection: $controller.startDate)
                     dateField(title: "Bis", selection: $controller.endDate)
                 }
@@ -109,7 +109,7 @@ struct DataExportView: View {
     }
 
     private func dateField(title: String, selection: Binding<Date>) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: SymiSpacing.compact) {
             Text(title)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)

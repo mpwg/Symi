@@ -1,33 +1,39 @@
 import SwiftUI
 
 enum AppTheme {
-    static let groupedHorizontalInset: CGFloat = 20
-    static let groupedTopInset: CGFloat = 12
-    static let groupedRowInsets = EdgeInsets(top: 10, leading: 20, bottom: 10, trailing: 20)
-    static let wideContentMaxWidth: CGFloat = 1180
-    static let readableContentMaxWidth: CGFloat = 760
-    static let dashboardSpacing: CGFloat = 20
+    static let groupedHorizontalInset = SymiSpacing.groupedHorizontalInset
+    static let groupedTopInset = SymiSpacing.screenTopInset
+    static let groupedRowInsets = EdgeInsets(
+        top: SymiSpacing.sm,
+        leading: SymiSpacing.xxl,
+        bottom: SymiSpacing.sm,
+        trailing: SymiSpacing.xxl
+    )
+    static let wideContentMaxWidth = SymiSpacing.wideContentMaxWidth
+    static let readableContentMaxWidth = SymiSpacing.readableContentMaxWidth
+    static let dashboardSpacing = SymiSpacing.dashboardSpacing
 
-    static let symiPetrol = Color(red: 0.059, green: 0.239, blue: 0.243)
-    static let symiSage = Color(red: 0.557, green: 0.804, blue: 0.722)
-    static let symiCoral = Color(red: 1.000, green: 0.541, blue: 0.478)
-    static let symiBackground = Color(red: 0.965, green: 0.957, blue: 0.937)
-    static let symiCard = Color(red: 1.000, green: 0.996, blue: 0.984)
-    static let symiTextPrimary = Color(red: 0.110, green: 0.110, blue: 0.118)
-    static let symiTextSecondary = Color(red: 0.420, green: 0.420, blue: 0.431)
+    static let symiPetrol = SymiColors.primaryPetrol.color
+    static let symiSage = SymiColors.sage.color
+    static let symiCoral = SymiColors.coral.color
+    static let symiBackground = SymiColors.warmBackground.color
+    static let symiCard = SymiColors.card.color
+    static let symiTextPrimary = SymiColors.textPrimary.color
+    static let symiTextSecondary = SymiColors.textSecondary.color
+    static let symiOnAccent = SymiColors.onAccent.color
 
     static let ink = symiPetrol
     static let ocean = symiPetrol
     static let seaGlass = symiSage
     static let foam = symiBackground
     static let coral = symiCoral
-    static let mist = Color(red: 0.925, green: 0.969, blue: 0.955)
+    static let mist = SymiColors.mist.color
 
     static let appBackground = LinearGradient(
         colors: [
             symiBackground,
-            Color.white.opacity(0.72),
-            symiSage.opacity(0.22)
+            symiOnAccent.opacity(SymiOpacity.appBackgroundSurface),
+            symiSage.opacity(SymiOpacity.backgroundAccent)
         ],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
@@ -45,16 +51,16 @@ enum AppTheme {
     static let cardGradient = LinearGradient(
         colors: [
             symiCard,
-            Color.white.opacity(0.96)
+            symiOnAccent.opacity(SymiOpacity.strongSurface)
         ],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
 
-    static let selectedFill = symiSage.opacity(0.35)
-    static let secondaryFill = symiSage.opacity(0.18)
+    static let selectedFill = symiSage.opacity(SymiOpacity.selectedFill)
+    static let secondaryFill = symiSage.opacity(SymiOpacity.secondaryFill)
     static let cardBorder = Color.clear
-    static let shadowColor = symiPetrol.opacity(0.10)
+    static let shadowColor = symiPetrol.opacity(SymiOpacity.shadow)
 }
 
 private struct BrandScreenModifier: ViewModifier {
@@ -95,33 +101,42 @@ private struct BrandCardModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .background(AppTheme.cardGradient)
-            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .shadow(color: AppTheme.shadowColor, radius: 14, x: 0, y: 6)
+            .clipShape(RoundedRectangle(cornerRadius: SymiRadius.card, style: .continuous))
+            .shadow(
+                color: AppTheme.shadowColor,
+                radius: SymiShadow.brandCardRadius,
+                x: SymiShadow.cardXOffset,
+                y: SymiShadow.brandCardYOffset
+            )
     }
 }
 
 struct SymiPrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.headline)
-            .foregroundStyle(.white)
-            .padding(.vertical, 16)
+            .font(SymiTypography.button)
+            .foregroundStyle(AppTheme.symiOnAccent)
+            .padding(.vertical, SymiSpacing.lg)
             .frame(maxWidth: .infinity)
-            .background(AppTheme.symiCoral.opacity(configuration.isPressed ? 0.82 : 1))
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .shadow(color: AppTheme.symiCoral.opacity(configuration.isPressed ? 0.10 : 0.22), radius: 12, y: 6)
+            .background(AppTheme.symiCoral.opacity(configuration.isPressed ? SymiOpacity.heroPrimaryWave : SymiOpacity.opaque))
+            .clipShape(RoundedRectangle(cornerRadius: SymiRadius.button, style: .continuous))
+            .shadow(
+                color: AppTheme.symiCoral.opacity(configuration.isPressed ? SymiOpacity.pressedShadow : SymiOpacity.backgroundAccent),
+                radius: SymiShadow.buttonRadius,
+                y: SymiShadow.buttonYOffset
+            )
     }
 }
 
 struct SymiSecondaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.headline)
+            .font(SymiTypography.button)
             .foregroundStyle(AppTheme.symiPetrol)
-            .padding(.vertical, 14)
+            .padding(.vertical, SymiSpacing.secondaryButtonVerticalPadding)
             .frame(maxWidth: .infinity)
-            .background(AppTheme.symiSage.opacity(configuration.isPressed ? 0.20 : 0.32))
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .background(AppTheme.symiSage.opacity(configuration.isPressed ? SymiOpacity.pressedFill : SymiOpacity.secondaryPressedFill))
+            .clipShape(RoundedRectangle(cornerRadius: SymiRadius.button, style: .continuous))
     }
 }
 

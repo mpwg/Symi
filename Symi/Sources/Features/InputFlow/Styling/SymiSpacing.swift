@@ -1,6 +1,21 @@
 import SwiftUI
 
-enum SymiSpacing {
+nonisolated enum SymiSpacing {
+    static let xxs: CGFloat = 4
+    static let micro: CGFloat = 2
+    static let compact: CGFloat = 6
+    static let xs: CGFloat = 8
+    static let sm: CGFloat = 10
+    static let md: CGFloat = 12
+    static let lg: CGFloat = 16
+    static let xl: CGFloat = 18
+    static let xxl: CGFloat = 20
+    static let xxxl: CGFloat = 24
+    static let screenTopInset: CGFloat = 12
+    static let groupedHorizontalInset: CGFloat = 20
+    static let dashboardSpacing: CGFloat = 20
+    static let wideContentMaxWidth: CGFloat = 1180
+    static let readableContentMaxWidth: CGFloat = 760
     static let flowHorizontalPadding: CGFloat = 20
     static let flowMaxContentWidth: CGFloat = 420
     static let flowSectionSpacing: CGFloat = 22
@@ -12,9 +27,26 @@ enum SymiSpacing {
     static let tileSpacing: CGFloat = 10
     static let pillSpacing: CGFloat = 8
     static let cardPadding: CGFloat = 18
+    static let buttonTrailingIconPadding: CGFloat = 18
+    static let pillVerticalPadding: CGFloat = 9
+    static let secondaryButtonVerticalPadding: CGFloat = 14
+    static let chevronTopPadding: CGFloat = 3
+    static let zero: CGFloat = 0
+    static let selectedCheckOffsetX: CGFloat = 12
+    static let selectedCheckOffsetY: CGFloat = -6
+    static let heroWavePrimaryOffsetX: CGFloat = -10
+    static let heroWavePrimaryOffsetY: CGFloat = 18
+    static let heroWaveSecondaryOffsetX: CGFloat = 6
+    static let heroWaveSecondaryOffsetY: CGFloat = 24
+    static let heroWaveAccentOffsetX: CGFloat = -8
+    static let heroWaveAccentOffsetY: CGFloat = 28
 }
 
-enum SymiRadius {
+nonisolated enum SymiRadius {
+    static let card: CGFloat = 20
+    static let button: CGFloat = 18
+    static let chip: CGFloat = 12
+    static let heroCard: CGFloat = 24
     static let flowCard: CGFloat = 18
     static let flowTile: CGFloat = 14
     static let flowPill: CGFloat = 12
@@ -22,10 +54,109 @@ enum SymiRadius {
 }
 
 enum SymiShadow {
-    static let cardColor = AppTheme.symiPetrol.opacity(0.06)
+    static let cardColor = AppTheme.symiPetrol.opacity(SymiOpacity.clearAccent)
     static let cardRadius: CGFloat = 12
+    static let cardXOffset: CGFloat = 0
     static let cardYOffset: CGFloat = 5
-    static let buttonColor = AppTheme.symiPetrol.opacity(0.16)
+    static let brandCardRadius: CGFloat = 14
+    static let brandCardYOffset: CGFloat = 6
+    static let heroTextRadius: CGFloat = 3
+    static let heroTextYOffset: CGFloat = 1
+    static let buttonColor = AppTheme.symiPetrol.opacity(SymiOpacity.softFill)
     static let buttonRadius: CGFloat = 12
+    static let buttonXOffset: CGFloat = 0
     static let buttonYOffset: CGFloat = 6
+}
+
+nonisolated enum SymiSize {
+    static let accessibilityMarker: CGFloat = 1
+    static let minInteractiveHeight: CGFloat = 44
+    static let primaryButtonHeight: CGFloat = 54
+    static let progressIndicator: CGFloat = 24
+    static let inputSelectionTileMinHeight: CGFloat = 84
+    static let inputSelectionIconWidth: CGFloat = 34
+    static let inputSelectionIconHeight: CGFloat = 30
+    static let medicationRowMinHeight: CGFloat = 72
+    static let selectedMedicationRowMinHeight: CGFloat = 108
+    static let medicationQuantityMinWidth: CGFloat = 24
+    static let noteEditorMinHeight: CGFloat = 220
+    static let dashboardWideColumnMinWidth: CGFloat = 360
+    static let dashboardColumnMinWidth: CGFloat = 320
+    static let dashboardActionColumnMinWidth: CGFloat = 180
+    static let historySidebarMinWidth: CGFloat = 420
+    static let historySidebarMaxWidth: CGFloat = 560
+    static let medicationGridMinWidth: CGFloat = 220
+    static let multiSelectGridMinWidth: CGFloat = 140
+    static let tagGridMinWidth: CGFloat = 120
+    static let pillGridMinWidth: CGFloat = 70
+    static let statusDot: CGFloat = 10
+    static let calendarDot: CGFloat = 9
+    static let calendarPlaceholderHeight: CGFloat = 16
+    static let calendarDayMinHeight: CGFloat = 52
+    static let calendarWeekdayHeight: CGFloat = 44
+    static let trendChartHeight: CGFloat = 88
+    static let reviewStepIcon: CGFloat = 44
+    static let reviewSummaryIcon: CGFloat = 42
+    static let productInfoIconWidth: CGFloat = 28
+    static let heroSymbolWidth: CGFloat = 90
+    static let heroSymbolHeight: CGFloat = 120
+    static let heroWavePrimaryHeight: CGFloat = 54
+    static let heroWaveSecondaryHeight: CGFloat = 44
+    static let heroWaveAccentWidth: CGFloat = 132
+    static let heroWaveAccentHeight: CGFloat = 34
+    static let painGaugeWidth: CGFloat = 212
+    static let painGaugeHeight: CGFloat = 142
+    static let emptyStateMinHeight: CGFloat = 360
+    static let defaultWindowWidth: CGFloat = 1280
+    static let defaultWindowHeight: CGFloat = 800
+    static let weatherInlineLogoMaxWidth: CGFloat = 180
+    static let weatherInlineLogoMinHeight: CGFloat = 28
+    static let weatherInlineLogoMaxHeight: CGFloat = 48
+    static let weatherFooterLogoMaxWidth: CGFloat = 220
+    static let weatherFooterLogoMinHeight: CGFloat = 32
+    static let weatherFooterLogoMaxHeight: CGFloat = 56
+}
+
+nonisolated enum SymiStroke {
+    static let hairline: CGFloat = 1
+    static let selectedHairline: CGFloat = 1.5
+    static let trendLine: CGFloat = 3
+    static let heroWaveAccent: CGFloat = 4
+    static let heroWaveSecondary: CGFloat = 5
+    static let heroWavePrimary: CGFloat = 8
+    static let painGaugeArc: CGFloat = 13
+}
+
+nonisolated enum SymiOpacity {
+    static let clearAccent: Double = 0.06
+    static let hairline: Double = 0.08
+    static let shadow: Double = 0.10
+    static let faintSurface: Double = 0.12
+    static let softFill: Double = 0.16
+    static let secondaryFill: Double = 0.18
+    static let pressedShadow: Double = 0.10
+    static let pressedFill: Double = 0.20
+    static let backgroundAccent: Double = 0.22
+    static let progressTrackLight: Double = 0.12
+    static let progressTrackDark: Double = 0.22
+    static let progressIndicatorStrokeDark: Double = 0.18
+    static let progressIndicatorStrokeLight: Double = 0.92
+    static let selectedStroke: Double = 0.24
+    static let stepSelectedFillDark: Double = 0.30
+    static let secondaryPressedFill: Double = 0.32
+    static let selectedFill: Double = 0.35
+    static let stepBorderLight: Double = 0.36
+    static let outline: Double = 0.45
+    static let stepBorderDark: Double = 0.48
+    static let disabledFill: Double = 0.55
+    static let disabledContent: Double = 0.55
+    static let disabledTile: Double = 0.58
+    static let heroSecondaryWave: Double = 0.72
+    static let appBackgroundSurface: Double = 0.72
+    static let heroPrimaryWave: Double = 0.82
+    static let heroSecondaryText: Double = 0.86
+    static let heroAccentWave: Double = 0.92
+    static let strongSurface: Double = 0.96
+    static let opaque: Double = 1
+    static let elevatedShadow: Double = 1.2
 }

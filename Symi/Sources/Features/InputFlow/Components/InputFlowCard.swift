@@ -24,24 +24,24 @@ struct InputFlowCard<Content: View>: View {
             .background(cardBackground, in: RoundedRectangle(cornerRadius: SymiRadius.flowCard, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: SymiRadius.flowCard, style: .continuous)
-                    .stroke(borderColor, lineWidth: 1)
+                    .stroke(borderColor, lineWidth: SymiStroke.hairline)
             }
-            .shadow(color: shadowColor, radius: SymiShadow.cardRadius, x: 0, y: SymiShadow.cardYOffset)
+            .shadow(color: shadowColor, radius: SymiShadow.cardRadius, x: SymiShadow.cardXOffset, y: SymiShadow.cardYOffset)
     }
 
     private var cardBackground: Color {
-        colorScheme == .dark ? Color(uiColor: .secondarySystemGroupedBackground) : SymiColors.card.color
+        SymiColors.elevatedCard(for: colorScheme)
     }
 
     private var borderColor: Color {
         guard isHighlighted, let theme else {
-            return Color.primary.opacity(colorScheme == .dark ? 0.16 : 0.08)
+            return SymiColors.subtleSeparator(for: colorScheme)
         }
 
         return theme.border(for: colorScheme)
     }
 
     private var shadowColor: Color {
-        colorScheme == .dark ? .clear : SymiShadow.cardColor
+        colorScheme == .dark ? Color.clear : SymiShadow.cardColor
     }
 }

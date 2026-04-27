@@ -8,7 +8,7 @@ struct WeatherAttributionView: View {
     var showsDescription = true
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: SymiSpacing.xs) {
             if showsDescription {
                 Text(WeatherAttribution.modifiedSourceDescription)
                     .font(.footnote)
@@ -23,7 +23,12 @@ struct WeatherAttributionView: View {
                 } placeholder: {
                     weatherMarkFallback
                 }
-                .frame(maxWidth: 180, minHeight: 28, maxHeight: 48, alignment: .leading)
+                .frame(
+                    maxWidth: SymiSize.weatherInlineLogoMaxWidth,
+                    minHeight: SymiSize.weatherInlineLogoMinHeight,
+                    maxHeight: SymiSize.weatherInlineLogoMaxHeight,
+                    alignment: .leading
+                )
                 .accessibilityLabel(attribution.serviceName)
             } else {
                 weatherMarkFallback
@@ -68,7 +73,7 @@ private struct WeatherAttributionDetailView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: SymiSpacing.lg) {
                     weatherMark
 
                     if let legalAttributionText = attribution.legalAttributionText, !legalAttributionText.isEmpty {
@@ -111,7 +116,12 @@ private struct WeatherAttributionDetailView: View {
             } placeholder: {
                 weatherMarkFallback
             }
-            .frame(maxWidth: 220, minHeight: 32, maxHeight: 56, alignment: .leading)
+            .frame(
+                maxWidth: SymiSize.weatherFooterLogoMaxWidth,
+                minHeight: SymiSize.weatherFooterLogoMinHeight,
+                maxHeight: SymiSize.weatherFooterLogoMaxHeight,
+                alignment: .leading
+            )
             .accessibilityLabel(attribution.serviceName)
         } else {
             weatherMarkFallback

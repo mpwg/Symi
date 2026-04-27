@@ -106,7 +106,7 @@ struct HistoryView: View {
     }
 
     private var compactContent: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: SymiSpacing.xxl) {
             insightSection
             calendarSection
 
@@ -120,8 +120,8 @@ struct HistoryView: View {
 
             selectedDaySection
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 20)
+        .padding(.horizontal, SymiSpacing.lg)
+        .padding(.vertical, SymiSpacing.xxl)
     }
 
     private var regularContent: some View {
@@ -130,12 +130,12 @@ struct HistoryView: View {
                 insightSection
                 calendarSection
             }
-            .frame(minWidth: 420, maxWidth: 560, alignment: .top)
+            .frame(minWidth: SymiSize.historySidebarMinWidth, maxWidth: SymiSize.historySidebarMaxWidth, alignment: .top)
 
             selectedDaySection
                 .frame(maxWidth: .infinity, alignment: .top)
         }
-        .padding(24)
+        .padding(SymiSpacing.xxxl)
         .wideContent()
     }
 
@@ -144,7 +144,7 @@ struct HistoryView: View {
             title: "Kalender",
             footer: "Weiche Punkte zeigen Tage mit Einträgen. Wähle einen Tag, um Details zu sehen."
         ) {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: SymiSpacing.lg) {
                 MonthHeader(
                     month: controller.displayedMonth,
                     onPrevious: controller.goToPreviousMonth,
@@ -165,7 +165,7 @@ struct HistoryView: View {
 
     private var insightSection: some View {
         contentSection(title: "Verstehen") {
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: SymiSpacing.secondaryButtonVerticalPadding) {
                 Text(insightTitle)
                     .font(.title3.weight(.bold))
                     .foregroundStyle(AppTheme.symiPetrol)
@@ -180,7 +180,7 @@ struct HistoryView: View {
                 .pickerStyle(.segmented)
 
                 SoftTrendChart(values: recentIntensityValues)
-                    .frame(height: 88)
+                    .frame(height: SymiSize.trendChartHeight)
                     .accessibilityLabel("Sanfte Verlaufsgrafik deiner letzten Einträge")
             }
         }
@@ -188,7 +188,7 @@ struct HistoryView: View {
 
     private var selectedDaySection: some View {
         contentSection(title: "Ausgewählter Tag") {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: SymiSpacing.md) {
                 daySummary
 
                 if controller.selectedDayEpisodes.isEmpty {
@@ -223,14 +223,14 @@ struct HistoryView: View {
 
     @ViewBuilder
     private func contentSection<Content: View>(title: String, footer: String? = nil, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: SymiSpacing.sm) {
             Text(title)
                 .font(.headline)
 
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: SymiSpacing.md) {
                 content()
             }
-            .padding(16)
+            .padding(SymiSpacing.lg)
             .frame(maxWidth: .infinity, alignment: .leading)
             .brandCard()
 
@@ -243,7 +243,7 @@ struct HistoryView: View {
     }
 
     private var daySummary: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: SymiSpacing.compact) {
             Text(controller.daySummary.date.formatted(date: .complete, time: .omitted))
                 .font(.headline)
 
@@ -257,7 +257,7 @@ struct HistoryView: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, SymiSpacing.micro)
         .accessibilityElement(children: .combine)
     }
 
@@ -311,7 +311,7 @@ private struct EpisodeRow: View {
     let episode: EpisodeRecord
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: SymiSpacing.compact) {
             Text(episode.startedAt.formatted(date: .abbreviated, time: .omitted))
                 .font(.headline)
 
@@ -328,7 +328,7 @@ private struct EpisodeRow: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, SymiSpacing.micro)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilitySummary)
         .accessibilityHint("Öffnet die Detailansicht des Eintrags.")
@@ -373,8 +373,8 @@ private struct MonthHeader: View {
             Button(action: onPrevious) {
                 Image(systemName: "chevron.left")
             }
-            .padding(10)
-            .background(AppTheme.secondaryFill, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .padding(SymiSpacing.sm)
+            .background(AppTheme.secondaryFill, in: RoundedRectangle(cornerRadius: SymiRadius.chip, style: .continuous))
             .accessibilityLabel("Vorheriger Monat")
 
             Spacer()
@@ -388,12 +388,12 @@ private struct MonthHeader: View {
             Button(action: onNext) {
                 Image(systemName: "chevron.right")
             }
-            .padding(10)
-            .background(AppTheme.secondaryFill, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .padding(SymiSpacing.sm)
+            .background(AppTheme.secondaryFill, in: RoundedRectangle(cornerRadius: SymiRadius.chip, style: .continuous))
             .accessibilityLabel("Nächster Monat")
         }
         .buttonStyle(.plain)
-        .padding(.vertical, 4)
+        .padding(.vertical, SymiSpacing.xxs)
     }
 }
 
@@ -402,11 +402,11 @@ private struct MonthGrid: View {
     @Binding var selectedDay: Date
     let episodesByDay: [Date: [EpisodeRecord]]
 
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 7)
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: SymiSpacing.xs), count: 7)
 
     var body: some View {
-        VStack(spacing: 12) {
-            LazyVGrid(columns: columns, spacing: 8) {
+        VStack(spacing: SymiSpacing.md) {
+            LazyVGrid(columns: columns, spacing: SymiSpacing.xs) {
                 ForEach(weekdaySymbols, id: \.self) { symbol in
                     Text(symbol)
                         .font(.caption.weight(.semibold))
@@ -428,7 +428,7 @@ private struct MonthGrid: View {
                         .buttonStyle(.plain)
                     } else {
                         Color.clear
-                            .frame(height: 44)
+                            .frame(height: SymiSize.calendarWeekdayHeight)
                     }
                 }
             }
@@ -472,23 +472,23 @@ private struct DayCell: View {
     let peakIntensity: Int
 
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: SymiSpacing.xxs) {
             Text(date.formatted(.dateTime.day()))
                 .font(.subheadline.weight(.semibold))
 
             if episodeCount > 0 {
                 Circle()
                     .fill(intensityColor)
-                    .frame(width: 9, height: 9)
+                    .frame(width: SymiSize.calendarDot, height: SymiSize.calendarDot)
             } else {
                 Spacer()
-                    .frame(height: 16)
+                    .frame(height: SymiSize.calendarPlaceholderHeight)
             }
         }
-        .frame(maxWidth: .infinity, minHeight: 52)
-        .padding(.vertical, 6)
+        .frame(maxWidth: .infinity, minHeight: SymiSize.calendarDayMinHeight)
+        .padding(.vertical, SymiSpacing.compact)
         .background(isSelected ? AppTheme.selectedFill : Color.clear)
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: SymiRadius.flowTile, style: .continuous))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityLabel)
         .accessibilityValue(isSelected ? "Ausgewählt" : "")
@@ -525,8 +525,8 @@ private struct SoftTrendChart: View {
             let points = chartPoints(in: proxy.size)
 
             ZStack(alignment: .bottomLeading) {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(AppTheme.symiSage.opacity(0.16))
+                RoundedRectangle(cornerRadius: SymiRadius.flowBanner, style: .continuous)
+                    .fill(AppTheme.symiSage.opacity(SymiOpacity.softFill))
 
                 Path { path in
                     guard let first = points.first else { return }
@@ -535,13 +535,16 @@ private struct SoftTrendChart: View {
                         path.addLine(to: point)
                     }
                 }
-                .stroke(AppTheme.symiPetrol, style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
+                .stroke(
+                    AppTheme.symiPetrol,
+                    style: StrokeStyle(lineWidth: SymiStroke.trendLine, lineCap: .round, lineJoin: .round)
+                )
 
                 ForEach(Array(points.enumerated()), id: \.offset) { _, point in
                     Circle()
                         .fill(AppTheme.symiCard)
-                        .frame(width: 9, height: 9)
-                        .overlay(Circle().stroke(AppTheme.symiPetrol, lineWidth: 2))
+                        .frame(width: SymiSize.calendarDot, height: SymiSize.calendarDot)
+                        .overlay(Circle().stroke(AppTheme.symiPetrol, lineWidth: SymiSpacing.micro))
                         .position(point)
                 }
             }

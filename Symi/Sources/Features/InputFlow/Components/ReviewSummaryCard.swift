@@ -13,7 +13,7 @@ struct InputFlowStepIcon: View {
         Image(systemName: metadata.symbolName)
             .font(.title3.weight(.semibold))
             .foregroundStyle(metadata.theme.accent(for: colorScheme))
-            .frame(width: 44, height: 44)
+            .frame(width: SymiSize.reviewStepIcon, height: SymiSize.reviewStepIcon)
             .background(metadata.theme.iconBackground(for: colorScheme), in: Circle())
             .accessibilityHidden(true)
     }
@@ -58,11 +58,11 @@ struct ReviewSummaryCard: View {
 
     private var content: some View {
         InputFlowCard {
-            HStack(alignment: .top, spacing: 12) {
+            HStack(alignment: .top, spacing: SymiSpacing.md) {
                 InputFlowStepIcon(metadata)
-                    .frame(width: 42, height: 42)
+                    .frame(width: SymiSize.reviewSummaryIcon, height: SymiSize.reviewSummaryIcon)
 
-                VStack(alignment: .leading, spacing: 7) {
+                VStack(alignment: .leading, spacing: SymiSpacing.xs - SymiSize.accessibilityMarker) {
                     Text(metadata.title)
                         .font(SymiTypography.flowSummaryTitle)
 
@@ -81,13 +81,13 @@ struct ReviewSummaryCard: View {
                     }
                 }
 
-                Spacer(minLength: 8)
+                Spacer(minLength: SymiSpacing.xs)
 
                 if onEdit != nil {
                     Image(systemName: "chevron.right")
                         .font(.footnote.weight(.semibold))
                         .foregroundStyle(.secondary)
-                        .padding(.top, 3)
+                        .padding(.top, SymiSpacing.chevronTopPadding)
                         .accessibilityHidden(true)
                 }
             }

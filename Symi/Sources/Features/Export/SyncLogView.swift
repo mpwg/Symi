@@ -50,11 +50,11 @@ struct SyncLogView: View {
                     )
                 } else {
                     ForEach(controller.logEntries) { entry in
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack(alignment: .top, spacing: 10) {
+                        VStack(alignment: .leading, spacing: SymiSpacing.xs) {
+                            HStack(alignment: .top, spacing: SymiSpacing.sm) {
                                 Image(systemName: iconName(for: entry.level))
                                     .foregroundStyle(color(for: entry.level))
-                                VStack(alignment: .leading, spacing: 4) {
+                                VStack(alignment: .leading, spacing: SymiSpacing.xxs) {
                                     Text(entry.operation)
                                         .font(.headline)
                                     Text(entry.message)
@@ -73,7 +73,7 @@ struct SyncLogView: View {
                                     .foregroundStyle(.secondary)
                             }
                         }
-                        .padding(.vertical, 4)
+                        .padding(.vertical, SymiSpacing.xxs)
                         .brandGroupedRow()
                     }
                 }

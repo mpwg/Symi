@@ -116,7 +116,7 @@ struct EpisodeDetailView: View {
                 if !episode.medications.isEmpty {
                     Section("Medikamente") {
                         ForEach(episode.medications.sorted(by: { $0.takenAt < $1.takenAt })) { medication in
-                            VStack(alignment: .leading, spacing: 4) {
+                            VStack(alignment: .leading, spacing: SymiSpacing.xxs) {
                                 HStack(alignment: .firstTextBaseline) {
                                     Text(medication.name)
                                         .font(.headline)
@@ -153,7 +153,7 @@ struct EpisodeDetailView: View {
                                         .foregroundStyle(.secondary)
                                 }
                             }
-                            .padding(.vertical, 2)
+                            .padding(.vertical, SymiSpacing.micro)
                             .brandGroupedRow()
                         }
                     }
@@ -190,7 +190,7 @@ struct EpisodeDetailView: View {
                         }
                         detailRow("Erfasst", weatherSnapshot.recordedAt.formatted(date: .abbreviated, time: .shortened))
                         WeatherAttributionView()
-                            .padding(.vertical, 4)
+                            .padding(.vertical, SymiSpacing.xxs)
                     }
                 }
 
@@ -216,7 +216,13 @@ struct EpisodeDetailView: View {
         ScrollView {
             if let episode {
                 LazyVGrid(
-                    columns: [GridItem(.adaptive(minimum: 320), spacing: AppTheme.dashboardSpacing, alignment: .top)],
+                    columns: [
+                        GridItem(
+                            .adaptive(minimum: SymiSize.dashboardColumnMinWidth),
+                            spacing: AppTheme.dashboardSpacing,
+                            alignment: .top
+                        )
+                    ],
                     alignment: .leading,
                     spacing: AppTheme.dashboardSpacing
                 ) {
@@ -256,7 +262,7 @@ struct EpisodeDetailView: View {
                     if !episode.medications.isEmpty {
                         AdaptiveDashboardCard(title: "Medikamente") {
                             ForEach(episode.medications.sorted(by: { $0.takenAt < $1.takenAt })) { medication in
-                                VStack(alignment: .leading, spacing: 4) {
+                                VStack(alignment: .leading, spacing: SymiSpacing.xxs) {
                                     HStack(alignment: .firstTextBaseline) {
                                         Text(medication.name)
                                             .font(.headline)
@@ -268,8 +274,8 @@ struct EpisodeDetailView: View {
                                     Text(medicationHeadline(for: medication))
                                         .foregroundStyle(.secondary)
                                 }
-                                .padding(12)
-                                .background(AppTheme.secondaryFill, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                .padding(SymiSpacing.md)
+                                .background(AppTheme.secondaryFill, in: RoundedRectangle(cornerRadius: SymiRadius.chip, style: .continuous))
                             }
                         }
                     }
@@ -314,30 +320,30 @@ struct EpisodeDetailView: View {
                         }
                     }
                 }
-                .padding(24)
+                .padding(SymiSpacing.xxxl)
                 .wideContent()
             } else {
                 ContentUnavailableView("Episode nicht gefunden", systemImage: "exclamationmark.triangle")
-                    .frame(maxWidth: .infinity, minHeight: 360)
+                    .frame(maxWidth: .infinity, minHeight: SymiSize.emptyStateMinHeight)
             }
         }
         .brandScreen()
     }
 
     private func detailRow(_ title: String, _ value: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: SymiSpacing.xxs) {
             Text(title)
             Text(value)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, SymiSpacing.micro)
         .brandGroupedRow()
         .accessibilityElement(children: .combine)
     }
 
     private func detailValue(_ title: String, _ value: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: SymiSpacing.xxs) {
             Text(title)
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
@@ -348,12 +354,16 @@ struct EpisodeDetailView: View {
     }
 
     private func tagFlow(_ values: [String]) -> some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 8)], alignment: .leading, spacing: 8) {
+        LazyVGrid(
+            columns: [GridItem(.adaptive(minimum: SymiSize.tagGridMinWidth), spacing: SymiSpacing.xs)],
+            alignment: .leading,
+            spacing: SymiSpacing.xs
+        ) {
             ForEach(values, id: \.self) { value in
                 Text(value)
                     .font(.subheadline.weight(.medium))
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
+                    .padding(.horizontal, SymiSpacing.md)
+                    .padding(.vertical, SymiSpacing.xs)
                     .background(AppTheme.secondaryFill, in: Capsule())
             }
         }

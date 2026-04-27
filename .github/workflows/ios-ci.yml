@@ -47,6 +47,12 @@ jobs:
           xcodebuild -version
           xcode-select -p
 
+      - name: SwiftLint installieren
+        run: brew install swiftlint
+
+      - name: Design-Token-Regeln prüfen
+        run: swiftlint lint --config .swiftlint.yml
+
       - name: Secrets prüfen
         run: |
           if [ -z "${APPLE_DEVELOPER_TEAM_ID}" ]; then

@@ -43,19 +43,19 @@ struct InputFlowSelectionTile: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 10) {
+            VStack(spacing: SymiSpacing.sm) {
                 ZStack(alignment: .topTrailing) {
                     Image(systemName: systemImage)
                         .font(.title3.weight(.medium))
                         .foregroundStyle(iconColor)
-                        .frame(width: 34, height: 30)
+                        .frame(width: SymiSize.inputSelectionIconWidth, height: SymiSize.inputSelectionIconHeight)
 
                     if state.isSelected {
                         Image(systemName: "checkmark.circle.fill")
                             .font(.caption.weight(.bold))
                             .foregroundStyle(theme.accent(for: colorScheme))
-                            .background(Color(uiColor: .systemBackground), in: Circle())
-                            .offset(x: 12, y: -6)
+                            .background(AppTheme.symiCard, in: Circle())
+                            .offset(x: SymiSpacing.selectedCheckOffsetX, y: SymiSpacing.selectedCheckOffsetY)
                             .accessibilityHidden(true)
                     }
                 }
@@ -65,18 +65,18 @@ struct InputFlowSelectionTile: View {
                     .multilineTextAlignment(.center)
                     .foregroundStyle(state.isDisabled ? .secondary : .primary)
                     .lineLimit(2)
-                    .minimumScaleFactor(0.82)
+                    .minimumScaleFactor(SymiTypography.compactScaleFactor)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 14)
-            .frame(maxWidth: .infinity, minHeight: 84)
+            .padding(.horizontal, SymiSpacing.sm)
+            .padding(.vertical, SymiSpacing.flowHeaderControlSpacing + SymiSpacing.xxs)
+            .frame(maxWidth: .infinity, minHeight: SymiSize.inputSelectionTileMinHeight)
             .background(tileBackground, in: RoundedRectangle(cornerRadius: SymiRadius.flowTile, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: SymiRadius.flowTile, style: .continuous)
-                    .stroke(borderColor, lineWidth: state.isSelected ? 1.5 : 1)
+                    .stroke(borderColor, lineWidth: state.isSelected ? SymiStroke.selectedHairline : SymiStroke.hairline)
             }
-            .opacity(state.isDisabled ? 0.58 : 1)
+            .opacity(state.isDisabled ? SymiOpacity.disabledTile : SymiOpacity.opaque)
         }
         .buttonStyle(.plain)
         .disabled(state.isDisabled)
@@ -100,7 +100,7 @@ struct InputFlowSelectionTile: View {
             return theme.selectedFill(for: colorScheme)
         }
 
-        return colorScheme == .dark ? Color(uiColor: .secondarySystemGroupedBackground) : SymiColors.card.color
+        return SymiColors.elevatedCard(for: colorScheme)
     }
 
     private var borderColor: Color {
@@ -108,7 +108,7 @@ struct InputFlowSelectionTile: View {
             return theme.border(for: colorScheme)
         }
 
-        return Color.primary.opacity(colorScheme == .dark ? 0.16 : 0.08)
+        return SymiColors.subtleSeparator(for: colorScheme)
     }
 
     private var accessibilityValue: String {

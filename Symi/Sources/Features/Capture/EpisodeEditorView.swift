@@ -167,7 +167,7 @@ private struct EpisodeScaleSection: View {
             }
             .pickerStyle(.segmented)
 
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: SymiSpacing.md) {
                 HStack {
                     Text("Intensität")
                     Spacer()
@@ -324,12 +324,12 @@ struct MedicationDefinitionGroupList: View {
                 description: Text("Passe den Suchbegriff an oder füge ein eigenes Medikament hinzu.")
             )
         } else {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: SymiSpacing.lg) {
                 ForEach(controller.filteredMedicationGroups) { group in
                     MedicationDefinitionGroupView(group: group, controller: controller)
                 }
             }
-            .padding(.vertical, 4)
+            .padding(.vertical, SymiSpacing.xxs)
             .formAlignedRow()
         }
     }
@@ -340,14 +340,14 @@ private struct MedicationDefinitionGroupView: View {
     let controller: EpisodeMedicationSelectionController
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: SymiSpacing.sm) {
             Text(group.title)
                 .font(.headline)
 
             LazyVGrid(
-                columns: [GridItem(.adaptive(minimum: 220), spacing: 12, alignment: .top)],
+                columns: [GridItem(.adaptive(minimum: SymiSize.medicationGridMinWidth), spacing: SymiSpacing.md, alignment: .top)],
                 alignment: .leading,
-                spacing: 12
+                spacing: SymiSpacing.md
             ) {
                 ForEach(group.items) { definition in
                     MedicationDefinitionRow(
@@ -362,7 +362,7 @@ private struct MedicationDefinitionGroupView: View {
                     )
                 }
             }
-            .padding(12)
+            .padding(SymiSpacing.md)
             .brandCard()
 
             if let footer = group.footer {
@@ -384,7 +384,7 @@ struct SelectedMedicationsSection: View {
                 .foregroundStyle(.secondary)
                 .formAlignedRow()
         } else {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: SymiSpacing.xs) {
                 Text("Ausgewählt")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.secondary)
@@ -430,14 +430,14 @@ private struct WeatherStatusContent: View {
                 description: Text("Beim Laden wird dein ungefährer Standort verwendet, um Wetterdaten für den Episodenzeitpunkt abzurufen.")
             )
         case .loading:
-            HStack(spacing: 12) {
+            HStack(spacing: SymiSpacing.md) {
                 ProgressView()
                 Text("Wetter wird ermittelt …")
                     .foregroundStyle(.secondary)
             }
-            .padding(.vertical, 8)
+            .padding(.vertical, SymiSpacing.xs)
         case .loaded(let weather):
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: SymiSpacing.xs) {
                 detailRow("Zustand", weather.condition)
                 if let temperature = weather.temperature {
                     detailRow("Temperatur", temperature.formatted(.number.precision(.fractionLength(1))) + " °C")
@@ -456,9 +456,9 @@ private struct WeatherStatusContent: View {
                 }
                 WeatherAttributionView()
             }
-            .padding(.vertical, 4)
+            .padding(.vertical, SymiSpacing.xxs)
         case .unavailable(let message):
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: SymiSpacing.md) {
                 Label(message, systemImage: "location.slash")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -474,12 +474,12 @@ private struct WeatherStatusContent: View {
                     .buttonStyle(SymiSecondaryButtonStyle())
                 }
             }
-            .padding(.vertical, 8)
+            .padding(.vertical, SymiSpacing.xs)
         }
     }
 
     private func detailRow(_ title: String, _ value: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: SymiSpacing.xxs) {
             Text(title)
                 .font(.subheadline.weight(.semibold))
             Text(value)
@@ -501,7 +501,7 @@ struct IntensityPicker: View {
     @Binding var value: Double
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: SymiSpacing.sm) {
             Slider(value: $value, in: 1 ... 10, step: 1)
                 .tint(AppTheme.symiCoral)
                 .accessibilityLabel("Intensität")
@@ -529,15 +529,15 @@ private struct MedicationDefinitionRow: View {
     let onDelete: (() -> Void)?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: SymiSpacing.sm) {
             Button(action: onToggle) {
-                HStack(alignment: .center, spacing: 12) {
+                HStack(alignment: .center, spacing: SymiSpacing.md) {
                     Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                         .imageScale(.large)
                         .foregroundStyle(isSelected ? AppTheme.ocean : .primary)
-                        .frame(width: 28, alignment: .center)
+                        .frame(width: SymiSize.productInfoIconWidth, alignment: .center)
 
-                    VStack(alignment: .leading, spacing: 3) {
+                    VStack(alignment: .leading, spacing: SymiSpacing.chevronTopPadding) {
                         Text(definition.name)
                             .font(.headline.weight(.semibold))
                             .foregroundStyle(.primary)
@@ -556,7 +556,7 @@ private struct MedicationDefinitionRow: View {
             .buttonStyle(.plain)
 
             if isSelected {
-                HStack(spacing: 10) {
+                HStack(spacing: SymiSpacing.sm) {
                     Text("Anzahl")
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(.secondary)
@@ -571,7 +571,7 @@ private struct MedicationDefinitionRow: View {
 
                     Text("\(quantity)")
                         .font(.headline.monospacedDigit())
-                        .frame(minWidth: 24)
+                        .frame(minWidth: SymiSize.medicationQuantityMinWidth)
 
                     Button(action: onIncrease) {
                         Image(systemName: "plus.circle")
@@ -581,14 +581,21 @@ private struct MedicationDefinitionRow: View {
                 }
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .frame(maxWidth: .infinity, minHeight: isSelected ? 108 : 72, alignment: .leading)
+        .padding(.horizontal, SymiSpacing.lg)
+        .padding(.vertical, SymiSpacing.secondaryButtonVerticalPadding)
+        .frame(
+            maxWidth: .infinity,
+            minHeight: isSelected ? SymiSize.selectedMedicationRowMinHeight : SymiSize.medicationRowMinHeight,
+            alignment: .leading
+        )
         .background(isSelected ? AppTheme.selectedFill : AppTheme.secondaryFill)
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: SymiRadius.flowTile, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .stroke(isSelected ? AppTheme.ocean.opacity(0.24) : Color.white.opacity(0.45), lineWidth: 1)
+            RoundedRectangle(cornerRadius: SymiRadius.flowTile, style: .continuous)
+                .stroke(
+                    isSelected ? AppTheme.ocean.opacity(SymiOpacity.selectedStroke) : AppTheme.symiOnAccent.opacity(SymiOpacity.outline),
+                    lineWidth: SymiStroke.hairline
+                )
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityLabel)
@@ -687,8 +694,8 @@ private struct SelectedMedicationSummaryRow: View {
     let onRemove: () -> Void
 
     var body: some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
+        HStack(spacing: SymiSpacing.md) {
+            VStack(alignment: .leading, spacing: SymiSpacing.xxs) {
                 Text(draft.name)
                     .font(.headline)
                     .foregroundStyle(.primary)
@@ -706,13 +713,13 @@ private struct SelectedMedicationSummaryRow: View {
             }
             .accessibilityLabel("\(draft.name) abwählen")
         }
-        .padding(12)
+        .padding(SymiSpacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(AppTheme.secondaryFill)
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: SymiRadius.chip, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(Color.white.opacity(0.45), lineWidth: 1)
+            RoundedRectangle(cornerRadius: SymiRadius.chip, style: .continuous)
+                .stroke(AppTheme.symiOnAccent.opacity(SymiOpacity.outline), lineWidth: SymiStroke.hairline)
         }
     }
 

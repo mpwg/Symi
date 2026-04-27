@@ -47,7 +47,7 @@ struct HomeView: View {
 
     private var compactDashboard: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: SymiSpacing.xl) {
                 DiaryWelcomeCard(overview: overview)
 
                 Button {
@@ -60,7 +60,7 @@ struct HomeView: View {
                 FeelingCheckInCard()
 
                 AdaptiveDashboardCard(title: "Vertrauen") {
-                    VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: SymiSpacing.sm) {
                         Label("Deine Daten gehören dir.", systemImage: "lock")
                             .font(.headline)
                         Text("Symi bleibt lokal nutzbar. Sync und Export passieren nur, wenn du sie aktiv nutzt.")
@@ -69,8 +69,8 @@ struct HomeView: View {
                     }
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 18)
+            .padding(.horizontal, SymiSpacing.xxl)
+            .padding(.vertical, SymiSpacing.xl)
         }
         .brandScreen()
     }
@@ -79,8 +79,8 @@ struct HomeView: View {
         ScrollView {
             LazyVGrid(
                 columns: [
-                    GridItem(.flexible(minimum: 360), spacing: AppTheme.dashboardSpacing, alignment: .top),
-                    GridItem(.flexible(minimum: 320), spacing: AppTheme.dashboardSpacing, alignment: .top)
+                    GridItem(.flexible(minimum: SymiSize.dashboardWideColumnMinWidth), spacing: AppTheme.dashboardSpacing, alignment: .top),
+                    GridItem(.flexible(minimum: SymiSize.dashboardColumnMinWidth), spacing: AppTheme.dashboardSpacing, alignment: .top)
                 ],
                 alignment: .leading,
                 spacing: AppTheme.dashboardSpacing
@@ -91,9 +91,9 @@ struct HomeView: View {
 
                     AdaptiveDashboardCard(title: "Schnellaktionen") {
                         LazyVGrid(
-                            columns: [GridItem(.adaptive(minimum: 180), spacing: 12)],
+                            columns: [GridItem(.adaptive(minimum: SymiSize.dashboardActionColumnMinWidth), spacing: SymiSpacing.md)],
                             alignment: .leading,
-                            spacing: 12
+                            spacing: SymiSpacing.md
                         ) {
                             QuickActionTile("Eintragen", systemImage: "plus") {
                                 isPresentingEpisodeEditor = true
@@ -105,7 +105,7 @@ struct HomeView: View {
 
                 VStack(alignment: .leading, spacing: AppTheme.dashboardSpacing) {
                     AdaptiveDashboardCard(title: "Vertrauen") {
-                        VStack(alignment: .leading, spacing: 10) {
+                        VStack(alignment: .leading, spacing: SymiSpacing.sm) {
                             Label("Deine Daten gehören dir.", systemImage: "lock")
                                 .font(.headline)
                             Text("Website und Support: symiapp.com")
@@ -116,7 +116,7 @@ struct HomeView: View {
 
                 }
             }
-            .padding(24)
+            .padding(SymiSpacing.xxxl)
             .wideContent()
         }
         .brandScreen()
@@ -145,17 +145,17 @@ struct AdaptiveDashboardCard<Content: View>: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: SymiSpacing.secondaryButtonVerticalPadding) {
             Text(title)
                 .font(.headline)
                 .accessibilityAddTraits(.isHeader)
 
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: SymiSpacing.md) {
                 content
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(18)
+        .padding(SymiSpacing.xl)
         .frame(maxWidth: .infinity, alignment: .leading)
         .brandCard()
     }
@@ -176,9 +176,9 @@ private struct QuickActionTile: View {
         Button(action: action) {
             Label(title, systemImage: systemImage)
                 .font(.subheadline.weight(.semibold))
-                .frame(maxWidth: .infinity, minHeight: 54, alignment: .leading)
-                .padding(.horizontal, 14)
-                .background(AppTheme.secondaryFill, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .frame(maxWidth: .infinity, minHeight: SymiSize.primaryButtonHeight, alignment: .leading)
+                .padding(.horizontal, SymiSpacing.secondaryButtonVerticalPadding)
+                .background(AppTheme.secondaryFill, in: RoundedRectangle(cornerRadius: SymiRadius.chip, style: .continuous))
                 .foregroundStyle(AppTheme.symiPetrol)
         }
         .buttonStyle(.plain)
@@ -190,75 +190,82 @@ private struct DiaryWelcomeCard: View {
     let overview: HomeOverviewData
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: SymiSpacing.xl) {
             HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 14) {
+                VStack(alignment: .leading, spacing: SymiSpacing.secondaryButtonVerticalPadding) {
                     Text(greeting)
                         .font(.title2.weight(.semibold))
                         .foregroundStyle(AppTheme.foam)
 
                     Text(ProductBranding.marketingClaim)
                         .font(.largeTitle.weight(.bold))
-                        .foregroundStyle(Color.white)
+                        .foregroundStyle(AppTheme.symiOnAccent)
 
                     Text(summaryDetail)
                         .font(.subheadline)
-                        .foregroundStyle(AppTheme.foam.opacity(0.86))
+                        .foregroundStyle(AppTheme.foam.opacity(SymiOpacity.heroSecondaryText))
 
                     if overview.episodeCount > 0 {
                         statsRow
                     }
                 }
 
-                Spacer(minLength: 12)
+                Spacer(minLength: SymiSpacing.md)
 
-                VStack(spacing: 10) {
+                VStack(spacing: SymiSpacing.sm) {
                     Image(systemName: "book.closed.fill")
                         .font(.title2)
                         .foregroundStyle(AppTheme.foam)
                 }
-                .frame(width: 90, height: 120, alignment: .top)
-                .background(.white.opacity(0.12), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .frame(width: SymiSize.heroSymbolWidth, height: SymiSize.heroSymbolHeight, alignment: .top)
+                .background(
+                    AppTheme.symiOnAccent.opacity(SymiOpacity.faintSurface),
+                    in: RoundedRectangle(cornerRadius: SymiRadius.button, style: .continuous)
+                )
             }
         }
-        .padding(24)
+        .padding(SymiSpacing.xxxl)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(AppTheme.heroGradient)
         .overlay(alignment: .bottomLeading) {
             WaveAccent()
-                .stroke(AppTheme.foam.opacity(0.82), lineWidth: 8)
-                .frame(height: 54)
-                .offset(x: -10, y: 18)
+                .stroke(AppTheme.foam.opacity(SymiOpacity.heroPrimaryWave), lineWidth: SymiStroke.heroWavePrimary)
+                .frame(height: SymiSize.heroWavePrimaryHeight)
+                .offset(x: SymiSpacing.heroWavePrimaryOffsetX, y: SymiSpacing.heroWavePrimaryOffsetY)
         }
         .overlay(alignment: .bottomLeading) {
             WaveAccent()
-                .stroke(AppTheme.seaGlass.opacity(0.72), lineWidth: 5)
-                .frame(height: 44)
-                .offset(x: 6, y: 24)
+                .stroke(AppTheme.seaGlass.opacity(SymiOpacity.heroSecondaryWave), lineWidth: SymiStroke.heroWaveSecondary)
+                .frame(height: SymiSize.heroWaveSecondaryHeight)
+                .offset(x: SymiSpacing.heroWaveSecondaryOffsetX, y: SymiSpacing.heroWaveSecondaryOffsetY)
         }
         .overlay(alignment: .bottomLeading) {
             WaveAccent()
-                .stroke(AppTheme.coral.opacity(0.92), lineWidth: 4)
-                .frame(width: 132, height: 34)
-                .offset(x: -8, y: 28)
+                .stroke(AppTheme.coral.opacity(SymiOpacity.heroAccentWave), lineWidth: SymiStroke.heroWaveAccent)
+                .frame(width: SymiSize.heroWaveAccentWidth, height: SymiSize.heroWaveAccentHeight)
+                .offset(x: SymiSpacing.heroWaveAccentOffsetX, y: SymiSpacing.heroWaveAccentOffsetY)
         }
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .shadow(color: AppTheme.shadowColor.opacity(1.2), radius: 24, y: 12)
+        .clipShape(RoundedRectangle(cornerRadius: SymiRadius.heroCard, style: .continuous))
+        .shadow(color: AppTheme.shadowColor.opacity(SymiOpacity.elevatedShadow), radius: SymiRadius.heroCard, y: SymiSpacing.md)
         .accessibilityElement(children: .combine)
     }
 
     private var statsRow: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 12) {
+        HStack(alignment: .firstTextBaseline, spacing: SymiSpacing.md) {
             Text("Bisher dokumentiert")
                 .font(.subheadline.weight(.semibold))
-                .foregroundStyle(AppTheme.foam.opacity(0.96))
+                .foregroundStyle(AppTheme.foam.opacity(SymiOpacity.strongSurface))
 
             Spacer(minLength: 12)
 
             Text("\(overview.episodeCount) Eintrag\(overview.episodeCount == 1 ? "" : "e")")
                 .font(.title3.weight(.bold))
-                .foregroundStyle(Color.white)
-                .shadow(color: AppTheme.ink.opacity(0.35), radius: 3, y: 1)
+                .foregroundStyle(AppTheme.symiOnAccent)
+                .shadow(
+                    color: AppTheme.ink.opacity(SymiOpacity.selectedFill),
+                    radius: SymiShadow.heroTextRadius,
+                    y: SymiShadow.heroTextYOffset
+                )
         }
     }
 
@@ -296,10 +303,10 @@ private struct FeelingCheckInCard: View {
 
     var body: some View {
         AdaptiveDashboardCard(title: "Wie geht es dir heute?") {
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: SymiSpacing.secondaryButtonVerticalPadding) {
                 HStack(alignment: .firstTextBaseline) {
                     Text("\(Int(currentState))")
-                        .font(.system(size: 44, weight: .bold, design: .rounded))
+                        .font(SymiTypography.homeMetric)
                         .foregroundStyle(AppTheme.symiPetrol)
                     Text(feelingLabel)
                         .font(.headline)

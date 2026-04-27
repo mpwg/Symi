@@ -174,7 +174,7 @@ struct StoreRecoveryView: View {
         NavigationStack {
             Form {
                 Section {
-                    VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: SymiSpacing.md) {
                         Label("Lokale Daten wurden nicht gelöscht", systemImage: "externaldrive.badge.exclamationmark")
                             .font(.headline)
                             .foregroundStyle(AppTheme.symiPetrol)
@@ -187,7 +187,7 @@ struct StoreRecoveryView: View {
                             .font(.subheadline)
                             .foregroundStyle(AppTheme.symiTextSecondary)
                     }
-                    .padding(.vertical, 6)
+                    .padding(.vertical, SymiSpacing.compact)
                 }
 
                 Section("Sicherung und Migration") {

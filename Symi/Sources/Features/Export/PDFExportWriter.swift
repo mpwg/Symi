@@ -9,8 +9,7 @@ nonisolated enum PDFExportWriter {
     static func write(summary: ExportPeriodSummary, mode: PDFReportMode = .detailed) throws -> URL {
         let fileName = "\(localized("Symi-Bericht"))-\(dateStamp(summary.startDate))-\(dateStamp(summary.endDate)).pdf"
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
-        let pageRect = CGRect(x: 0, y: 0, width: 595, height: 842)
-        let layout = PDFLayout(pageRect: pageRect)
+        let layout = PDFLayout(pageRect: PDFLayout.defaultPageRect)
 
         try writeRawPDF(summary: summary, mode: mode, to: url, layout: layout)
         try finalizeDocument(at: url)
@@ -385,6 +384,10 @@ nonisolated private struct PDFChartRow {
 }
 
 nonisolated private struct PDFLayout {
+    static let defaultPageWidth: CGFloat = 595
+    static let defaultPageHeight: CGFloat = 842
+    static let defaultPageRect = CGRect(x: 0, y: 0, width: defaultPageWidth, height: defaultPageHeight)
+
     let pageRect: CGRect
     let margin: CGFloat = 40
     let logoSize: CGFloat = 44
@@ -403,11 +406,37 @@ nonisolated private struct PDFLayout {
     let separatorColor = CGColor(gray: 0.82, alpha: 1)
     let lineSpacing: CGFloat = 5
     let footerHeight: CGFloat = 108
+    let headerTopInset: CGFloat = 72
+    let footerTopInset: CGFloat = 10
+    let headerHeight: CGFloat = 48
+    let headerTextTopOffset: CGFloat = 2
+    let headerTextGap: CGFloat = 12
+    let panelHeight: CGFloat = 92
+    let panelInset: CGFloat = 12
+    let panelTextInset: CGFloat = 14
+    let panelTitleTopOffset: CGFloat = 14
+    let panelTitleHeight: CGFloat = 16
+    let panelBodyTopOffset: CGFloat = 34
+    let panelBodyHeight: CGFloat = 18
+    let panelLinkTopOffset: CGFloat = 48
+    let panelLinkHeight: CGFloat = 30
+    let chartMaxRows = 8
+    let chartRowHeight: CGFloat = 18
+    let chartTitleHeight: CGFloat = 24
+    let chartBottomPadding: CGFloat = 10
+    let chartLabelWidth: CGFloat = 132
+    let chartValueWidth: CGFloat = 60
+    let chartBarGap: CGFloat = 12
+    let chartBarInset: CGFloat = 4
+    let chartBarHeight: CGFloat = 8
+    let chartMinFillWidth: CGFloat = 2
+    let separatorHeight: CGFloat = 1
+    let panelCornerRadius: CGFloat = 6
 
     var contentWidth: CGFloat { pageRect.width - (margin * 2) }
-    var topY: CGFloat { margin + 72 }
+    var topY: CGFloat { margin + headerTopInset }
     var bottomY: CGFloat { pageRect.height - margin - footerHeight }
-    var footerTopY: CGFloat { pageRect.height - margin - footerHeight + 10 }
+    var footerTopY: CGFloat { pageRect.height - margin - footerHeight + footerTopInset }
 
     init(pageRect: CGRect) {
         self.pageRect = pageRect
@@ -458,8 +487,7 @@ nonisolated private struct PDFPageContext {
     }
 
     mutating func drawBrandHeader(title: String, logo: CGImage?) throws {
-        let headerHeight: CGFloat = 48
-        ensureSpace(headerHeight + 12)
+        ensureSpace(layout.headerHeight + layout.headerTextGap)
         let headerTop = cursorY
 
         if let logo {
@@ -469,19 +497,24 @@ nonisolated private struct PDFPageContext {
             drawLogoFallback(in: CGRect(x: layout.margin, y: headerTop, width: layout.logoSize, height: layout.logoSize))
         }
 
-        let textX = layout.margin + layout.logoSize + 12
-        let textWidth = layout.contentWidth - layout.logoSize - 12
+        let textX = layout.margin + layout.logoSize + layout.headerTextGap
+        let textWidth = layout.contentWidth - layout.logoSize - layout.headerTextGap
         try draw(
             text: title,
             font: layout.titleFont,
             color: layout.textColor,
-            rect: CGRect(x: textX, y: headerTop + 2, width: textWidth, height: height(for: title, font: layout.titleFont)),
+            rect: CGRect(
+                x: textX,
+                y: headerTop + layout.headerTextTopOffset,
+                width: textWidth,
+                height: height(for: title, font: layout.titleFont)
+            ),
             extraSpacing: 0
         )
 
-        cursorY = headerTop + headerHeight
+        cursorY = headerTop + layout.headerHeight
         drawSeparator()
-        addSpacing(14)
+        addSpacing(layout.panelTextInset)
     }
 
     mutating func drawSectionTitle(_ text: String) throws {
@@ -493,13 +526,12 @@ nonisolated private struct PDFPageContext {
     }
 
     mutating func drawAppStorePanel(title: String, body: String, linkLabel: String, url: String, qrCode: CGImage?) throws {
-        let panelHeight: CGFloat = 92
-        let panelRect = CGRect(x: layout.margin, y: layout.footerTopY, width: layout.contentWidth, height: panelHeight)
+        let panelRect = CGRect(x: layout.margin, y: layout.footerTopY, width: layout.contentWidth, height: layout.panelHeight)
         drawPanelBackground(panelRect)
 
         let qrRect = CGRect(
-            x: panelRect.maxX - layout.qrCodeSize - 12,
-            y: panelRect.minY + 12,
+            x: panelRect.maxX - layout.qrCodeSize - layout.panelInset,
+            y: panelRect.minY + layout.panelInset,
             width: layout.qrCodeSize,
             height: layout.qrCodeSize
         )
@@ -507,30 +539,63 @@ nonisolated private struct PDFPageContext {
             drawImage(qrCode, in: qrRect)
         }
 
-        let textX = panelRect.minX + 14
-        let textWidth = qrRect.minX - textX - 14
-        try draw(text: title, font: layout.brandFont, color: layout.textColor, rect: CGRect(x: textX, y: panelRect.minY + 14, width: textWidth, height: 16), extraSpacing: 0)
+        let textX = panelRect.minX + layout.panelTextInset
+        let textWidth = qrRect.minX - textX - layout.panelTextInset
+        try draw(
+            text: title,
+            font: layout.brandFont,
+            color: layout.textColor,
+            rect: CGRect(
+                x: textX,
+                y: panelRect.minY + layout.panelTitleTopOffset,
+                width: textWidth,
+                height: layout.panelTitleHeight
+            ),
+            extraSpacing: 0
+        )
         if !body.isEmpty {
-            try draw(text: body, font: layout.bodyFont, color: layout.textColor, rect: CGRect(x: textX, y: panelRect.minY + 34, width: textWidth, height: 18), extraSpacing: 0)
+            try draw(
+                text: body,
+                font: layout.bodyFont,
+                color: layout.textColor,
+                rect: CGRect(
+                    x: textX,
+                    y: panelRect.minY + layout.panelBodyTopOffset,
+                    width: textWidth,
+                    height: layout.panelBodyHeight
+                ),
+                extraSpacing: 0
+            )
         }
-        try draw(text: "\(linkLabel): \(url)", font: layout.smallFont, color: layout.mutedTextColor, rect: CGRect(x: textX, y: panelRect.minY + 48, width: textWidth, height: 30), extraSpacing: 0)
+        try draw(
+            text: "\(linkLabel): \(url)",
+            font: layout.smallFont,
+            color: layout.mutedTextColor,
+            rect: CGRect(
+                x: textX,
+                y: panelRect.minY + layout.panelLinkTopOffset,
+                width: textWidth,
+                height: layout.panelLinkHeight
+            ),
+            extraSpacing: 0
+        )
     }
 
     mutating func drawHorizontalBarChart(title: String, rows: [PDFChartRow], maximumValue: Int? = nil) throws {
         guard !rows.isEmpty else { return }
 
-        let chartRows = Array(rows.prefix(8))
-        let rowHeight: CGFloat = 18
-        let chartHeight = 24 + (CGFloat(chartRows.count) * rowHeight) + 10
+        let chartRows = Array(rows.prefix(layout.chartMaxRows))
+        let rowHeight = layout.chartRowHeight
+        let chartHeight = layout.chartTitleHeight + (CGFloat(chartRows.count) * rowHeight) + layout.chartBottomPadding
         ensureSpace(chartHeight)
 
         try draw(text: title, font: layout.brandFont, extraSpacing: 8)
 
         let maxValue = max(maximumValue ?? chartRows.map(\.value).max() ?? 1, 1)
-        let labelWidth: CGFloat = 132
-        let valueWidth: CGFloat = 60
+        let labelWidth = layout.chartLabelWidth
+        let valueWidth = layout.chartValueWidth
         let barX = layout.margin + labelWidth
-        let barWidth = layout.contentWidth - labelWidth - valueWidth - 12
+        let barWidth = layout.contentWidth - labelWidth - valueWidth - layout.chartBarGap
 
         for row in chartRows {
             let rowTop = cursorY
@@ -538,20 +603,28 @@ nonisolated private struct PDFPageContext {
                 text: row.label,
                 font: layout.smallFont,
                 color: layout.textColor,
-                rect: CGRect(x: layout.margin, y: rowTop, width: labelWidth - 8, height: rowHeight),
+                rect: CGRect(x: layout.margin, y: rowTop, width: labelWidth - layout.chartBarHeight, height: rowHeight),
                 extraSpacing: 0
             )
 
-            let trackRect = CGRect(x: barX, y: rowTop + 4, width: barWidth, height: 8)
+            let trackRect = CGRect(
+                x: barX,
+                y: rowTop + layout.chartBarInset,
+                width: barWidth,
+                height: layout.chartBarHeight
+            )
             drawRect(trackRect, color: layout.chartTrackColor)
-            let filledWidth = max(2, barWidth * CGFloat(row.value) / CGFloat(maxValue))
-            drawRect(CGRect(x: barX, y: rowTop + 4, width: filledWidth, height: 8), color: layout.chartFillColor)
+            let filledWidth = max(layout.chartMinFillWidth, barWidth * CGFloat(row.value) / CGFloat(maxValue))
+            drawRect(
+                CGRect(x: barX, y: rowTop + layout.chartBarInset, width: filledWidth, height: layout.chartBarHeight),
+                color: layout.chartFillColor
+            )
 
             try draw(
                 text: row.detail,
                 font: layout.smallFont,
                 color: layout.mutedTextColor,
-                rect: CGRect(x: barX + barWidth + 8, y: rowTop, width: valueWidth, height: rowHeight),
+                rect: CGRect(x: barX + barWidth + layout.chartBarHeight, y: rowTop, width: valueWidth, height: rowHeight),
                 extraSpacing: 0
             )
 
@@ -575,9 +648,9 @@ nonisolated private struct PDFPageContext {
             try drawBodyLine(line)
         }
 
-        addSpacing(8)
+        addSpacing(layout.chartBarHeight)
         drawSeparator()
-        addSpacing(10)
+        addSpacing(layout.footerTopInset)
     }
 
     mutating func addSpacing(_ value: CGFloat) {
@@ -633,13 +706,18 @@ nonisolated private struct PDFPageContext {
         context.setFillColor(layout.brandFillColor)
         context.fillEllipse(in: pdfRect)
         context.setStrokeColor(layout.brandStrokeColor)
-        context.setLineWidth(1)
+        context.setLineWidth(layout.separatorHeight)
         context.strokeEllipse(in: pdfRect)
         context.restoreGState()
     }
 
     private func drawPanelBackground(_ rect: CGRect) {
-        let path = unsafe CGPath(roundedRect: pdfRect(fromTopLeftRect: rect), cornerWidth: 6, cornerHeight: 6, transform: nil)
+        let path = unsafe CGPath(
+            roundedRect: pdfRect(fromTopLeftRect: rect),
+            cornerWidth: layout.panelCornerRadius,
+            cornerHeight: layout.panelCornerRadius,
+            transform: nil
+        )
         context.saveGState()
         context.setFillColor(layout.brandFillColor)
         context.addPath(path)
@@ -659,7 +737,12 @@ nonisolated private struct PDFPageContext {
 
     private func drawSeparator() {
         let separatorRect = pdfRect(
-            fromTopLeftRect: CGRect(x: layout.margin, y: cursorY, width: layout.contentWidth, height: 1)
+            fromTopLeftRect: CGRect(
+                x: layout.margin,
+                y: cursorY,
+                width: layout.contentWidth,
+                height: layout.separatorHeight
+            )
         )
         context.saveGState()
         context.setFillColor(layout.separatorColor)

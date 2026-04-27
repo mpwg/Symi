@@ -18,7 +18,7 @@ struct SettingsView: View {
                 NavigationLink {
                     SyncStatusView(controller: controller)
                 } label: {
-                    VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: SymiSpacing.sm) {
                         HStack {
                             Text("Status")
                             Spacer()
@@ -29,13 +29,13 @@ struct SettingsView: View {
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
 
-                        HStack(spacing: 16) {
+                        HStack(spacing: SymiSpacing.lg) {
                             statValue(title: "Ausstehend", value: "\(controller.syncStatus.queuedUpdates)")
                             statValue(title: "Ungesynct", value: "\(controller.syncStatus.unsyncedRecords)")
                             statValue(title: "Konflikte", value: "\(controller.conflicts.count)")
                         }
                     }
-                    .padding(.vertical, 6)
+                    .padding(.vertical, SymiSpacing.compact)
                     .brandGroupedRow()
                 }
 
@@ -54,7 +54,7 @@ struct SettingsView: View {
                 NavigationLink {
                     SyncLogView(controller: controller)
                 } label: {
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: SymiSpacing.xxs) {
                         Label("Sync-Protokoll", systemImage: "text.document")
                         Text(logSubtitle)
                             .font(.subheadline)
@@ -72,7 +72,7 @@ struct SettingsView: View {
                 NavigationLink {
                     AppleHealthSettingsView(controller: controller)
                 } label: {
-                    VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: SymiSpacing.sm) {
                         HStack {
                             Label("Apple Health", systemImage: "heart.text.square")
                             Spacer()
@@ -84,7 +84,7 @@ struct SettingsView: View {
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
-                    .padding(.vertical, 6)
+                    .padding(.vertical, SymiSpacing.compact)
                     .brandGroupedRow()
                 }
             } header: {
@@ -178,17 +178,17 @@ struct SettingsView: View {
     }
 
     private var statusBadge: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: SymiSpacing.xs) {
             Circle()
                 .fill(statusColor)
-                .frame(width: 10, height: 10)
+                .frame(width: SymiSize.statusDot, height: SymiSize.statusDot)
             Text(controller.syncStatus.state.displayTitle)
                 .foregroundStyle(.secondary)
         }
     }
 
     private func statValue(title: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: SymiSpacing.micro) {
             Text(value)
                 .font(.headline)
                 .foregroundStyle(.primary)
@@ -325,9 +325,9 @@ private struct ContinuousMedicationSettingsRow: View {
     let onEnd: (() -> Void)?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: SymiSpacing.xs) {
             HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: SymiSpacing.xxs) {
                     Text(medication.name)
                         .font(.headline)
                     if !medication.detailText.isEmpty {
@@ -356,7 +356,7 @@ private struct ContinuousMedicationSettingsRow: View {
             }
             .buttonStyle(.borderless)
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, SymiSpacing.xxs)
         .brandGroupedRow()
     }
 
@@ -515,7 +515,7 @@ private struct HealthDataTypeSection: View {
                     get: { enabledTypes.contains(definition.id) },
                     set: { onToggle($0, definition.id, direction) }
                 )) {
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: SymiSpacing.xxs) {
                         Text(definition.displayName)
                         Text(definition.rationale)
                             .font(.caption)
@@ -542,13 +542,13 @@ private struct SyncStatusView: View {
                 statusRow("Letzter Upload", formatted(controller.syncStatus.lastUploadedAt))
 
                 if let lastError = controller.syncStatus.lastError {
-                    VStack(alignment: .leading, spacing: 6) {
+                    VStack(alignment: .leading, spacing: SymiSpacing.compact) {
                         Text("Letzter Fehler")
                         Text(lastError)
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
-                    .padding(.vertical, 4)
+                    .padding(.vertical, SymiSpacing.xxs)
                     .brandGroupedRow()
                 }
             } header: {
@@ -655,7 +655,7 @@ private struct ManageCloudDataView: View {
                         .foregroundStyle(.secondary)
                 } else {
                     ForEach(controller.conflicts) { conflict in
-                        VStack(alignment: .leading, spacing: 8) {
+                        VStack(alignment: .leading, spacing: SymiSpacing.xs) {
                             Text(conflictTitle(for: conflict))
                                 .font(.headline)
                             Text("Lokaler Stand und Cloud-Stand unterscheiden sich.")
@@ -668,7 +668,7 @@ private struct ManageCloudDataView: View {
                                 selectedConflict = conflict
                             }
                         }
-                        .padding(.vertical, 4)
+                        .padding(.vertical, SymiSpacing.xxs)
                         .brandGroupedRow()
                     }
                 }
@@ -681,7 +681,7 @@ private struct ManageCloudDataView: View {
                 } else {
                     ForEach(controller.deletedEpisodes) { episode in
                         HStack {
-                            VStack(alignment: .leading, spacing: 4) {
+                            VStack(alignment: .leading, spacing: SymiSpacing.xxs) {
                                 Text(episode.startedAt.formatted(date: .abbreviated, time: .shortened))
                                 Text(episode.type.rawValue)
                                     .font(.subheadline)
@@ -697,7 +697,7 @@ private struct ManageCloudDataView: View {
 
                     ForEach(controller.deletedDefinitions) { definition in
                         HStack {
-                            VStack(alignment: .leading, spacing: 4) {
+                            VStack(alignment: .leading, spacing: SymiSpacing.xxs) {
                                 Text(definition.name)
                                 Text(definition.category.rawValue)
                                     .font(.subheadline)
@@ -719,8 +719,8 @@ private struct ManageCloudDataView: View {
         .overlay {
             if isResolvingConflict {
                 ProgressView("Konflikt wird verarbeitet …")
-                    .padding(20)
-                    .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .padding(SymiSpacing.xxl)
+                    .background(.thinMaterial, in: RoundedRectangle(cornerRadius: SymiRadius.flowBanner, style: .continuous))
             }
         }
         .confirmationDialog(
