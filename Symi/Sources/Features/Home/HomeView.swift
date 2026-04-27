@@ -575,10 +575,14 @@ private struct HomePatternEmptyState: View {
 struct InsightsView: View {
     let appContainer: AppContainer
     @State private var data = InsightResult(totalQualifiedEpisodeCount: 0, insights: [])
+    @State private var selectedPeriod: InsightPeriod = .thirtyDays
 
     var body: some View {
         ScrollView {
-            HomeInsightsContent(data: data)
+            HomeInsightsContent(
+                data: data,
+                selectedPeriod: $selectedPeriod
+            )
             .padding(.horizontal, SymiSpacing.xxl)
             .padding(.vertical, SymiSpacing.xl)
             .wideContent(maxWidth: AppTheme.readableContentMaxWidth)
@@ -587,6 +591,11 @@ struct InsightsView: View {
         .navigationTitle("Insights")
         .task {
             await reload()
+        }
+        .onChange(of: selectedPeriod) { _, _ in
+            Task {
+                await reload()
+            }
         }
         .refreshable {
             await reload()
@@ -597,15 +606,28 @@ struct InsightsView: View {
         data = (try? await LoadInsightResultUseCase(
             repository: appContainer.episodeRepository,
             insightEngine: appContainer.insightEngine
-        ).execute()) ?? InsightResult(totalQualifiedEpisodeCount: 0, insights: [])
+        ).execute(period: selectedPeriod)) ?? InsightResult(
+            period: selectedPeriod,
+            totalQualifiedEpisodeCount: 0,
+            insights: []
+        )
     }
 }
 
 private struct HomeInsightsContent: View {
     let data: InsightResult
+    @Binding var selectedPeriod: InsightPeriod
 
     var body: some View {
         VStack(alignment: .leading, spacing: SymiSpacing.xxl) {
+            Picker("Zeitraum", selection: $selectedPeriod) {
+                ForEach(InsightPeriod.allCases) { period in
+                    Text(period.displayTitle).tag(period)
+                }
+            }
+            .pickerStyle(.segmented)
+            .accessibilityIdentifier("insights-period-picker")
+
             Text("Diese Hinweise basieren nur auf deinen bisherigen Schmerz- und Migräneeinträgen. Sie ersetzen keine medizinische Einschätzung.")
                 .font(.subheadline)
                 .foregroundStyle(AppTheme.symiTextSecondary)

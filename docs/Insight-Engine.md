@@ -6,19 +6,24 @@ Die Insight Engine berechnet lokale Hinweise aus echten Tagebuchdaten. Sie erzeu
 
 Ausgewertet werden nur aktive Einträge mit dem Typ `Migräne` oder `Kopfschmerz`. Einträge mit `Unklar`, gelöschte Einträge und zukünftige Nicht-Schmerz-Typen zählen nicht als normale Messwerte. Dadurch werden auch keine „Keine Schmerzen“-Datenpunkte in Durchschnitt, Trend oder Muster eingerechnet.
 
-Die Mindestmenge liegt bei `5` qualifizierten Einträgen. Unterhalb dieser Grenze liefert `InsightEngine` nur `totalQualifiedEpisodeCount` und keine Insights.
+Die Mindestmenge liegt bei `5` qualifizierten Einträgen. Unterhalb dieser Grenze liefert `InsightEngine` strukturierte Empty-State-Daten und keine Insights.
 
 ## Aggregation
 
-`DataAggregator` bereitet die Daten für alle Detektoren vor:
+`DataAggregator` bereitet die Daten für alle Detektoren, Kennzahlen und Charts aus derselben gefilterten Datenbasis vor. Unterstützte Zeiträume sind `7 Tage`, `30 Tage` und `3 Monate`.
 
-- qualifizierte Einträge, nach Startzeit sortiert
+- qualifizierte Einträge im ausgewählten Zeitraum, nach Startzeit sortiert
 - durchschnittliche Intensität über alle qualifizierten Einträge
 - Anzahl und durchschnittliche Intensität pro Wochentag
-- Anzahl normalisierter Trigger pro Eintrag
+- Anzahl und durchschnittliche Intensität pro Tagesbereich
+- Anzahl normalisierter Trigger pro Eintrag inklusive relativer Häufigkeit
+- Akutmedikation und Dauermedikations-Checks pro Zeitraum
+- Wetterkontext inklusive Bedingungen, Mittelwerten und erweiterten Kontextwerten
+- Tagesverlauf mit echten Intensitätswerten
 - Fingerprint für den Cache
 
 Trigger werden pro Eintrag dedupliziert, getrimmt und alphabetisch sortiert. Leere Trigger werden ignoriert.
+Akutmedikamente werden pro Eintrag über den normalisierten Namen dedupliziert. Dauermedikation nutzt die beim Eintrag gespeicherten Checks und trennt eingenommen/nicht eingenommen.
 
 ## Detektoren
 
@@ -79,7 +84,9 @@ Bei gleichem Score entscheidet zuerst die höhere `confidence`, danach der Titel
 - Typ
 - Intensität
 - normalisierte Trigger
-- Wetterstatus
+- normalisierte Akutmedikation
+- Dauermedikations-Checks
+- Wetterstatus und Wetterkontext
 
 Neue oder bearbeitete Einträge ändern `updatedAt` oder die ausgewerteten Felder und erzwingen dadurch eine Neuberechnung. Der Cache ist bewusst nur lokal im laufenden Prozess; er ersetzt keine persistierte Statistik.
 

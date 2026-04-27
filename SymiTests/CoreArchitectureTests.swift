@@ -360,6 +360,123 @@ struct CoreArchitectureTests {
     }
 
     @Test
+    func insightAggregationFiltersSupportedPeriods() {
+        let calendar = fixedCalendar()
+        let referenceDate = fixedDate().addingTimeInterval(40 * 86_400)
+        let episodes = [
+            makeEpisode(id: UUID(), startedAt: referenceDate.addingTimeInterval(-2 * 86_400), intensity: 5),
+            makeEpisode(id: UUID(), startedAt: referenceDate.addingTimeInterval(-6 * 86_400), intensity: 6),
+            makeEpisode(id: UUID(), startedAt: referenceDate.addingTimeInterval(-20 * 86_400), intensity: 7),
+            makeEpisode(id: UUID(), startedAt: referenceDate.addingTimeInterval(-70 * 86_400), intensity: 8)
+        ]
+
+        let sevenDays = InsightEngine().evaluate(
+            episodes: episodes,
+            period: .sevenDays,
+            referenceDate: referenceDate,
+            calendar: calendar
+        )
+        let thirtyDays = InsightEngine().evaluate(
+            episodes: episodes,
+            period: .thirtyDays,
+            referenceDate: referenceDate,
+            calendar: calendar
+        )
+        let threeMonths = InsightEngine().evaluate(
+            episodes: episodes,
+            period: .threeMonths,
+            referenceDate: referenceDate,
+            calendar: calendar
+        )
+
+        #expect(sevenDays.totalQualifiedEpisodeCount == 2)
+        #expect(thirtyDays.totalQualifiedEpisodeCount == 3)
+        #expect(threeMonths.totalQualifiedEpisodeCount == 4)
+    }
+
+    @Test
+    func insightAggregationExposesSharedMetricsForTriggersMedicationWeatherAndTrend() {
+        let calendar = fixedCalendar()
+        let start = fixedDate()
+        let medication = MedicationRecord(
+            id: UUID(),
+            name: "Sumatriptan",
+            category: .triptan,
+            dosage: "50 mg",
+            quantity: 1,
+            takenAt: start,
+            effectiveness: .good,
+            reliefStartedAt: nil,
+            isRepeatDose: false
+        )
+        let check = ContinuousMedicationCheckRecord(
+            id: UUID(),
+            continuousMedicationID: UUID(),
+            name: "Metoprolol",
+            dosage: "50 mg",
+            frequency: "täglich",
+            wasTaken: true
+        )
+        let weather = WeatherRecord(
+            recordedAt: start,
+            condition: "Regen",
+            temperature: 12,
+            humidity: 80,
+            pressure: 1_004,
+            precipitation: 2,
+            weatherCode: 63,
+            source: "Test",
+            contextRangeStart: start.addingTimeInterval(-3_600),
+            contextRangeEnd: start
+        )
+        let episodes = (0 ..< 5).map { offset in
+            makeEpisode(
+                id: UUID(),
+                startedAt: start.addingTimeInterval(Double(offset) * 86_400),
+                intensity: 4 + offset,
+                triggers: offset < 3 ? ["Stress"] : [],
+                medications: offset < 2 ? [medication] : [],
+                continuousMedicationChecks: offset < 4 ? [check] : [],
+                weather: offset < 2 ? weather : nil
+            )
+        }
+
+        let result = InsightEngine().evaluate(
+            episodes: episodes,
+            period: .thirtyDays,
+            referenceDate: start.addingTimeInterval(5 * 86_400),
+            calendar: calendar
+        )
+
+        #expect(result.metrics.triggerSummaries.first?.name == "Stress")
+        #expect(result.metrics.triggerSummaries.first?.count == 3)
+        #expect(abs((result.metrics.triggerSummaries.first?.share ?? 0) - 0.6) < 0.001)
+        #expect(result.metrics.acuteMedicationSummaries.first?.name == "Sumatriptan")
+        #expect(result.metrics.acuteMedicationSummaries.first?.count == 2)
+        #expect(result.metrics.continuousMedicationSummaries.first?.name == "Metoprolol")
+        #expect(result.metrics.continuousMedicationSummaries.first?.takenCount == 4)
+        #expect(result.metrics.weatherSummary.entryCountWithWeather == 2)
+        #expect(result.metrics.weatherSummary.extendedContextCount == 2)
+        #expect(result.metrics.dailyIntensityTrend.count == 5)
+        #expect(result.metrics.dailyIntensityTrend.last?.highestIntensity == 8)
+    }
+
+    @Test
+    func insightAggregationReturnsStructuredEmptyStateInsteadOfFallbackValues() {
+        let result = InsightEngine().evaluate(
+            episodes: [],
+            period: .sevenDays,
+            referenceDate: fixedDate(),
+            calendar: fixedCalendar()
+        )
+
+        #expect(result.emptyState?.reason == .noQualifiedEntries)
+        #expect(result.emptyState?.availableEntryCount == 0)
+        #expect(result.metrics == .empty)
+        #expect(result.insights.isEmpty)
+    }
+
+    @Test
     func loadSettingsUseCaseCountsActiveTrashAndConflicts() async throws {
         let episodeRepository = EpisodeRepositoryMock()
         let medicationRepository = MedicationCatalogRepositoryMock()
@@ -506,6 +623,8 @@ private func makeEpisode(
     symptoms: [String] = [],
     triggers: [String] = [],
     menstruationStatus: MenstruationStatus = .unknown,
+    medications: [MedicationRecord] = [],
+    continuousMedicationChecks: [ContinuousMedicationCheckRecord] = [],
     weather: WeatherRecord? = nil
 ) -> EpisodeRecord {
     EpisodeRecord(
@@ -523,8 +642,8 @@ private func makeEpisode(
         triggers: triggers,
         functionalImpact: "",
         menstruationStatus: menstruationStatus,
-        medications: [],
-        continuousMedicationChecks: [],
+        medications: medications,
+        continuousMedicationChecks: continuousMedicationChecks,
         weather: weather,
         healthContext: nil
     )
