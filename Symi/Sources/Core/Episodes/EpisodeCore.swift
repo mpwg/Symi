@@ -639,13 +639,13 @@ struct LoadInsightResultUseCase {
     let repository: EpisodeRepository
     let insightEngine: InsightEngine
 
-    func execute() async throws -> InsightResult {
+    func execute(period: InsightPeriod = .thirtyDays) async throws -> InsightResult {
         let repository = repository
         let episodes = try await Task.detached(priority: .userInitiated) {
             try repository.fetchRecent()
         }.value
 
-        return insightEngine.evaluate(episodes: episodes)
+        return insightEngine.evaluate(episodes: episodes, period: period)
     }
 }
 
