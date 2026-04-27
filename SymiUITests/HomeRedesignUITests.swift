@@ -14,23 +14,19 @@ final class HomeRedesignUITests: XCTestCase {
             ]
         )
 
-        let quickEntry = app.descendants(matching: .any)["home-quick-entry"]
-        XCTAssertTrue(quickEntry.waitForExistence(timeout: 6))
-
-        XCTAssertMinimumTouchTarget(quickEntry)
-
-        XCTAssertTrue(accessibilityElement(containing: "Eintrag erstellen", in: app).exists)
-
-        scrollUntilVisible(app.sliders["home-feeling-slider"], in: app)
-        XCTAssertTrue(app.sliders["home-feeling-slider"].exists)
-
         let calendar = app.descendants(matching: .any)["home-calendar"]
-        scrollUntilVisible(calendar, in: app)
-        XCTAssertTrue(calendar.exists)
+        XCTAssertTrue(calendar.waitForExistence(timeout: 6))
         XCTAssertTrue(accessibilityElement(containing: "Monatskalender", in: app).exists)
         XCTAssertTrue(accessibilityElement(containing: "ausgewählt", in: app).exists)
         XCTAssertMinimumTouchTarget(app.buttons["home-calendar-previous-month"])
         XCTAssertMinimumTouchTarget(app.buttons["home-calendar-next-month"])
+
+        let quickEntry = app.descendants(matching: .any)["home-quick-entry"]
+        scrollUntilVisible(quickEntry, in: app)
+        XCTAssertTrue(quickEntry.exists)
+        XCTAssertMinimumTouchTarget(quickEntry)
+        XCTAssertTrue(accessibilityElement(containing: "Eintrag erstellen", in: app).exists)
+        XCTAssertFalse(app.sliders["home-feeling-slider"].exists)
 
         scrollUntilVisible(app.descendants(matching: .any)["home-patterns-section"], in: app)
         XCTAssertTrue(app.descendants(matching: .any)["home-patterns-section"].exists)

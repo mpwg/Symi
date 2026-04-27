@@ -44,12 +44,6 @@ struct HomeView: View {
             VStack(alignment: .leading, spacing: SymiSpacing.xxl) {
                 HomeHeaderView(month: displayedMonth)
 
-                PrimaryEntryButton(selectedDay: selectedDay) {
-                    isPresentingEpisodeEditor = true
-                }
-
-                FeelingCheckInCard()
-
                 HomeMonthCalendarView(
                     month: displayedMonth,
                     selectedDay: selectedDay,
@@ -58,6 +52,10 @@ struct HomeView: View {
                     onPrevious: showPreviousMonth,
                     onNext: showNextMonth
                 )
+
+                PrimaryEntryButton(selectedDay: selectedDay) {
+                    isPresentingEpisodeEditor = true
+                }
 
                 HomePatternPreviewSection(data: patternPreviewData) {
                     HomeInsightsView(data: patternPreviewData)
@@ -76,12 +74,6 @@ struct HomeView: View {
             VStack(alignment: .leading, spacing: SymiSpacing.xxl) {
                 HomeHeaderView(month: displayedMonth)
 
-                PrimaryEntryButton(selectedDay: selectedDay) {
-                    isPresentingEpisodeEditor = true
-                }
-
-                FeelingCheckInCard()
-
                 HomeMonthCalendarView(
                     month: displayedMonth,
                     selectedDay: selectedDay,
@@ -90,6 +82,10 @@ struct HomeView: View {
                     onPrevious: showPreviousMonth,
                     onNext: showNextMonth
                 )
+
+                PrimaryEntryButton(selectedDay: selectedDay) {
+                    isPresentingEpisodeEditor = true
+                }
 
                 HomePatternPreviewSection(data: patternPreviewData) {
                     HomeInsightsView(data: patternPreviewData)
@@ -437,12 +433,7 @@ private struct HomeCalendarDay: Identifiable {
 
 private struct HomePatternPreviewSection<Destination: View>: View {
     let data: HomePatternPreviewData
-    let destination: Destination
-
-    init(data: HomePatternPreviewData, @ViewBuilder destination: () -> Destination) {
-        self.data = data
-        self.destination = destination()
-    }
+    @ViewBuilder let destination: Destination
 
     var body: some View {
         VStack(alignment: .leading, spacing: SymiSpacing.md) {
@@ -613,13 +604,8 @@ private struct HomeInsightsView: View {
 
 struct AdaptiveDashboardCard<Content: View>: View {
     let title: String
-    let content: Content
+    @ViewBuilder let content: Content
     @Environment(\.colorScheme) private var colorScheme
-
-    init(title: String, @ViewBuilder content: () -> Content) {
-        self.title = title
-        self.content = content()
-    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: SymiSpacing.secondaryButtonVerticalPadding) {
@@ -656,45 +642,6 @@ private struct HomeTrustSection: View {
         .padding(.top, SymiSpacing.xs)
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityIdentifier("home-trust-section")
-    }
-}
-
-private struct FeelingCheckInCard: View {
-    @State private var currentState = 4.0
-    @Environment(\.colorScheme) private var colorScheme
-
-    var body: some View {
-        AdaptiveDashboardCard(title: "Wie geht es dir heute?") {
-            VStack(alignment: .leading, spacing: SymiSpacing.md) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text("\(Int(currentState))")
-                        .font(SymiTypography.homeMetric)
-                        .foregroundStyle(AppTheme.petrol(for: colorScheme))
-                    Text(feelingLabel)
-                        .font(.headline)
-                        .foregroundStyle(AppTheme.textSecondary(for: colorScheme))
-                }
-
-                Slider(value: $currentState, in: 0 ... 10, step: 1)
-                    .tint(AppTheme.coral(for: colorScheme))
-                    .accessibilityLabel("Aktueller Zustand")
-                    .accessibilityValue("\(Int(currentState)) von 10")
-                    .accessibilityIdentifier("home-feeling-slider")
-            }
-        }
-    }
-
-    private var feelingLabel: String {
-        switch Int(currentState) {
-        case 0 ... 2:
-            return "ruhig"
-        case 3 ... 5:
-            return "mittel"
-        case 6 ... 8:
-            return "spürbar"
-        default:
-            return "stark"
-        }
     }
 }
 
