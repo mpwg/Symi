@@ -28,7 +28,7 @@ struct InputFlowPillOption: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 6) {
+            HStack(spacing: SymiSpacing.compact) {
                 if isSelected {
                     Image(systemName: "checkmark")
                         .font(.caption.weight(.bold))
@@ -39,19 +39,19 @@ struct InputFlowPillOption: View {
                     .font(SymiTypography.flowPillLabel)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
-                    .minimumScaleFactor(0.82)
+                    .minimumScaleFactor(SymiTypography.compactScaleFactor)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .foregroundStyle(isSelected ? theme.accent(for: colorScheme) : .primary)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 9)
-            .frame(maxWidth: .infinity, minHeight: 44)
+            .padding(.horizontal, SymiSpacing.md)
+            .padding(.vertical, SymiSpacing.pillVerticalPadding)
+            .frame(maxWidth: .infinity, minHeight: SymiSize.minInteractiveHeight)
             .background(backgroundColor, in: Capsule())
             .overlay {
                 Capsule()
-                    .stroke(borderColor, lineWidth: 1)
+                    .stroke(borderColor, lineWidth: SymiStroke.hairline)
             }
-            .opacity(isDisabled ? 0.55 : 1)
+            .opacity(isDisabled ? SymiOpacity.disabledContent : SymiOpacity.opaque)
         }
         .buttonStyle(.plain)
         .disabled(isDisabled)
@@ -66,7 +66,7 @@ struct InputFlowPillOption: View {
             return theme.selectedFill(for: colorScheme)
         }
 
-        return colorScheme == .dark ? Color(uiColor: .secondarySystemGroupedBackground) : SymiColors.card.color
+        return SymiColors.elevatedCard(for: colorScheme)
     }
 
     private var borderColor: Color {
@@ -74,6 +74,6 @@ struct InputFlowPillOption: View {
             return theme.border(for: colorScheme)
         }
 
-        return Color.primary.opacity(colorScheme == .dark ? 0.16 : 0.08)
+        return SymiColors.subtleSeparator(for: colorScheme)
     }
 }

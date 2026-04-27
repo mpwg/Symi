@@ -1,0 +1,95 @@
+included:
+  - Symi
+
+only_rules:
+  - no_magic_padding
+  - no_magic_corner_radius
+  - no_direct_swiftui_colors
+  - no_direct_white_black_background
+  - no_free_shadow_values
+  - no_magic_frame_sizes
+  - no_magic_spacing
+  - no_magic_offsets
+  - no_magic_line_width
+  - no_magic_opacity
+  - no_magic_font_size
+  - no_magic_minimum_scale_factor
+
+excluded:
+  - Symi/Sources/Features/InputFlow/Styling/SymiColors.swift
+  - Symi/Sources/Features/InputFlow/Styling/SymiSpacing.swift
+  - Symi/Sources/Features/InputFlow/Styling/SymiTypography.swift
+  - Symi/Sources/Features/Export/PDFExportWriter.swift
+
+custom_rules:
+  no_magic_padding:
+    name: "Keine rohen Padding-Werte"
+    regex: '\.padding\((?:\.(?:horizontal|vertical|top|bottom|leading|trailing),\s*)?\d+(?:\.\d+)?\)'
+    message: "Nutze SymiSpacing-Tokens statt roher Padding-Werte."
+    severity: warning
+
+  no_magic_corner_radius:
+    name: "Keine rohen Radius-Werte"
+    regex: 'cornerRadius:\s*\d+(?:\.\d+)?|\.cornerRadius\(\d+(?:\.\d+)?\)'
+    message: "Nutze SymiRadius-Tokens statt roher Radius-Werte."
+    severity: warning
+
+  no_direct_swiftui_colors:
+    name: "Keine direkten SwiftUI-Farben"
+    regex: 'Color\((?:red:|hex:|uiColor:)|\.(?:foregroundStyle|foregroundColor|tint)\(\.(?:white|black|red|blue|green|orange|yellow|pink|purple)\)'
+    message: "Nutze SymiColors/AppTheme-Tokens statt direkter Farben."
+    severity: warning
+
+  no_direct_white_black_background:
+    name: "Keine weißen oder schwarzen Backgrounds"
+    regex: '\.background\((?:Color\.)?(?:white|black)|\.background\(\.(?:white|black)'
+    message: "Nutze SymiColors/AppTheme-Tokens statt .white/.black im Hintergrund."
+    severity: warning
+
+  no_free_shadow_values:
+    name: "Keine freien Shadow-Werte"
+    regex: '\.shadow\([^)]*(?:radius:\s*\d+(?:\.\d+)?|x:\s*-?\d+(?:\.\d+)?|y:\s*-?\d+(?:\.\d+)?)'
+    message: "Nutze SymiShadow-Tokens statt freier Shadow-Werte."
+    severity: warning
+
+  no_magic_frame_sizes:
+    name: "Keine rohen Frame-Größen"
+    regex: '\.(?:frame|defaultSize)\([^)]*(?:width|height|minWidth|minHeight|maxWidth|maxHeight):\s*-?\d+(?:\.\d+)?'
+    message: "Nutze SymiSize-Tokens statt roher Frame- oder Fenstergrößen."
+    severity: warning
+
+  no_magic_spacing:
+    name: "Keine rohen Spacing-Werte"
+    regex: '(?:VStack|HStack|LazyVGrid|LazyHGrid|GridItem)\([^)]*spacing:\s*-?\d+(?:\.\d+)?'
+    message: "Nutze SymiSpacing-Tokens statt roher Spacing-Werte."
+    severity: warning
+
+  no_magic_offsets:
+    name: "Keine rohen Offset-Werte"
+    regex: '\.offset\([^)]*(?:x|y):\s*-?\d+(?:\.\d+)?'
+    message: "Nutze SymiSpacing- oder SymiSize-Tokens statt roher Offset-Werte."
+    severity: warning
+
+  no_magic_line_width:
+    name: "Keine rohen Linienbreiten"
+    regex: '(?:lineWidth:\s*\d+(?:\.\d+)?|\.setLineWidth\(\d+(?:\.\d+)?\))'
+    message: "Nutze SymiStroke-Tokens statt roher Linienbreiten."
+    severity: warning
+
+  no_magic_opacity:
+    name: "Keine rohen Opacity-Werte"
+    regex: '\.opacity\([^)]*\b\d+(?:\.\d+)?\b'
+    message: "Nutze SymiOpacity-Tokens statt roher Opacity-Werte."
+    severity: warning
+
+  no_magic_font_size:
+    name: "Keine rohen Font-Größen"
+    regex: '\.font\(\.system\(size:\s*\d+(?:\.\d+)?'
+    message: "Nutze SymiTypography-Tokens statt roher Font-Größen."
+    severity: warning
+
+  no_magic_minimum_scale_factor:
+    name: "Keine rohen Minimum-Scale-Faktoren"
+    regex: '\.minimumScaleFactor\(\d+(?:\.\d+)?\)'
+    message: "Nutze SymiTypography-Tokens statt roher Minimum-Scale-Faktoren."
+    severity: warning

@@ -29,13 +29,13 @@ struct InputFlowPrimaryButton: View {
             ZStack {
                 if isLoading {
                     ProgressView()
-                        .tint(.white)
+                        .tint(AppTheme.symiOnAccent)
                 } else {
                     Text(title)
                         .font(SymiTypography.flowPrimaryButton)
                         .multilineTextAlignment(.center)
                         .lineLimit(2)
-                        .minimumScaleFactor(0.85)
+                        .minimumScaleFactor(SymiTypography.buttonScaleFactor)
 
                     HStack {
                         Spacer(minLength: 0)
@@ -43,14 +43,19 @@ struct InputFlowPrimaryButton: View {
                             .font(.headline.weight(.semibold))
                             .accessibilityHidden(true)
                     }
-                    .padding(.trailing, 18)
+                    .padding(.trailing, SymiSpacing.buttonTrailingIconPadding)
                 }
             }
-            .foregroundStyle(.white)
-            .padding(.horizontal, 18)
-            .frame(maxWidth: .infinity, minHeight: 54)
+            .foregroundStyle(AppTheme.symiOnAccent)
+            .padding(.horizontal, SymiSpacing.xl)
+            .frame(maxWidth: .infinity, minHeight: SymiSize.primaryButtonHeight)
             .background(buttonFill, in: Capsule())
-            .shadow(color: isDisabled ? .clear : SymiShadow.buttonColor, radius: SymiShadow.buttonRadius, x: 0, y: SymiShadow.buttonYOffset)
+            .shadow(
+                color: isDisabled ? .clear : SymiShadow.buttonColor,
+                radius: SymiShadow.buttonRadius,
+                x: SymiShadow.buttonXOffset,
+                y: SymiShadow.buttonYOffset
+            )
         }
         .buttonStyle(.plain)
         .disabled(isDisabled || isLoading)
@@ -58,7 +63,7 @@ struct InputFlowPrimaryButton: View {
     }
 
     private var buttonFill: Color {
-        (isDisabled || isLoading) ? AppTheme.symiPetrol.opacity(0.55) : AppTheme.symiPetrol
+        (isDisabled || isLoading) ? AppTheme.symiPetrol.opacity(SymiOpacity.disabledFill) : AppTheme.symiPetrol
     }
 }
 
@@ -84,9 +89,9 @@ struct InputFlowSecondaryAction: View {
         Button(title, action: action)
             .font(SymiTypography.flowSecondaryAction)
             .foregroundStyle(AppTheme.symiPetrol)
-            .frame(minHeight: 44)
+            .frame(minHeight: SymiSize.minInteractiveHeight)
             .disabled(isDisabled)
-            .opacity(isDisabled ? 0.55 : 1)
+            .opacity(isDisabled ? SymiOpacity.disabledContent : SymiOpacity.opaque)
             .accessibilityIdentifier(accessibilityIdentifier ?? "input-flow-secondary")
     }
 }

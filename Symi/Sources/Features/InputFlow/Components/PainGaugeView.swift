@@ -18,7 +18,7 @@ struct PainGaugeView: View {
 
     var body: some View {
         InputFlowCard(theme: theme, isHighlighted: true) {
-            VStack(spacing: 18) {
+            VStack(spacing: SymiSpacing.xl) {
                 ZStack(alignment: .center) {
                     PainGaugeArc()
                         .stroke(
@@ -31,17 +31,17 @@ struct PainGaugeView: View {
                                 startPoint: .leading,
                                 endPoint: .trailing
                             ),
-                            style: StrokeStyle(lineWidth: 13, lineCap: .round)
+                            style: StrokeStyle(lineWidth: SymiStroke.painGaugeArc, lineCap: .round)
                         )
-                        .frame(width: 212, height: 142)
+                        .frame(width: SymiSize.painGaugeWidth, height: SymiSize.painGaugeHeight)
                         .accessibilityHidden(true)
 
-                    VStack(spacing: 4) {
+                    VStack(spacing: SymiSpacing.xxs) {
                         Text("\(normalizedValue)")
-                            .font(.system(size: 58, weight: .bold, design: .rounded))
+                            .font(SymiTypography.largeMetric)
                             .monospacedDigit()
                             .foregroundStyle(AppTheme.symiPetrol)
-                            .minimumScaleFactor(0.75)
+                            .minimumScaleFactor(SymiTypography.gaugeScaleFactor)
 
                         Text("/10")
                             .font(.headline)
@@ -50,14 +50,14 @@ struct PainGaugeView: View {
                         Text(intensityLabel)
                             .font(.title3.weight(.semibold))
                             .foregroundStyle(theme.accent)
-                            .padding(.top, 8)
-                            .minimumScaleFactor(0.85)
+                            .padding(.top, SymiSpacing.xs)
+                            .minimumScaleFactor(SymiTypography.buttonScaleFactor)
                     }
-                    .padding(.top, 20)
+                    .padding(.top, SymiSpacing.xxl)
                 }
                 .frame(maxWidth: .infinity)
 
-                VStack(spacing: 8) {
+                VStack(spacing: SymiSpacing.xs) {
                     Slider(
                         value: Binding(
                             get: { Double(normalizedValue) },
@@ -107,8 +107,8 @@ struct PainGaugeView: View {
 
 private struct PainGaugeArc: Shape {
     func path(in rect: CGRect) -> Path {
-        let radius = min(rect.width / 2, rect.height) - 8
-        let center = CGPoint(x: rect.midX, y: rect.maxY - 8)
+        let radius = min(rect.width / 2, rect.height) - SymiSpacing.xs
+        let center = CGPoint(x: rect.midX, y: rect.maxY - SymiSpacing.xs)
         var path = Path()
         path.addArc(
             center: center,

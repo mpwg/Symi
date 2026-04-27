@@ -27,7 +27,7 @@ struct SymiApp: App {
             )
         }
         #if targetEnvironment(macCatalyst)
-        .defaultSize(width: 1280, height: 800)
+        .defaultSize(width: SymiSize.defaultWindowWidth, height: SymiSize.defaultWindowHeight)
         .windowResizability(.contentSize)
         #endif
     }

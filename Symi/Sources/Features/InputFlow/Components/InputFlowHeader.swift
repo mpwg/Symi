@@ -32,11 +32,11 @@ struct InputFlowHeader: View {
                     Image(systemName: "chevron.left")
                         .font(.headline.weight(.semibold))
                         .foregroundStyle(.primary)
-                        .frame(width: 44, height: 44)
+                        .frame(width: SymiSize.minInteractiveHeight, height: SymiSize.minInteractiveHeight)
                         .background(.thinMaterial, in: Circle())
                         .overlay {
                             Circle()
-                                .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+                                .stroke(Color.primary.opacity(SymiOpacity.hairline), lineWidth: SymiStroke.hairline)
                         }
                 }
                 .accessibilityLabel("Zurück")
@@ -47,7 +47,7 @@ struct InputFlowHeader: View {
                 Button("Abbrechen", action: onCancel)
                     .font(.callout.weight(.medium))
                     .foregroundStyle(AppTheme.symiPetrol)
-                    .frame(minHeight: 44)
+                    .frame(minHeight: SymiSize.minInteractiveHeight)
                     .accessibilityIdentifier("entry-flow-cancel")
             }
 
@@ -71,7 +71,7 @@ struct InputFlowHeader: View {
         }
         .padding(.horizontal, SymiSpacing.flowHorizontalPadding)
         .padding(.top, SymiSpacing.flowHeaderTopPadding)
-        .padding(.bottom, 8)
+        .padding(.bottom, SymiSpacing.xs)
         .frame(maxWidth: SymiSpacing.flowMaxContentWidth, alignment: .leading)
         .frame(maxWidth: .infinity)
     }

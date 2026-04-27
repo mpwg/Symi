@@ -159,29 +159,29 @@ enum InputFlowStepColorToken: String, CaseIterable, Sendable {
     }
 
     func softFill(for colorScheme: ColorScheme) -> Color {
-        color(for: colorScheme).opacity(colorScheme == .dark ? 0.22 : 0.16)
+        color(for: colorScheme).opacity(colorScheme == .dark ? SymiOpacity.progressTrackDark : SymiOpacity.softFill)
     }
 
     func selectedFill(for colorScheme: ColorScheme) -> Color {
-        color(for: colorScheme).opacity(colorScheme == .dark ? 0.30 : 0.24)
+        color(for: colorScheme).opacity(colorScheme == .dark ? SymiOpacity.stepSelectedFillDark : SymiOpacity.selectedStroke)
     }
 
     func border(for colorScheme: ColorScheme) -> Color {
-        color(for: colorScheme).opacity(colorScheme == .dark ? 0.48 : 0.36)
+        color(for: colorScheme).opacity(colorScheme == .dark ? SymiOpacity.stepBorderDark : SymiOpacity.stepBorderLight)
     }
 
     private var darkColorValue: SymiColorValue {
         switch self {
         case .coral:
-            SymiColorValue(hex: 0xFFA196)
+            SymiColors.coralDark
         case .sageTeal:
-            SymiColorValue(hex: 0xA9DEC9)
+            SymiColors.sageDark
         case .blue:
-            SymiColorValue(hex: 0x81A0F1)
+            SymiColors.triggerBlueDark
         case .warmAmber:
-            SymiColorValue(hex: 0xF0B867)
+            SymiColors.noteAmberDark
         case .purple:
-            SymiColorValue(hex: 0xB096F2)
+            SymiColors.reviewPurpleDark
         }
     }
 }

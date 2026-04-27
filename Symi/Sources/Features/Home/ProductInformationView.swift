@@ -165,14 +165,14 @@ struct ProductInformationView: View {
 
     @ViewBuilder
     private func infoRow(title: LocalizedStringKey, detail: LocalizedStringKey, systemImage: String) -> some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .top, spacing: SymiSpacing.md) {
             Image(systemName: systemImage)
                 .font(.title3)
                 .foregroundStyle(.accent)
-                .frame(width: 28)
+                .frame(width: SymiSize.productInfoIconWidth)
                 .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: SymiSpacing.compact) {
                 Text(title)
                     .font(.headline)
                 Text(detail)
@@ -180,7 +180,7 @@ struct ProductInformationView: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, SymiSpacing.xxs)
         .brandGroupedRow()
     }
 }

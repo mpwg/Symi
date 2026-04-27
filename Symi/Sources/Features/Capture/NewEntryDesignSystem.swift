@@ -65,7 +65,7 @@ struct SelectionChip: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 8) {
+            HStack(spacing: SymiSpacing.xs) {
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                     .imageScale(.medium)
 
@@ -76,15 +76,18 @@ struct SelectionChip: View {
 
                 Spacer(minLength: 0)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
-            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+            .padding(.horizontal, SymiSpacing.md)
+            .padding(.vertical, SymiSpacing.sm)
+            .frame(maxWidth: .infinity, minHeight: SymiSize.minInteractiveHeight, alignment: .leading)
             .background(isSelected ? colorToken.selectedFill(for: colorScheme) : colorToken.softFill(for: colorScheme))
             .foregroundStyle(isSelected ? colorToken.color(for: colorScheme) : Color.primary)
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: SymiRadius.chip, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(isSelected ? colorToken.border(for: colorScheme) : Color.secondary.opacity(0.18), lineWidth: 1)
+                RoundedRectangle(cornerRadius: SymiRadius.chip, style: .continuous)
+                    .stroke(
+                        isSelected ? colorToken.border(for: colorScheme) : Color.secondary.opacity(SymiOpacity.secondaryFill),
+                        lineWidth: SymiStroke.hairline
+                    )
             }
         }
         .buttonStyle(.plain)
@@ -111,7 +114,10 @@ struct MultiSelectGrid: View {
     }
 
     var body: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 10)], spacing: 10) {
+        LazyVGrid(
+            columns: [GridItem(.adaptive(minimum: SymiSize.multiSelectGridMinWidth), spacing: SymiSpacing.tileSpacing)],
+            spacing: SymiSpacing.tileSpacing
+        ) {
             ForEach(options, id: \.self) { option in
                 let isSelected = selection.contains(option)
 

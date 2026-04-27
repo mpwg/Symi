@@ -10,7 +10,7 @@ struct InputFlowFieldGroup<Content: View>: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: SymiSpacing.md) {
             Text(title)
                 .font(SymiTypography.flowSectionTitle)
                 .foregroundStyle(.primary)
@@ -46,7 +46,7 @@ struct InputFlowPillGrid<Content: View>: View {
     let minimumColumnWidth: CGFloat
     let content: Content
 
-    init(minimumColumnWidth: CGFloat = 70, @ViewBuilder content: () -> Content) {
+    init(minimumColumnWidth: CGFloat = SymiSize.pillGridMinWidth, @ViewBuilder content: () -> Content) {
         self.minimumColumnWidth = minimumColumnWidth
         self.content = content()
     }
@@ -78,16 +78,16 @@ struct InputFlowBackground: View {
     private var colors: [Color] {
         if colorScheme == .dark {
             return [
-                Color(red: 0.08, green: 0.09, blue: 0.10),
-                Color(red: 0.06, green: 0.10, blue: 0.10),
-                Color(red: 0.10, green: 0.09, blue: 0.08)
+                SymiColors.darkBackgroundTop.color,
+                SymiColors.darkBackgroundMiddle.color,
+                SymiColors.darkBackgroundBottom.color
             ]
         }
 
         return [
             SymiColors.warmBackground.color,
-            Color.white,
-            SymiColors.sage.color.opacity(0.18)
+            SymiColors.onAccent.color,
+            SymiColors.sage.color.opacity(SymiOpacity.secondaryFill)
         ]
     }
 }

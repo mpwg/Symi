@@ -14,45 +14,56 @@ struct InputFlowProgressView: View {
     }
 
     var body: some View {
-        HStack(spacing: 18) {
+        HStack(spacing: SymiSpacing.xl) {
             GeometryReader { proxy in
-                let indicatorSize: CGFloat = 24
+                let indicatorSize = SymiSize.progressIndicator
                 let trackWidth = max(proxy.size.width - indicatorSize, 1)
                 let xOffset = progressPosition(in: trackWidth)
                 let activeWidth = min(xOffset + indicatorSize / 2, proxy.size.width)
 
                 ZStack(alignment: .leading) {
                     Capsule()
-                        .fill(Color.primary.opacity(colorScheme == .dark ? 0.22 : 0.12))
-                        .frame(height: 4)
-                        .offset(y: indicatorSize / 2 - 2)
+                        .fill(
+                            Color.primary.opacity(
+                                colorScheme == .dark ? SymiOpacity.progressTrackDark : SymiOpacity.progressTrackLight
+                            )
+                        )
+                        .frame(height: SymiSpacing.xxs)
+                        .offset(y: indicatorSize / 2 - SymiSpacing.micro)
 
                     Capsule()
                         .fill(theme.accent(for: colorScheme))
-                        .frame(width: activeWidth, height: 4)
-                        .offset(y: indicatorSize / 2 - 2)
+                        .frame(width: activeWidth, height: SymiSpacing.xxs)
+                        .offset(y: indicatorSize / 2 - SymiSpacing.micro)
 
                     Text("\(clampedCurrentStep)")
                         .font(.caption.weight(.bold))
                         .monospacedDigit()
-                        .foregroundStyle(.white)
+                        .foregroundStyle(AppTheme.symiOnAccent)
                         .frame(width: indicatorSize, height: indicatorSize)
                         .background(theme.accent(for: colorScheme), in: Circle())
                         .overlay {
                             Circle()
-                                .stroke(.white.opacity(colorScheme == .dark ? 0.18 : 0.92), lineWidth: 1)
+                                .stroke(
+                                    AppTheme.symiOnAccent.opacity(
+                                        colorScheme == .dark
+                                            ? SymiOpacity.progressIndicatorStrokeDark
+                                            : SymiOpacity.progressIndicatorStrokeLight
+                                    ),
+                                    lineWidth: SymiStroke.hairline
+                                )
                         }
                         .offset(x: xOffset)
                         .accessibilityHidden(true)
                 }
             }
-            .frame(height: 24)
+            .frame(height: SymiSize.progressIndicator)
 
             Text("von \(safeTotalSteps)")
                 .font(.footnote.weight(.medium))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
-                .minimumScaleFactor(0.82)
+                .minimumScaleFactor(SymiTypography.compactScaleFactor)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Schritt \(clampedCurrentStep) von \(safeTotalSteps)")

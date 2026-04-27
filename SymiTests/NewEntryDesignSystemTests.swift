@@ -48,9 +48,10 @@ struct NewEntryDesignSystemTests {
         #expect(SymiColors.sage.hexString == "#8ECDB8")
         #expect(SymiColors.coral.hexString == "#FF8A7A")
         #expect(SymiColors.warmBackground.hexString == "#F6F4EF")
-        #expect(SymiColors.card.hexString == "#FFFFFF")
+        #expect(SymiColors.card.hexString == "#FFFEFB")
         #expect(SymiColors.textPrimary.hexString == "#1C1C1E")
         #expect(SymiColors.textSecondary.hexString == "#6B6B6E")
+        #expect(SymiColors.onAccent.hexString == "#FFFFFF")
     }
 
     @Test

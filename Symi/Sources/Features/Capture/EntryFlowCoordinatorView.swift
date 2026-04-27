@@ -536,7 +536,7 @@ private struct EntryReviewStepView: View {
             onBack: onBack,
             onCancel: onCancel
         ) {
-            VStack(spacing: 12) {
+            VStack(spacing: SymiSpacing.md) {
                 ReviewSummaryCard(
                     metadata: InputFlowStepCatalog.metadata(for: .headache),
                     lines: headacheSummary,
@@ -713,7 +713,7 @@ private struct EntryFlowScreen<Content: View, Footer: View>: View {
             InputFlowBackground()
                 .ignoresSafeArea()
 
-            VStack(spacing: 0) {
+            VStack(spacing: SymiSpacing.zero) {
                 InputFlowHeader(
                     step: step.inputFlowStepID,
                     currentStep: currentIndex,
@@ -727,7 +727,7 @@ private struct EntryFlowScreen<Content: View, Footer: View>: View {
                         Text(step.rawValue)
                             .font(.caption2)
                             .foregroundStyle(.clear)
-                            .frame(width: 1, height: 1)
+                            .frame(width: SymiSize.accessibilityMarker, height: SymiSize.accessibilityMarker)
                             .accessibilityElement()
                             .accessibilityLabel("Flow-Schritt \(step.rawValue)")
                             .accessibilityIdentifier("entry-flow-step-\(step.rawValue)")
@@ -735,8 +735,8 @@ private struct EntryFlowScreen<Content: View, Footer: View>: View {
                         content
                     }
                     .padding(.horizontal, SymiSpacing.flowHorizontalPadding)
-                    .padding(.top, 8)
-                    .padding(.bottom, 24)
+                    .padding(.top, SymiSpacing.xs)
+                    .padding(.bottom, SymiSpacing.xxxl)
                     .frame(maxWidth: SymiSpacing.flowMaxContentWidth, alignment: .leading)
                     .frame(maxWidth: .infinity)
                 }
@@ -762,10 +762,10 @@ private struct EntryContinuousMedicationBlock: View {
 
     var body: some View {
         InputFlowFieldGroup(title: "Dauermedikation") {
-            VStack(spacing: 10) {
+            VStack(spacing: SymiSpacing.sm) {
                 ForEach($checks) { $check in
                     Toggle(isOn: $check.wasTaken) {
-                        VStack(alignment: .leading, spacing: 3) {
+                        VStack(alignment: .leading, spacing: SymiSpacing.chevronTopPadding) {
                             Text(check.name)
                                 .font(.subheadline.weight(.semibold))
                             if !check.detailText.isEmpty {
@@ -776,7 +776,7 @@ private struct EntryContinuousMedicationBlock: View {
                         }
                     }
                     .toggleStyle(.switch)
-                    .frame(minHeight: 44)
+                    .frame(minHeight: SymiSize.minInteractiveHeight)
                     .accessibilityLabel("\(check.name) heute genommen")
                 }
             }
@@ -793,10 +793,13 @@ private struct EntryInfoBanner: View {
         Label(text, systemImage: "info.circle")
             .font(.footnote.weight(.medium))
             .foregroundStyle(NewEntryStepColorToken.blue.color)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
+            .padding(.horizontal, SymiSpacing.lg)
+            .padding(.vertical, SymiSpacing.secondaryButtonVerticalPadding)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(NewEntryStepColorToken.blue.softFill(for: colorScheme), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .background(
+                NewEntryStepColorToken.blue.softFill(for: colorScheme),
+                in: RoundedRectangle(cornerRadius: SymiRadius.flowTile, style: .continuous)
+            )
             .accessibilityIdentifier("entry-trigger-info")
     }
 }
@@ -812,9 +815,9 @@ private struct EntryNoteCard: View {
                 TextEditor(text: $notes)
                     .font(.callout)
                     .scrollContentBackground(.hidden)
-                    .padding(.horizontal, 4)
-                    .padding(.vertical, 4)
-                    .frame(minHeight: 220)
+                    .padding(.horizontal, SymiSpacing.xxs)
+                    .padding(.vertical, SymiSpacing.xxs)
+                    .frame(minHeight: SymiSize.noteEditorMinHeight)
                     .onChange(of: notes) { _, newValue in
                         if newValue.count > limit {
                             notes = String(newValue.prefix(limit))
@@ -824,14 +827,14 @@ private struct EntryNoteCard: View {
                     .accessibilityIdentifier("entry-note-text")
 
                 if notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: SymiSpacing.sm) {
                         Text("Was hat geholfen?")
                         Text("Was war heute anders?")
                     }
                     .font(.callout)
                     .foregroundStyle(.secondary)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 10)
+                    .padding(.horizontal, SymiSpacing.sm)
+                    .padding(.vertical, SymiSpacing.sm)
                     .allowsHitTesting(false)
                 }
 
@@ -842,7 +845,7 @@ private struct EntryNoteCard: View {
                         Text("\(notes.count)/\(limit)")
                             .font(.caption.monospacedDigit())
                             .foregroundStyle(.secondary)
-                            .padding(8)
+                            .padding(SymiSpacing.xs)
                     }
                 }
             }
@@ -855,8 +858,8 @@ private struct EntryTodayLinkCard: View {
 
     var body: some View {
         InputFlowCard(theme: .note) {
-            HStack(spacing: 14) {
-                VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: SymiSpacing.secondaryButtonVerticalPadding) {
+                VStack(alignment: .leading, spacing: SymiSpacing.compact) {
                     Text("Zu heutigem Eintrag hinzufügen")
                         .font(.subheadline.weight(.semibold))
                     Text("Diese Notiz wird mit deinem Eintrag von heute verknüpft.")
@@ -865,14 +868,14 @@ private struct EntryTodayLinkCard: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
-                Spacer(minLength: 8)
+                Spacer(minLength: SymiSpacing.xs)
 
                 Toggle("Zu heutigem Eintrag hinzufügen", isOn: $isOn)
                     .labelsHidden()
                     .tint(InputFlowStepTheme.note.accent)
                     .accessibilityIdentifier("entry-note-link-toggle")
             }
-            .frame(maxWidth: .infinity, minHeight: 72, alignment: .leading)
+            .frame(maxWidth: .infinity, minHeight: SymiSize.medicationRowMinHeight, alignment: .leading)
         }
     }
 }
@@ -908,7 +911,7 @@ private struct EntryFlowFooter: View {
     }
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: SymiSpacing.md) {
             InputFlowPrimaryButton(
                 title: primaryTitle,
                 systemImage: primarySystemImage,
@@ -943,9 +946,12 @@ private struct EntryPatternHint: View {
             Image(systemName: "sparkles")
                 .foregroundStyle(NewEntryStepColorToken.purple.color)
         }
-        .padding(16)
+        .padding(SymiSpacing.lg)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(NewEntryStepColorToken.purple.softFill(for: colorScheme), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(
+            NewEntryStepColorToken.purple.softFill(for: colorScheme),
+            in: RoundedRectangle(cornerRadius: SymiRadius.flowBanner, style: .continuous)
+        )
         .accessibilityIdentifier("entry-review-pattern-hint")
     }
 }
